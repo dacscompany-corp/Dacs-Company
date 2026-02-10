@@ -72,32 +72,21 @@ document.querySelectorAll('section, .about-card, .value-card, .team-member, .obj
     observer.observe(el);
 });
 
-// Background Slideshow Functionality - Hover to Auto-play
+// Background Slideshow Functionality - Auto-play every 10 seconds
 let currentSlide = 0;
 const bgSlides = document.querySelectorAll('.bg-slide');
-const indicatorsContainer = document.querySelector('.slideshow-indicators');
-let slideshowTimer = null;
-let isHovering = false;
 
-// Create indicators
-bgSlides.forEach((_, index) => {
-    const indicator = document.createElement('div');
-    indicator.classList.add('indicator');
-    if (index === 0) indicator.classList.add('active');
-    indicator.addEventListener('click', () => goToSlide(index));
-    indicatorsContainer.appendChild(indicator);
-});
-
-const indicators = document.querySelectorAll('.indicator');
+// Show first slide initially
+if (bgSlides.length > 0) {
+    bgSlides[0].classList.add('bg-active');
+}
 
 function showSlide(index) {
-    // Remove active class from all background slides and indicators
+    // Remove active class from all background slides
     bgSlides.forEach(bgSlide => bgSlide.classList.remove('bg-active'));
-    indicators.forEach(indicator => indicator.classList.remove('active'));
     
-    // Add active class to current background slide and indicator
+    // Add active class to current background slide
     bgSlides[index].classList.add('bg-active');
-    indicators[index].classList.add('active');
 }
 
 function nextSlide() {
@@ -105,30 +94,10 @@ function nextSlide() {
     showSlide(currentSlide);
 }
 
-function goToSlide(index) {
-    currentSlide = index;
-    showSlide(currentSlide);
-    
-    // Reset timer if hovering
-    if (isHovering) {
-        clearInterval(slideshowTimer);
-        slideshowTimer = setInterval(nextSlide, 3000);
-    }
+// Start automatic slideshow - changes every 10 seconds
+if (bgSlides.length > 1) {
+    setInterval(nextSlide, 10000); // 10 seconds per slide
 }
-
-// Start slideshow only on hover over the hero decoration area
-const heroDecoration = document.querySelector('.hero-decoration');
-
-heroDecoration.addEventListener('mouseenter', () => {
-    isHovering = true;
-    slideshowTimer = setInterval(nextSlide, 3000); // 3 seconds per slide
-});
-
-heroDecoration.addEventListener('mouseleave', () => {
-    isHovering = false;
-    clearInterval(slideshowTimer);
-    slideshowTimer = null;
-});
 
 // Form submission handler
 const appointmentForm = document.getElementById('appointmentForm');
@@ -202,10 +171,10 @@ function showMessage(message, type) {
     }
 }
 
-// Parallax effect for hero decoration
+// Parallax effect for hero decoration (desktop only)
 window.addEventListener('scroll', () => {
     const decoration = document.querySelector('.hero-decoration');
-    if (decoration) {
+    if (decoration && window.innerWidth > 1024) {
         const scrolled = window.pageYOffset;
         decoration.style.transform = `translateY(${scrolled * 0.3}px)`;
     }
@@ -295,5 +264,6 @@ document.querySelectorAll('.value-card').forEach(card => {
 
 // Console log for debugging
 console.log('DAC\'s Building Design Services - Website Loaded Successfully');
-console.log('Background slideshow initialized with', bgSlides.length, 'slides');
+console.log('Automatic background slideshow initialized with', bgSlides.length, 'slides');
+console.log('Slideshow transitions every 10 seconds');
 console.log('All interactive features initialized');
