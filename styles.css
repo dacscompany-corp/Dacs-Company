@@ -29,9 +29,26 @@ html {
 body {
     font-family: 'Barlow', -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--text-primary);
-    background: var(--bg-white);
+    background-image: url('background.jpg');
+    background-attachment: fixed;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
     line-height: 1.6;
     overflow-x: hidden;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.5);
+    z-index: -1;
+    pointer-events: none;
 }
 
 .container {
@@ -183,6 +200,8 @@ h1, h2, h3, h4, h5, h6 {
     padding: 120px 0 80px;
     position: relative;
     overflow: hidden;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(1px);
 }
 
 .hero .container {
@@ -190,6 +209,8 @@ h1, h2, h3, h4, h5, h6 {
     grid-template-columns: 1fr 1fr;
     gap: 80px;
     align-items: center;
+    position: relative;
+    z-index: 2;
 }
 
 .hero-badge {
@@ -275,55 +296,99 @@ h1, h2, h3, h4, h5, h6 {
 
 .hero-visual {
     position: relative;
-    height: 500px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
 }
 
-.floating-card {
-    position: absolute;
-    background: white;
-    padding: 24px;
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
-    animation: float 6s ease-in-out infinite;
-}
-
-.floating-card h3 {
-    font-size: 18px;
-    margin-top: 12px;
-}
-
-.card-icon {
-    font-size: 32px;
-}
-
-.card-1 {
-    top: 50px;
-    left: 50px;
-    animation-delay: 0s;
-}
-
-.card-2 {
-    top: 200px;
-    right: 80px;
-    animation-delay: 2s;
-}
-
-.card-3 {
-    bottom: 80px;
-    left: 120px;
-    animation-delay: 4s;
-}
-
+/* Enhanced Hero Decoration - With Slideshow Background */
 .hero-decoration {
     position: absolute;
-    top: -200px;
-    right: -200px;
-    width: 600px;
-    height: 600px;
-    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+    top: 0;
+    right: 0;
+    width: 65%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: auto;
+    overflow: hidden;
+}
+
+/* Background slideshow that fills entire decoration area */
+.bg-slideshow-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.bg-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.bg-slide.bg-active {
+    opacity: 1;
+}
+
+.bg-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: blur(0px) brightness(1);
+    transform: scale(1);
+}
+
+/* Gradient overlay to blend with page */
+.hero-decoration::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, 
+        rgba(255, 255, 255, 0.95) 0%, 
+        rgba(255, 255, 255, 0.7) 15%,
+        rgba(255, 255, 255, 0.2) 40%,
+        transparent 70%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.slideshow-indicators {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 3;
+    pointer-events: auto;
+}
+
+.indicator {
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    opacity: 0.05;
-    z-index: -1;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.indicator.active {
+    background: white;
+    width: 32px;
+    border-radius: 5px;
 }
 
 /* Sections */
@@ -362,7 +427,8 @@ section {
 
 /* About Section */
 .about {
-    background: var(--bg-gray);
+    background: rgba(248, 248, 248, 0.6);
+    backdrop-filter: blur(3px);
 }
 
 .about-grid {
@@ -404,90 +470,118 @@ section {
 
 .about-card p {
     color: var(--text-secondary);
-    line-height: 1.8;
+    line-height: 1.7;
 }
 
 /* Philosophy Section */
 .philosophy {
-    background: var(--text-primary);
-    color: white;
-}
-
-.philosophy-content {
-    max-width: 900px;
-    margin: 0 auto;
+    background: linear-gradient(135deg, var(--bg-light) 0%, white 100%);
     text-align: center;
+    padding: 80px 0;
 }
 
 .philosophy-title {
-    font-size: 42px;
+    font-size: 36px;
     margin-bottom: 32px;
-    color: white;
+    color: var(--text-primary);
 }
 
 .philosophy-quote {
     font-size: 20px;
-    line-height: 1.9;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    max-width: 900px;
+    margin: 0 auto;
     font-style: italic;
-    color: rgba(255, 255, 255, 0.9);
+    position: relative;
+    padding: 0 40px;
+}
+
+.philosophy-quote::before,
+.philosophy-quote::after {
+    content: '"';
+    font-size: 64px;
+    color: var(--primary-color);
+    opacity: 0.3;
+    font-family: 'Playfair Display', serif;
+    position: absolute;
+}
+
+.philosophy-quote::before {
+    top: -20px;
+    left: 0;
+}
+
+.philosophy-quote::after {
+    bottom: -40px;
+    right: 0;
 }
 
 /* Values Section */
+.values {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(2px);
+}
+
 .values-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
+    gap: 32px;
 }
 
 .value-card {
-    text-align: center;
-    padding: 40px;
-    background: var(--bg-gray);
+    background: white;
+    padding: 48px 32px;
     border-radius: 16px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
     transition: all 0.3s ease;
 }
 
 .value-card:hover {
-    background: white;
-    box-shadow: var(--shadow-lg);
     transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
 }
 
 .value-icon {
     font-size: 56px;
     margin-bottom: 24px;
+    display: inline-block;
+    transition: transform 0.3s ease;
 }
 
 .value-card h3 {
-    font-size: 28px;
+    font-size: 24px;
     margin-bottom: 16px;
 }
 
 .value-card p {
     color: var(--text-secondary);
-    line-height: 1.8;
+    line-height: 1.7;
 }
 
 /* Objectives Section */
 .objectives {
-    background: var(--bg-light);
+    background: rgba(248, 248, 248, 0.6);
+    backdrop-filter: blur(3px);
 }
 
 .objectives-flow {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 32px;
     flex-wrap: wrap;
-    margin-top: 40px;
 }
 
 .objective-step {
+    flex: 1;
+    min-width: 200px;
+    max-width: 250px;
     background: white;
     padding: 32px;
     border-radius: 16px;
     text-align: center;
-    min-width: 160px;
     box-shadow: var(--shadow-sm);
     transition: all 0.3s ease;
     position: relative;
@@ -500,9 +594,9 @@ section {
 
 .step-number {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    font-size: 12px;
+    top: 16px;
+    right: 16px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--primary-color);
     background: var(--bg-gray);
@@ -530,6 +624,11 @@ section {
 }
 
 /* Team Section */
+.team {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(2px);
+}
+
 .team-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -598,7 +697,8 @@ section {
 
 /* Appointment Section */
 .appointment {
-    background: var(--bg-gray);
+    background: rgba(248, 248, 248, 0.6);
+    backdrop-filter: blur(3px);
 }
 
 .appointment-wrapper {
@@ -866,6 +966,17 @@ section {
     }
 }
 
+@keyframes decorationPulse {
+    0%, 100% {
+        transform: translate(10%, -50%) scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: translate(15%, -52%) scale(1.05);
+        opacity: 0.4;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .hero .container {
@@ -874,7 +985,11 @@ section {
     }
 
     .hero-visual {
-        height: 400px;
+        height: 500px;
+    }
+
+    .image-slideshow {
+        max-width: 100%;
     }
 
     .about-grid,
@@ -912,6 +1027,10 @@ section {
         font-size: 36px;
     }
 
+    .hero-visual {
+        height: 400px;
+    }
+
     .objectives-flow {
         flex-direction: column;
     }
@@ -938,5 +1057,13 @@ section {
     .btn {
         width: 100%;
         text-align: center;
+    }
+
+    .hero-visual {
+        height: 350px;
+    }
+
+    .image-slideshow {
+        border-radius: 12px;
     }
 }
