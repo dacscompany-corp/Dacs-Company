@@ -517,6 +517,27 @@ function updateBudgetOverview() {
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
+    // ── Contract variance (folder total budget vs spent) ──────
+    const contractVarEl  = document.getElementById('expContractVariance');
+    const contractVarBar = document.getElementById('expContractVarBar');
+    if (contractVarEl) {
+        if (contractVal > 0) {
+            const cRemain = contractVal - spent;
+            const cPct    = Math.min(Math.max((cRemain / contractVal) * 100, 0), 100);
+            const isOver  = cRemain < 0;
+            contractVarEl.textContent = (isOver ? '-' : '') + '₱' + formatNum(Math.abs(cRemain));
+            contractVarEl.style.color = isOver ? '#ef4444' : '#00D084';
+            if (contractVarBar) {
+                contractVarBar.style.width      = Math.max(cPct, 2).toFixed(1) + '%';
+                contractVarBar.style.background = isOver ? '#ef4444' : '#00D084';
+            }
+        } else {
+            contractVarEl.textContent = '— no folder';
+            contractVarEl.style.color = '#9ca3af';
+            if (contractVarBar) contractVarBar.style.width = '0%';
+        }
+    }
+
     const matW = Math.min(expPct, 100);
     const payW = Math.min(payPct, Math.max(0, 100 - matW));
     const remW = Math.max(0, 100 - matW - payW);
@@ -604,7 +625,7 @@ function renderExpensesTable() {
         <tr class="exp-group-row">
             <td>${formatDate(e.dateTime)}</td>
             <td><strong>${_highlightMatch(e.expenseName || '—', name)}</strong></td>
-            <td></td>
+            <td class="exp-notes-cell">${e.notes ? '<span class="exp-notes-text">' + e.notes + '</span>' : '<span class="exp-notes-empty">—</span>'}</td>
             <td>${e.quantity || 1}</td>
             <td>₱${formatNum(e.amount)}</td>
             <td>${getReceiptThumbsHTML(e)}</td>
@@ -763,7 +784,7 @@ function renderPayrollTable() {
         return;
     }
     if (!expPayroll.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="exp-empty-row">No payroll entries yet. Click ＋ Add Payroll Entry.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="exp-empty-row">No payroll entries yet. Click ＋ Add Payroll Entry.</td></tr>';
         return;
     }
 
@@ -785,6 +806,7 @@ function renderPayrollTable() {
             <td>${formatDate(p.paymentDate)}</td>
             <td><strong>${_highlightMatch(p.workerName || '—', name)}</strong></td>
             <td>${p.role || '—'}</td>
+            <td class="exp-notes-cell">${p.notes ? '<span class="exp-notes-text">' + p.notes + '</span>' : '<span class="exp-notes-empty">—</span>'}</td>
             <td>${p.daysWorked || 0}</td>
             <td>₱${formatNum(p.dailyRate)}</td>
             <td>₱${formatNum(p.totalSalary)}</td>
@@ -795,7 +817,7 @@ function renderPayrollTable() {
             </td>
         </tr>`).join('') + `
         <tr class="exp-total-row">
-            <td colspan="5"></td>
+            <td colspan="6"></td>
             <td class="exp-total-label">TOTAL</td>
             <td class="exp-total-value">₱${formatNum(grandTotal)}</td>
             <td></td>
@@ -952,11 +974,12 @@ async function deleteFolder(id) {
         : `Delete folder "${folder?.name}"?`;
     if (!confirm(msg)) return;
     try {
+        const uid = currentUser.uid;
         const projsInFolder = expProjects.filter(p => p.folderId === id);
         for (const p of projsInFolder) {
             const [eSnap, paySnap] = await Promise.all([
-                db.collection('expenses').where('projectId','==',p.id).get(),
-                db.collection('payroll').where('projectId','==',p.id).get()
+                db.collection('expenses').where('projectId','==',p.id).where('userId','==',uid).get(),
+                db.collection('payroll').where('projectId','==',p.id).where('userId','==',uid).get()
             ]);
             const batch = db.batch();
             eSnap.docs.forEach(d => batch.delete(d.ref));
@@ -979,9 +1002,10 @@ async function deleteFolder(id) {
 async function deleteProject(id) {
     if (!confirm('Delete this project and ALL its expenses & payroll?')) return;
     try {
+        const uid = currentUser.uid;
         const [eSnap, pSnap] = await Promise.all([
-            db.collection('expenses').where('projectId', '==', id).get(),
-            db.collection('payroll').where('projectId', '==', id).get()
+            db.collection('expenses').where('projectId','==',id).where('userId','==',uid).get(),
+            db.collection('payroll').where('projectId','==',id).where('userId','==',uid).get()
         ]);
         const batch = db.batch();
         eSnap.docs.forEach(d => batch.delete(d.ref));
@@ -1492,7 +1516,7 @@ function _pmRenderPayTable() {
     const tbody = document.getElementById('pmPayTbody');
     if (!tbody) return;
     if (!_pmPay.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="exp-empty-row">No payroll yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="exp-empty-row">No payroll yet.</td></tr>';
         return;
     }
     const totalSalary = _pmPay.reduce((s, p) => s + (p.totalSalary || 0), 0);
@@ -1501,11 +1525,12 @@ function _pmRenderPayTable() {
             <td>${formatDate(p.paymentDate)}</td>
             <td><strong>${p.workerName||'—'}</strong></td>
             <td>${p.role||'—'}</td>
+            <td class="exp-notes-cell">${p.notes ? '<span class="exp-notes-text">'+p.notes+'</span>' : '<span class="exp-notes-empty">—</span>'}</td>
             <td>${p.daysWorked||0} days × ₱${formatNum(p.dailyRate)}</td>
             <td>₱${formatNum(p.totalSalary)}</td>
         </tr>`).join('') + `
         <tr class="exp-pm-total-row">
-            <td colspan="4" style="text-align:right;font-weight:700;padding:0.6rem 0.75rem;border-top:2px solid #e5e7eb;color:#374151;">TOTAL</td>
+            <td colspan="5" style="text-align:right;font-weight:700;padding:0.6rem 0.75rem;border-top:2px solid #e5e7eb;color:#374151;">TOTAL</td>
             <td style="font-weight:800;padding:0.6rem 0.75rem;border-top:2px solid #e5e7eb;color:#1a1a1a;">₱${formatNum(totalSalary)}</td>
         </tr>`;
 }
@@ -2358,12 +2383,29 @@ function _rptRenderKPIs(groups) {
                 <div class="rpt-kpi-sub">${totPct.toFixed(1)}% utilized · ${contract > 0 ? ((totSpent/contract)*100).toFixed(1):0}% of contract</div>
             </div>
         </div>
-        <div class="rpt-kpi-card ${totRemain < 0 ? 'rpt-kpi-over' : 'rpt-kpi-remaining'}">
+        <div class="rpt-kpi-card rpt-kpi-variance-wide ${totRemain < 0 ? 'rpt-kpi-over' : 'rpt-kpi-remaining'}">
             <div class="rpt-kpi-ico-wrap"><i data-lucide="${totRemain < 0 ? 'trending-down':'trending-up'}" class="rpt-kpi-ico"></i></div>
             <div class="rpt-kpi-body">
-                <div class="rpt-kpi-label">${totRemain < 0 ? 'Over Budget':'Remaining Budget'}</div>
-                <div class="rpt-kpi-val">₱${formatNum(Math.abs(totRemain))}</div>
-                <div class="rpt-kpi-sub">${totRemain < 0 ? 'Exceeds budget by ₱'+formatNum(Math.abs(totRemain)) : (100 - totPct).toFixed(1)+'% still available'}</div>
+                <div class="rpt-kpi-label" style="margin-bottom:0.6rem">Budget Variance</div>
+                <div class="rpt-variance-split">
+                    <div class="rpt-variance-col">
+                        <div class="rpt-variance-col-label">Period (Allocated)</div>
+                        <div class="rpt-variance-col-val">${totRemain < 0 ? '-' : ''}&#8369;${formatNum(Math.abs(totRemain))}</div>
+                        <div class="rpt-variance-bar-wrap">
+                            <div class="rpt-variance-bar-fill" style="width:${Math.max(Math.min(100-totPct,100),2).toFixed(1)}%;background:rgba(255,255,255,0.75)"></div>
+                        </div>
+                        <div class="rpt-variance-col-sub">${(100-totPct).toFixed(1)}% of period remaining</div>
+                    </div>
+                    <div class="rpt-variance-divider"></div>
+                    <div class="rpt-variance-col">
+                        <div class="rpt-variance-col-label">Contract (Total)</div>
+                        <div class="rpt-variance-col-val">${contract > 0 ? ((contract-totSpent)>=0?'':'-')+'&#8369;'+formatNum(Math.abs(contract-totSpent)) : '&#8369;0.00'}</div>
+                        <div class="rpt-variance-bar-wrap">
+                            <div class="rpt-variance-bar-fill" style="width:${contract>0?Math.max(Math.min(((contract-totSpent)/contract)*100,100),2).toFixed(1):2}%;background:rgba(255,255,255,0.75)"></div>
+                        </div>
+                        <div class="rpt-variance-col-sub">${contract>0?(((contract-totSpent)/contract)*100).toFixed(1)+'% of contract remaining':'no contract set'}</div>
+                    </div>
+                </div>
             </div>
         </div>`;
     if (typeof lucide !== 'undefined') lucide.createIcons();
