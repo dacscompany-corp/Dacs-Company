@@ -76,7 +76,9 @@ h1, h2, h3, h4, h5, h6 {
     line-height: 1.2;
 }
 
-/* Navigation */
+/* ===========================
+   Navigation
+=========================== */
 .navbar {
     position: fixed;
     top: 0;
@@ -204,7 +206,9 @@ h1, h2, h3, h4, h5, h6 {
     transition: all 0.3s ease;
 }
 
-/* Hero Section */
+/* ===========================
+   Hero Section
+=========================== */
 .hero {
     min-height: 100vh;
     display: flex;
@@ -326,7 +330,6 @@ h1, h2, h3, h4, h5, h6 {
     overflow: hidden;
 }
 
-/* Background slideshow that fills entire decoration area */
 .bg-slideshow-container {
     position: absolute;
     top: 0;
@@ -358,7 +361,6 @@ h1, h2, h3, h4, h5, h6 {
     filter: blur(0px) brightness(1);
 }
 
-/* Gradient overlay to blend with page */
 .hero-decoration::after {
     content: '';
     position: absolute;
@@ -366,8 +368,8 @@ h1, h2, h3, h4, h5, h6 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to right, 
-        rgba(255, 255, 255, 0.95) 0%, 
+    background: linear-gradient(to right,
+        rgba(255, 255, 255, 0.95) 0%,
         rgba(255, 255, 255, 0.7) 15%,
         rgba(255, 255, 255, 0.2) 40%,
         transparent 70%);
@@ -375,7 +377,6 @@ h1, h2, h3, h4, h5, h6 {
     pointer-events: none;
 }
 
-/* Hide slideshow indicators */
 .slideshow-indicators {
     display: none;
 }
@@ -384,7 +385,9 @@ h1, h2, h3, h4, h5, h6 {
     display: none;
 }
 
-/* Sections */
+/* ===========================
+   Sections – shared
+=========================== */
 section {
     padding: 100px 0;
 }
@@ -418,7 +421,9 @@ section {
     margin: 0 auto;
 }
 
-/* About Section */
+/* ===========================
+   About Section
+=========================== */
 .about {
     background: rgba(248, 248, 248, 0.6);
     backdrop-filter: blur(3px);
@@ -466,7 +471,9 @@ section {
     line-height: 1.7;
 }
 
-/* Philosophy Section */
+/* ===========================
+   Philosophy Section
+=========================== */
 .philosophy {
     background: linear-gradient(135deg, var(--bg-light) 0%, white 100%);
     text-align: center;
@@ -510,7 +517,9 @@ section {
     right: 0;
 }
 
-/* Values Section */
+/* ===========================
+   Values Section
+=========================== */
 .values {
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(2px);
@@ -553,7 +562,9 @@ section {
     line-height: 1.7;
 }
 
-/* Objectives Section */
+/* ===========================
+   Objectives Section
+=========================== */
 .objectives {
     background: rgba(248, 248, 248, 0.6);
     backdrop-filter: blur(3px);
@@ -570,7 +581,7 @@ section {
 .objective-step {
     flex: 1;
     min-width: 200px;
-    max-width: 0px;
+    max-width: 220px;
     background: white;
     padding: 32px;
     border-radius: 16px;
@@ -616,7 +627,9 @@ section {
     font-weight: 300;
 }
 
-/* Team Section */
+/* ===========================
+   Team Section
+=========================== */
 .team {
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(2px);
@@ -688,7 +701,9 @@ section {
     font-size: 14px;
 }
 
-/* Appointment Section */
+/* ===========================
+   Appointment Section
+=========================== */
 .appointment {
     background: rgba(248, 248, 248, 0.6);
     backdrop-filter: blur(3px);
@@ -826,7 +841,9 @@ section {
     display: block;
 }
 
-/* Footer */
+/* ===========================
+   Footer
+=========================== */
 .footer {
     background: var(--text-primary);
     color: white;
@@ -938,7 +955,279 @@ section {
     font-size: 14px;
 }
 
-/* Animations */
+/* ===========================
+   Projects Carousel Section
+   Image-first: full bleed photo
+   Info panel as bottom overlay
+=========================== */
+.projects-carousel {
+    padding: 100px 0 80px;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(3px);
+    overflow: hidden;
+}
+
+.carousel-section-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.carousel-section-header .section-tag {
+    display: inline-block;
+    background: var(--primary-color);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+}
+
+.carousel-section-header .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 44px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0;
+}
+
+/* ── Clean Slider ─────────────────────────────────────── */
+.carousel-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.card-carousel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.22);
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+
+
+/* ── Single Card ─────────────────────────────────────── */
+.carousel-card {
+    flex: 0 0 100%;
+    min-width: 100%;
+    position: relative;
+    height: auto;
+    overflow: hidden;
+    cursor: default;
+    background: var(--text-secondary);   /* ← was #111 */
+    display: flex;
+    flex-direction: column;
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    filter: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    transition: none;
+}
+
+.carousel-card.active { opacity: 1; visibility: visible; }
+.carousel-card.prev   { opacity: 1; visibility: visible; }
+.carousel-card.next   { opacity: 1; visibility: visible; }
+.carousel-card.far-prev { opacity: 1; visibility: visible; pointer-events: auto; }
+.carousel-card.far-next { opacity: 1; visibility: visible; pointer-events: auto; }
+
+/* ── Card Image ──────────────────────────────────────── */
+.card-image-wrap {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--text-secondary);   /* ← was #111 */
+}
+
+.card-image-wrap img {
+    width: 100%;
+    height: auto;             /* natural height so nothing is cut */
+    max-height: 420px;        /* prevents extremely tall images */
+    object-fit: fill;         /* stretches to full width, no side gaps */
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    transition: transform 0.7s ease;
+}
+
+.card-carousel:hover .carousel-card .card-image-wrap img {
+    transform: scale(1.03);
+}
+
+.card-image-wrap::after {
+    display: none;
+}
+
+/* ── Card Body — solid dark panel below the image ───── */
+.card-body {
+    position: relative;
+    width: 100%;
+    padding: 18px 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 2;
+    pointer-events: none;
+    background: var(--text-secondary);   /* ← was #111 */
+    flex-shrink: 0;
+}
+
+
+.card-play-btn { display: none; }
+
+.card-category {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--primary-color);
+}
+
+.card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.25;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+}
+
+.card-desc {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.55;
+    max-width: 540px;
+}
+
+.card-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.18);
+}
+
+.author-avatar-fallback {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: var(--primary-color);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: white;
+    font-family: 'Barlow', sans-serif;
+    flex-shrink: 0;
+}
+
+.author-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.3);
+    flex-shrink: 0;
+    background: #808080;
+}
+
+.author-info { display: flex; flex-direction: column; }
+.author-name { font-size: 13px; font-weight: 700; color: #fff; line-height: 1.2; font-family: 'Barlow', sans-serif; }
+.author-role { font-size: 11px; color: rgba(255,255,255,0.55); line-height: 1.2; font-family: 'Barlow', sans-serif; }
+
+/* ── Slide counter ───────────────────────────────────── */
+.carousel-counter {
+    position: absolute;
+    top: 18px; right: 22px;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Barlow', sans-serif;
+    padding: 5px 12px;
+    border-radius: 20px;
+    z-index: 20;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+}
+
+/* ── Dots ────────────────────────────────────────────── */
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.carousel-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.25s;
+}
+
+.carousel-dot.active {
+    background: var(--primary-color);
+    width: 24px;
+    border-radius: 4px;
+}
+
+.carousel-dot:hover:not(.active) { background: #999; }
+
+/* ── Arrow nav ───────────────────────────────────────── */
+.carousel-nav {
+    position: absolute;
+    top: 50%; left: 0; right: 0;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    padding: 0 14px;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.carousel-nav-btn {
+    pointer-events: all;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    line-height: 1;
+    position: relative;
+    z-index: 20;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.carousel-nav-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+/* ===========================
+   Animations
+=========================== */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -970,7 +1259,11 @@ section {
     }
 }
 
-/* Responsive Design */
+/* ===========================
+   Responsive Design
+=========================== */
+
+/* Tablet */
 @media (max-width: 1024px) {
     .hero {
         min-height: 100vh;
@@ -1013,8 +1306,8 @@ section {
     }
 
     .hero-decoration::after {
-        background: linear-gradient(to bottom, 
-            rgba(255, 255, 255, 0.85) 0%, 
+        background: linear-gradient(to bottom,
+            rgba(255, 255, 255, 0.85) 0%,
             rgba(255, 255, 255, 0.6) 40%,
             rgba(255, 255, 255, 0.3) 70%,
             transparent 100%);
@@ -1036,8 +1329,65 @@ section {
     .footer-content {
         grid-template-columns: 1fr;
     }
+
+    /* Carousel tablet: horizontal scroll */
+    .projects-carousel {
+        padding: 70px 0;
+    }
+
+    .card-carousel {
+        height: auto;
+        perspective: none;
+    }
+
+    .carousel-track {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding: 20px 20px 30px;
+        justify-content: flex-start;
+        transform-style: flat;
+    }
+
+    .carousel-track::-webkit-scrollbar { height: 4px; }
+    .carousel-track::-webkit-scrollbar-track { background: rgba(189, 186, 186, 0.05); border-radius: 10px; }
+    .carousel-track::-webkit-scrollbar-thumb { background: #808080; border-radius: 10px; }
+
+    .carousel-card {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        margin: 0 !important;
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+        min-width: 260px;
+        width: 260px;
+        height: 380px;
+        flex-shrink: 0;
+        scroll-snap-align: center;
+        z-index: auto !important;
+    }
+
+    /* Image fills card absolutely – override position */
+    .card-image-wrap {
+        position: absolute !important;
+        inset: 0 !important;
+        height: 100% !important;
+    }
+
+    .card-body {
+        position: absolute !important;
+        bottom: 0 !important;
+        height: auto !important;
+    }
+
+    .carousel-dots,
+    .carousel-nav { display: none; }
 }
 
+/* Mobile */
 @media (max-width: 768px) {
     .nav-links {
         display: none;
@@ -1096,8 +1446,8 @@ section {
     }
 
     .hero-decoration::after {
-        background: linear-gradient(to bottom, 
-            rgba(255, 255, 255, 0.9) 0%, 
+        background: linear-gradient(to bottom,
+            rgba(255, 255, 255, 0.9) 0%,
             rgba(255, 255, 255, 0.7) 35%,
             rgba(255, 255, 255, 0.4) 60%,
             transparent 100%);
@@ -1128,6 +1478,7 @@ section {
     }
 }
 
+/* Small mobile */
 @media (max-width: 480px) {
     .hero {
         padding: 90px 0 60px;
@@ -1139,13 +1490,6 @@ section {
         display: block;
         position: relative;
         z-index: 2;
-    }
-
-    .hero-content {
-        margin-bottom: 0;
-        background: transparent;
-        padding: 0;
-        border-radius: 0;
     }
 
     .hero-title {
@@ -1189,8 +1533,8 @@ section {
     }
 
     .hero-decoration::after {
-        background: linear-gradient(to bottom, 
-            rgba(255, 255, 255, 0.92) 0%, 
+        background: linear-gradient(to bottom,
+            rgba(255, 255, 255, 0.92) 0%,
             rgba(255, 255, 255, 0.75) 30%,
             rgba(255, 255, 255, 0.5) 55%,
             rgba(255, 255, 255, 0.2) 80%,
@@ -1220,5 +1564,13 @@ section {
     .hero-badge {
         font-size: 11px;
         padding: 6px 16px;
+    }
+
+    /* Carousel small mobile */
+    .carousel-card { height: 340px; }
+    .card-title { font-size: 18px; }
+
+    .carousel-section-header .section-title {
+        font-size: 28px;
     }
 }
