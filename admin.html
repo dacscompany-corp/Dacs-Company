@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | DAC's Building Design Services</title>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="expenses-module.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-container">
+        <div class="login-header">
+            <img src="DACS-TRANSPARENT.png" alt="DAC's" class="login-logo">
+            <h1>Admin Dashboard</h1>
+            <p>DAC's Building Design Services</p>
+        </div>
+        <form id="loginForm" class="login-form">
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" required placeholder="admin@dacsbuilding.com">
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" required placeholder="Enter your password">
+            </div>
+            <button type="submit" class="btn-login">Sign In</button>
+            <div id="loginError" class="error-message"></div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════ DASHBOARD ══════════ -->
+<div id="dashboardScreen" class="dashboard-screen" style="display: none;">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="DACS-TRANSPARENT.png" alt="DAC's" class="sidebar-logo">
+            <h2>DAC'S</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-view="dashboard">
+                <span class="nav-icon-wrap"><i data-lucide="layout-dashboard" class="nav-icon"></i></span><span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-view="appointments">
+                <span class="nav-icon-wrap"><i data-lucide="calendar-check" class="nav-icon"></i></span><span>Appointments</span>
+            </a>
+            <a href="#" class="nav-item" data-view="analytics">
+                <span class="nav-icon-wrap"><i data-lucide="bar-chart-2" class="nav-icon"></i></span><span>Analytics</span>
+            </a>
+            <div class="nav-group-label">EXPENSES TRACKER</div>
+            <a href="#" class="nav-item" data-view="expOverview">
+                <span class="nav-icon-wrap"><i data-lucide="wallet" class="nav-icon"></i></span><span>Budget Overview</span>
+            </a>
+            <a href="#" class="nav-item" data-view="expExpenses">
+                <span class="nav-icon-wrap"><i data-lucide="receipt" class="nav-icon"></i></span><span>Expenses</span>
+            </a>
+            <a href="#" class="nav-item" data-view="expPayroll">
+                <span class="nav-icon-wrap"><i data-lucide="users" class="nav-icon"></i></span><span>Payroll</span>
+            </a>
+            <a href="#" class="nav-item" data-view="expReports">
+                <span class="nav-icon-wrap"><i data-lucide="file-bar-chart" class="nav-icon"></i></span><span>Reports</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="btn-logout">
+                <span class="nav-icon-wrap"><i data-lucide="log-out" class="nav-icon"></i></span><span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="dashboard-header">
+            <h1 id="pageTitle">Dashboard</h1>
+            <div class="header-user"><span id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8feeebe2e6e1cfebeeecfcedfae6e3ebe6e1e8a1ece0e2">[email&#160;protected]</a></span></div>
+        </header>
+
+        <!-- ════════════ DASHBOARD ════════════ -->
+        <div id="dashboardView" class="content-view">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="calendar"></i></div>
+                    <div class="stat-info"><h3 id="totalAppointments">0</h3><p>Total Appointments</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="clock"></i></div>
+                    <div class="stat-info"><h3 id="pendingAppointments">0</h3><p>Pending</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="check-circle-2"></i></div>
+                    <div class="stat-info"><h3 id="completedAppointments">0</h3><p>Completed</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="trending-up"></i></div>
+                    <div class="stat-info"><h3 id="thisWeek">0</h3><p>This Week</p></div>
+                </div>
+            </div>
+            <div class="dashboard-compact-grid">
+                <div class="dashboard-charts-column">
+                    <div class="section-card compact-card">
+                        <div class="card-header-compact"><h3>Appointments Trend</h3></div>
+                        <div class="chart-wrapper-compact"><canvas id="servicesChart"></canvas></div>
+                    </div>
+                    <div class="dashboard-bottom-charts">
+                        <div class="section-card compact-card">
+                            <div class="card-header-compact"><h3>Service Distribution</h3></div>
+                            <div class="chart-wrapper-compact"><canvas id="dashboardServiceChart"></canvas></div>
+                        </div>
+                        <div class="section-card compact-card">
+                            <div class="card-header-compact"><h3>Status Overview</h3></div>
+                            <div class="chart-wrapper-compact"><canvas id="dashboardStatusChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-card compact-card">
+                    <div class="section-header-compact">
+                        <h3>Recent Appointments</h3>
+                        <button class="btn-secondary btn-sm" onclick="switchView('appointments')">View All</button>
+                    </div>
+                    <div id="recentAppointments" class="appointments-list-compact"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ APPOINTMENTS ════════════ -->
+        <div id="appointmentsView" class="content-view" style="display: none;">
+            <div class="filters-bar">
+                <select id="statusFilter" class="filter-select">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name or email...">
+            </div>
+            <div class="section-card">
+                <div id="appointmentsTable" class="table-container">
+                    <table class="appointments-table">
+                        <thead>
+                            <tr><th>Date</th><th>Name</th><th>Email</th><th>Contact</th><th>Service</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="appointmentsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ ANALYTICS ════════════ -->
+        <div id="analyticsView" class="content-view" style="display: none;">
+            <div class="analytics-summary">
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:linear-gradient(135deg,#667eea,#764ba2)"><i data-lucide="percent" class="metric-lucide"></i></div>
+                    <div class="metric-content"><h4>Conversion Rate</h4><h2 id="conversionRate">0%</h2><p class="metric-change positive">↑ 12% from last month</p></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:linear-gradient(135deg,#f093fb,#f5576c)"><i data-lucide="timer" class="metric-lucide"></i></div>
+                    <div class="metric-content"><h4>Avg. Response Time</h4><h2 id="avgResponseTime">2.3h</h2><p class="metric-change positive">↓ 0.5h faster</p></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"><i data-lucide="target" class="metric-lucide"></i></div>
+                    <div class="metric-content"><h4>Popular Service</h4><h2 id="popularService">Design</h2><p class="metric-change">Most requested</p></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:linear-gradient(135deg,#43e97b,#38f9d7)"><i data-lucide="trending-up" class="metric-lucide"></i></div>
+                    <div class="metric-content"><h4>Growth Rate</h4><h2 id="growthRate">+24%</h2><p class="metric-change positive">↑ vs last period</p></div>
+                </div>
+            </div>
+            <div class="analytics-grid">
+                <div class="section-card full-width">
+                    <div class="card-header">
+                        <div><h2>Appointments Trend</h2><p class="card-subtitle">Monthly overview of appointment bookings</p></div>
+                        <div class="chart-legend-inline">
+                            <span class="legend-item"><span class="dot" style="background:#00D084"></span> Appointments</span>
+                            <span class="legend-item"><span class="dot" style="background:#E0E0E0"></span> Trend</span>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper"><canvas id="monthlyTrendChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Service Distribution</h2><p class="card-subtitle">Breakdown by service type</p></div></div>
+                    <div class="chart-wrapper" style="height:320px"><canvas id="serviceBreakdownChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Status Overview</h2><p class="card-subtitle">Current appointment states</p></div></div>
+                    <div class="chart-wrapper" style="height:320px"><canvas id="statusBreakdownChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Weekly Activity</h2><p class="card-subtitle">Appointments by day of week</p></div></div>
+                    <div class="chart-wrapper" style="height:320px"><canvas id="weeklyActivityChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Time Preference</h2><p class="card-subtitle">Preferred booking hours</p></div></div>
+                    <div class="chart-wrapper" style="height:320px"><canvas id="timeDistributionChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ BUDGET OVERVIEW ════════════ -->
+        <div id="expOverviewView" class="content-view" style="display: none;">
+            <div class="exp-page-layout">
+
+                <!-- LEFT: Project List Panel -->
+                <div class="exp-proj-panel section-card">
+                    <div class="exp-proj-panel-header">
+                        <span><i data-lucide="folder-open" class="inline-icon"></i> Projects</span>
+                        <button class="exp-add-proj-btn" onclick="openExpModal('createFolderModal')" title="New Project Folder"><i data-lucide="folder-plus" class="btn-icon"></i> New Folder</button>
+                    </div>
+                    <div id="expOverviewList" class="exp-proj-list">
+                        <p class="exp-empty">Loading…</p>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Budget Stats -->
+                <div class="exp-page-content">
+                    <div class="exp-page-topbar">
+                        <span id="expBadgeOverview" class="exp-active-badge">No project selected</span>
+                    </div>
+                    <!-- ══ PRIMARY KPI ROW ══ -->
+                    <div class="exp-kpi-row">
+                        <div class="exp-kpi-primary exp-kpi-contract">
+                            <div class="exp-kpi-icon-wrap"><i data-lucide="building-2" class="exp-kpi-ico"></i></div>
+                            <div class="exp-kpi-body">
+                                <div class="exp-kpi-label">Contract Value</div>
+                                <div class="exp-kpi-value" id="expFolderBudget">—</div>
+                                <div class="exp-kpi-sub">Project Total Budget</div>
+                            </div>
+                        </div>
+                        <div class="exp-kpi-primary exp-kpi-period">
+                            <div class="exp-kpi-icon-wrap"><i data-lucide="calendar-range" class="exp-kpi-ico"></i></div>
+                            <div class="exp-kpi-body">
+                                <div class="exp-kpi-label">Period Budget</div>
+                                <div class="exp-kpi-value" id="expTotalBudget">₱0.00</div>
+                                <div class="exp-kpi-sub" id="expPeriodLabel">Current allocation</div>
+                            </div>
+                        </div>
+                        <div class="exp-kpi-primary exp-kpi-status" id="expKpiStatusCard">
+                            <div class="exp-kpi-icon-wrap" id="expHealthIconWrap"><i data-lucide="shield-check" class="exp-kpi-ico" id="expHealthIcon"></i></div>
+                            <div class="exp-kpi-body">
+                                <div class="exp-kpi-label">Budget Status</div>
+                                <div class="exp-kpi-value" id="expUsedPct">0%</div>
+                                <div class="exp-kpi-sub" id="expHealthSub">utilized — HEALTHY</div>
+                            </div>
+                            <div class="exp-status-badge" id="expHealthBadge">ON TRACK</div>
+                        </div>
+                    </div>
+
+                    <!-- ══ COST BREAKDOWN ROW ══ -->
+                    <div class="exp-cost-row">
+                        <div class="exp-cost-card exp-cost-materials">
+                            <div class="exp-cost-head">
+                                <i data-lucide="hard-hat" class="exp-cost-ico"></i>
+                                <span class="exp-cost-tag">Materials &amp; Direct Costs</span>
+                            </div>
+                            <div class="exp-cost-val" id="expTotalExpenses">₱0.00</div>
+                            <div class="exp-cost-meta">
+                                <span id="expExpenseCount">0 transactions</span>
+                                <span class="exp-cost-dot">·</span>
+                                <span id="expExpPct">0% of budget</span>
+                            </div>
+                            <div class="exp-cost-minibar"><div id="expExpBar" class="exp-mini-fill exp-mini-mat" style="width:0%"></div></div>
+                        </div>
+                        <div class="exp-cost-card exp-cost-labor">
+                            <div class="exp-cost-head">
+                                <i data-lucide="users" class="exp-cost-ico"></i>
+                                <span class="exp-cost-tag">Labor &amp; Payroll</span>
+                            </div>
+                            <div class="exp-cost-val" id="expTotalPayroll">₱0.00</div>
+                            <div class="exp-cost-meta">
+                                <span id="expPayrollCount">0 workers</span>
+                                <span class="exp-cost-dot">·</span>
+                                <span id="expPayPct">0% of budget</span>
+                            </div>
+                            <div class="exp-cost-minibar"><div id="expPayBar" class="exp-mini-fill exp-mini-pay" style="width:0%"></div></div>
+                        </div>
+                        <div class="exp-cost-card exp-cost-total">
+                            <div class="exp-cost-head">
+                                <i data-lucide="sigma" class="exp-cost-ico"></i>
+                                <span class="exp-cost-tag">Total Cost to Date</span>
+                            </div>
+                            <div class="exp-cost-val" id="expTotalSpent">₱0.00</div>
+                            <div class="exp-cost-meta">
+                                <span id="expSpentOfContract">0% of contract value</span>
+                            </div>
+                            <div class="exp-cost-minibar"><div id="expSpentBar" class="exp-mini-fill exp-mini-spent" style="width:0%"></div></div>
+                        </div>
+                        <div class="exp-cost-card exp-cost-variance" id="expVarianceCard">
+                            <div class="exp-cost-head">
+                                <i data-lucide="trending-up" class="exp-cost-ico" id="expVarianceIcon"></i>
+                                <span class="exp-cost-tag">Budget Variance</span>
+                            </div>
+                            <div class="exp-cost-val" id="expRemaining">₱0.00</div>
+                            <div class="exp-cost-meta" id="expVarianceMeta">Remaining available</div>
+                            <div class="exp-cost-minibar"><div id="expRemBar" class="exp-mini-fill exp-mini-rem" style="width:100%"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- ══ STACKED UTILIZATION BAR ══ -->
+                    <div class="section-card exp-utilization-card">
+                        <div class="exp-util-header">
+                            <span class="exp-util-title">
+                                <i data-lucide="bar-chart-horizontal" class="inline-icon"></i>
+                                Budget Utilization Breakdown
+                            </span>
+                            <span id="expRemPct" class="exp-util-remain-label">100% remaining</span>
+                        </div>
+                        <div class="exp-stack-track">
+                            <div id="expStackMaterials" class="exp-stack-seg exp-stack-mat" style="width:0%" data-label="Materials"></div>
+                            <div id="expStackPayroll"   class="exp-stack-seg exp-stack-pay" style="width:0%" data-label="Payroll"></div>
+                            <div id="expStackRemaining" class="exp-stack-seg exp-stack-rem" style="width:100%" data-label="Remaining"></div>
+                        </div>
+                        <div class="exp-util-legend">
+                            <span class="exp-leg-item"><span class="exp-leg-dot exp-leg-mat"></span>Materials &amp; Costs <strong id="expLegMatPct">0%</strong></span>
+                            <span class="exp-leg-item"><span class="exp-leg-dot exp-leg-pay"></span>Labor &amp; Payroll <strong id="expLegPayPct">0%</strong></span>
+                            <span class="exp-leg-item"><span class="exp-leg-dot exp-leg-rem"></span>Remaining <strong id="expLegRemPct">100%</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ EXPENSES ════════════ -->
+        <div id="expExpensesView" class="content-view" style="display: none;">
+            <div class="exp-page-layout">
+
+                <!-- LEFT: Project List Panel -->
+                <div class="exp-proj-panel section-card">
+                    <div class="exp-proj-panel-header">
+                        <span><i data-lucide="folder-open" class="inline-icon"></i> Projects</span>
+                        <button class="exp-add-proj-btn" onclick="openExpModal('createFolderModal')" title="New Project Folder"><i data-lucide="folder-plus" class="btn-icon"></i> New Folder</button>
+                    </div>
+                    <div id="expExpensesList" class="exp-proj-list">
+                        <p class="exp-empty">Loading…</p>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Expenses Table -->
+                <div class="exp-page-content">
+                    <div class="exp-page-topbar exp-topbar-search">
+                        <span id="expBadgeExpenses" class="exp-active-badge" style="white-space:nowrap">No project selected</span>
+
+                        <!-- Search & Filter bar -->
+                        <div class="exp-search-bar">
+                            <!-- Name search -->
+                            <div class="exp-search-input-wrap">
+                                <i data-lucide="search" class="exp-search-icon"></i>
+                                <input type="text" id="expSearchName"
+                                       placeholder="Expense name…"
+                                       oninput="applyExpenseSearch()"
+                                       autocomplete="off">
+                            </div>
+                            <!-- Category -->
+                            <select id="expSearchCategory" onchange="applyExpenseSearch()">
+                                <option value="">All Categories</option>
+                            </select>
+                            <!-- Amount range -->
+                            <div class="exp-search-range-wrap">
+                                <span class="exp-search-range-label">₱</span>
+                                <input type="number" id="expSearchAmtMin" placeholder="Min"
+                                       min="0" step="0.01" oninput="applyExpenseSearch()">
+                                <span class="exp-search-dash">–</span>
+                                <input type="number" id="expSearchAmtMax" placeholder="Max"
+                                       min="0" step="0.01" oninput="applyExpenseSearch()">
+                            </div>
+                            <!-- Month filter -->
+                            <select id="expSearchMonth" onchange="applyExpenseSearch()" class="exp-search-month-select">
+                                <option value="">📅 All Months</option>
+                            </select>
+                            <!-- Clear -->
+                            <button class="exp-search-clear" id="expSearchClearBtn"
+                                    onclick="clearExpenseSearch()" style="display:none">✕ Clear</button>
+                        </div>
+
+                        <button class="exp-btn exp-btn-primary" style="white-space:nowrap" onclick="guardExpModal('addExpenseModal')"><i data-lucide="plus-circle" class="btn-icon"></i> Add Expense</button>
+                    </div>
+                    <!-- Filter chips + result count -->
+                    <div class="exp-filter-bar" id="expFilterBar" style="display:none">
+                        <div class="exp-filter-chips" id="expFilterChips"></div>
+                        <span class="exp-filter-count" id="expSearchCount"></span>
+                    </div>
+                    <div class="section-card">
+                        <div class="table-container">
+                            <table class="appointments-table">
+                                <thead>
+                                    <tr><th>Date</th><th>Expense Name</th><th>Category</th><th>Qty</th><th>Amount</th><th>Receipt</th><th>Action</th></tr>
+                                </thead>
+                                <tbody id="expensesTbody">
+                                    <tr><td colspan="7" class="exp-empty-row">👈 Select a project from the list.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ PAYROLL ════════════ -->
+        <div id="expPayrollView" class="content-view" style="display: none;">
+            <div class="exp-page-layout">
+
+                <!-- LEFT: Project List Panel -->
+                <div class="exp-proj-panel section-card">
+                    <div class="exp-proj-panel-header">
+                        <span><i data-lucide="folder-open" class="inline-icon"></i> Projects</span>
+                        <button class="exp-add-proj-btn" onclick="openExpModal('createFolderModal')" title="New Project Folder"><i data-lucide="folder-plus" class="btn-icon"></i> New Folder</button>
+                    </div>
+                    <div id="expPayrollList" class="exp-proj-list">
+                        <p class="exp-empty">Loading…</p>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Payroll Table -->
+                <div class="exp-page-content">
+                    <div class="exp-page-topbar exp-topbar-search">
+                        <span id="expBadgePayroll" class="exp-active-badge" style="white-space:nowrap">No project selected</span>
+                        <div class="exp-search-bar">
+                            <div class="exp-search-input-wrap">
+                                <i data-lucide="search" class="exp-search-icon"></i>
+                                <input type="text" id="paySearchName"
+                                       placeholder="Search worker name…"
+                                       oninput="applyPayrollSearch()"
+                                       autocomplete="off">
+                            </div>
+                            <button class="exp-search-clear" id="paySearchClearBtn"
+                                    onclick="clearPayrollSearch()" style="display:none">✕ Clear</button>
+                        </div>
+                        <button class="exp-btn exp-btn-primary" style="white-space:nowrap" onclick="guardExpModal('addPayrollModal')"><i data-lucide="plus-circle" class="btn-icon"></i> Add Payroll Entry</button>
+                    </div>
+                    <div style="margin-bottom:0.5rem">
+                        <span id="paySearchCount" class="exp-search-count-badge" style="display:none"></span>
+                    </div>
+                    <div class="section-card">
+                        <div class="table-container">
+                            <table class="appointments-table">
+                                <thead>
+                                    <tr><th>Payment Date</th><th>Worker Name</th><th>Role</th><th>Days</th><th>Daily Rate</th><th>Total Salary</th><th>Receipt</th><th>Action</th></tr>
+                                </thead>
+                                <tbody id="payrollTbody">
+                                    <tr><td colspan="7" class="exp-empty-row">👈 Select a project from the list.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ REPORTS ════════════ -->
+        <div id="expReportsView" class="content-view" style="display: none;">
+
+            <!-- ══ REPORTS TOP BAR ══ -->
+            <div class="rpt-topbar">
+                <div class="rpt-topbar-left">
+                    <div class="rpt-company-badge">
+                        <i data-lucide="building-2" class="rpt-company-ico"></i>
+                        <div class="rpt-company-info">
+                            <span class="rpt-company-name">DAC's Building Design Services</span>
+                            <span class="rpt-company-sub" id="rptCompanySub">All Projects · Company-Wide</span>
+                        </div>
+                    </div>
+                    <div class="rpt-select-wrap rpt-year-wrap">
+                        <i data-lucide="calendar" class="rpt-sel-ico"></i>
+                        <select id="rptYearSel" onchange="onRptYearChange()"></select>
+                    </div>
+                </div>
+                <div class="rpt-period-tabs" id="rptPeriodTabs">
+                    <button class="rpt-tab" data-period="weekly"    onclick="setRptPeriod('weekly')">
+                        <i data-lucide="calendar-days" class="rpt-tab-ico"></i>Weekly
+                    </button>
+                    <button class="rpt-tab active" data-period="monthly"   onclick="setRptPeriod('monthly')">
+                        <i data-lucide="calendar" class="rpt-tab-ico"></i>Monthly
+                    </button>
+                    <button class="rpt-tab" data-period="quarterly" onclick="setRptPeriod('quarterly')">
+                        <i data-lucide="layout-grid" class="rpt-tab-ico"></i>Quarterly
+                    </button>
+                    <button class="rpt-tab" data-period="semi"      onclick="setRptPeriod('semi')">
+                        <i data-lucide="split" class="rpt-tab-ico"></i>Semi-Annual
+                    </button>
+                    <button class="rpt-tab" data-period="annual"    onclick="setRptPeriod('annual')">
+                        <i data-lucide="trending-up" class="rpt-tab-ico"></i>Annual
+                    </button>
+                </div>
+            </div>
+
+            <!-- ══ AXIS LEGEND HINT ══ -->
+            <div class="rpt-axis-hint" id="rptAxisHint">
+                <i data-lucide="info" class="rpt-axis-hint-ico"></i>
+                <span id="rptAxisHintText">X-axis: <strong>Jan, Feb, Mar…</strong> — Each bar represents one calendar month.</span>
+            </div>
+
+            <!-- ══ PERIOD KPI ROW ══ -->
+            <div class="rpt-kpi-row" id="rptKpiRow">
+                <div class="rpt-empty-state">
+                    <i data-lucide="bar-chart-2" class="rpt-empty-ico"></i>
+                    <p>Loading company-wide data…</p>
+                </div>
+            </div>
+
+            <!-- ══ TREND + COMPOSITION CHARTS ══ -->
+            <div class="rpt-charts-grid">
+                <div class="section-card rpt-chart-wide">
+                    <div class="card-header">
+                        <div>
+                            <h2 id="rptTrendTitle">Spending Trend</h2>
+                            <p class="card-subtitle" id="rptTrendSubtitle">Cost breakdown over time</p>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper" style="height:270px"><canvas id="rptTrendChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header">
+                        <div><h2>Cost Composition</h2><p class="card-subtitle">Spending by category &amp; labor</p></div>
+                    </div>
+                    <div class="chart-wrapper" style="height:270px"><canvas id="rptCompositionChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- ══ BUDGET vs ACTUAL + CATEGORY ══ -->
+            <div class="rpt-charts-grid rpt-charts-grid-equal">
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Budget vs Actual</h2><p class="card-subtitle">Allocated budget vs real spend per period</p></div></div>
+                    <div class="chart-wrapper" style="height:270px"><canvas id="rptBudgetVsActualChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Category Breakdown</h2><p class="card-subtitle">Distribution including payroll</p></div></div>
+                    <div class="chart-wrapper" style="height:270px"><canvas id="expCategoryChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- ══ PERIOD BREAKDOWN TABLE ══ -->
+            <div class="section-card rpt-table-card">
+                <div class="card-header">
+                    <div>
+                        <h2 id="rptTableTitle">Period Breakdown</h2>
+                        <p class="card-subtitle" id="rptTableSubtitle">Detailed budget vs actual by period</p>
+                    </div>
+                    <button class="btn-secondary btn-sm rpt-export-btn" onclick="exportRptTable()">
+                        <i data-lucide="download" class="btn-icon"></i> Export CSV
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="appointments-table rpt-summary-table">
+                        <thead>
+                            <tr>
+                                <th>Period</th>
+                                <th>Budget Allocated</th>
+                                <th>Materials &amp; Costs</th>
+                                <th>Labor &amp; Payroll</th>
+                                <th>Total Spent</th>
+                                <th>Remaining</th>
+                                <th>% Utilized</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rptSummaryTbody">
+                            <tr><td colspan="8" class="exp-empty-row">Select a project folder to see reports.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- hidden canvas kept for legacy renderCategoryPieChart() compatibility -->
+            <canvas id="expBudgetChart" style="display:none"></canvas>
+            <table style="display:none"><tbody id="expSummaryTbody"></tbody></table>
+        </div>
+
+    </main>
+</div>
+
+<!-- ══════════ ORIGINAL: Appointment Modal ══════════ -->
+<div id="appointmentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Appointment Details</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="appointmentDetails"></div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeModal()">Close</button>
+            <button class="btn-danger" onclick="deleteAppointment()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ EXPENSES MODALS ══════════ -->
+
+<!-- Create Project -->
+<div id="createProjectModal" class="exp-modal">
+    <div class="exp-modal-box" style="max-width:420px">
+        <div class="exp-modal-header">
+            <h2>📅 Add Month</h2>
+            <button class="exp-modal-close" onclick="closeExpModal('createProjectModal')">&times;</button>
+        </div>
+        <form id="createProjectForm" onsubmit="handleCreateProject(event)">
+            <div class="exp-form-group">
+                <div id="createProjectFolderLabel" style="font-size:0.85rem;font-weight:700;color:#00D084;margin-bottom:0.25rem;min-height:1.2rem;"></div>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Month</label>
+                    <select id="projMonth" required>
+                        <option value="">Select month…</option>
+                        <option>January</option><option>February</option><option>March</option>
+                        <option>April</option><option>May</option><option>June</option>
+                        <option>July</option><option>August</option><option>September</option>
+                        <option>October</option><option>November</option><option>December</option>
+                    </select>
+                </div>
+                <div class="exp-form-group">
+                    <label>Year</label>
+                    <input type="number" id="projYear" required min="2020" max="2099" placeholder="e.g. 2026">
+                </div>
+            </div>
+            <div class="exp-form-group">
+                <label>Monthly Budget (₱)</label>
+                <input type="number" id="projBudget" required min="1" step="0.01" placeholder="e.g. 80000">
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('createProjectModal')">Cancel</button>
+                <button type="submit" id="createProjectBtn" class="exp-btn exp-btn-primary" data-label="Add Month">Add Month</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Project -->
+<div id="editProjectModal" class="exp-modal">
+    <div class="exp-modal-box">
+        <div class="exp-modal-header">
+            <h2><i data-lucide="pencil" class="modal-icon"></i> Edit Project</h2>
+            <button class="exp-modal-close" onclick="closeExpModal('editProjectModal')">&times;</button>
+        </div>
+        <form id="editProjectForm" onsubmit="handleEditProject(event)">
+            <input type="hidden" id="editProjectId">
+            <div class="exp-form-group">
+                <label>Month</label>
+                <select id="editProjMonth" required>
+                    <option value="">Select month…</option>
+                    <option>January</option><option>February</option><option>March</option>
+                    <option>April</option><option>May</option><option>June</option>
+                    <option>July</option><option>August</option><option>September</option>
+                    <option>October</option><option>November</option><option>December</option>
+                </select>
+            </div>
+            <div class="exp-form-group">
+                <label>Year</label>
+                <input type="number" id="editProjYear" required min="2020" max="2099" placeholder="e.g. 2026">
+            </div>
+            <div class="exp-form-group">
+                <label>Total Monthly Budget (₱)</label>
+                <input type="number" id="editProjBudget" required min="1" step="0.01" placeholder="e.g. 500000">
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('editProjectModal')">Cancel</button>
+                <button type="submit" id="editProjectBtn" class="exp-btn exp-btn-primary" data-label="Save Changes"><i data-lucide="check" class="btn-icon"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ══════════ CREATE FOLDER MODAL ══════════ -->
+<div id="createFolderModal" class="exp-modal">
+    <div class="exp-modal-box" style="max-width:460px">
+        <div class="exp-modal-header">
+            <h2>📁 New Project Folder</h2>
+            <button class="exp-modal-close" onclick="closeExpModal('createFolderModal')">&times;</button>
+        </div>
+        <form id="createFolderForm" onsubmit="handleCreateFolder(event)">
+            <div class="exp-form-group">
+                <label>Project Name</label>
+                <input type="text" id="folderName" required placeholder="e.g. Santos Residence, Office Renovation">
+            </div>
+            <div class="exp-form-group">
+                <label>Description / Address <small style="font-weight:400;color:#888">(optional)</small></label>
+                <input type="text" id="folderDesc" placeholder="e.g. 123 Rizal St., Quezon City">
+            </div>
+            <div class="exp-form-group">
+                <label>Total Project Budget (₱)</label>
+                <input type="number" id="folderBudget" required min="1" step="0.01" placeholder="e.g. 5000000">
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('createFolderModal')">Cancel</button>
+                <button type="submit" id="createFolderBtn" class="exp-btn exp-btn-primary" data-label="Create Folder">Create Folder</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════ EDIT FOLDER MODAL ══════════ -->
+<div id="editFolderModal" class="exp-modal">
+    <div class="exp-modal-box" style="max-width:460px">
+        <div class="exp-modal-header">
+            <h2>✏️ Edit Project Folder</h2>
+            <button class="exp-modal-close" onclick="closeExpModal('editFolderModal')">&times;</button>
+        </div>
+        <form id="editFolderForm" onsubmit="handleEditFolder(event)">
+            <div class="exp-form-group">
+                <label>Project Name</label>
+                <input type="text" id="editFolderName" required placeholder="Project name">
+            </div>
+            <div class="exp-form-group">
+                <label>Description / Address <small style="font-weight:400;color:#888">(optional)</small></label>
+                <input type="text" id="editFolderDesc" placeholder="e.g. 123 Rizal St.">
+            </div>
+            <div class="exp-form-group">
+                <label>Total Project Budget (₱)</label>
+                <input type="number" id="editFolderBudget" required min="1" step="0.01" placeholder="e.g. 5000000">
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('editFolderModal')">Cancel</button>
+                <button type="submit" id="editFolderBtn" class="exp-btn exp-btn-primary" data-label="Save Changes">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Expense -->
+<div id="addExpenseModal" class="exp-modal">
+    <div class="exp-modal-box">
+        <div class="exp-modal-header">
+            <h2><i data-lucide="receipt" class="modal-icon"></i> Add Expense</h2>
+            <button class="exp-modal-close" onclick="closeExpModal('addExpenseModal')">&times;</button>
+        </div>
+        <form id="addExpenseForm">
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Expense Name</label>
+                    <input type="text" id="expName" required placeholder="e.g. Tiles, Cement">
+                </div>
+                <div class="exp-form-group">
+                    <label>Category <button type="button" onclick="toggleCatManager()" class="exp-cat-mgr-toggle">⚙ Manage</button></label>
+                    <select id="expCategory" required>
+                        <option value="">Select category…</option>
+                    </select>
+                    <!-- Category Manager Panel -->
+                    <div id="catManagerPanel" style="display:none;margin-top:0.6rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:0.75rem;">
+                        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.6rem;">
+                            <input type="text" id="catNameInput" placeholder="Category name…"
+                                   style="flex:1;padding:0.4rem 0.6rem;border:1px solid #d1d5db;border-radius:7px;font-size:0.85rem;"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();addCategory();}">
+                            <input type="color" id="catColorInput" value="#00D084" title="Pick color"
+                                   style="width:34px;height:34px;border:none;border-radius:7px;cursor:pointer;padding:2px;background:#fff;border:1px solid #d1d5db;">
+                            <button type="button" onclick="addCategory()" class="exp-btn exp-btn-primary" style="padding:0.4rem 0.8rem;font-size:0.82rem;white-space:nowrap;">+ Add</button>
+                        </div>
+                        <div id="expCategoryList" style="display:flex;flex-wrap:wrap;gap:6px;min-height:24px;">
+                            <span style="color:#aaa;font-size:0.8rem;">No categories yet. Add one above.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="expQty" value="1" min="0.01" step="any" required>
+                </div>
+                <div class="exp-form-group">
+                    <label>Unit Cost (₱)</label>
+                    <input type="number" id="expUnitCost" min="0" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+            <div class="exp-form-group">
+                <label>Total Amount (₱) <small style="font-weight:400;color:#888">(auto-computed)</small></label>
+                <input type="number" id="expAmount" required min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div class="exp-form-group">
+                <label>Date &amp; Time</label>
+                <input type="datetime-local" id="expDateTime" required>
+            </div>
+            <div class="exp-form-group">
+                <label>Upload Receipts <small style="font-weight:400;color:#888">(JPG/PNG, optional — select multiple)</small></label>
+                <label for="expReceipt" style="display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.9rem;background:#f0fdf4;border:2px dashed #00D084;border-radius:8px;cursor:pointer;font-size:0.88rem;color:#15803d;font-weight:600;">
+                     Choose Images
+                    <span style="font-weight:400;color:#888;font-size:0.8rem;">(tap to add more anytime)</span>
+                </label>
+                <input type="file" id="expReceipt" accept="image/jpeg,image/png,image/jpg" multiple
+                       style="display:none;">
+                <div id="expReceiptGrid"></div>
+            </div>
+            <div class="exp-form-group">
+                <label>Notes (optional)</label>
+                <textarea id="expNotes" rows="2" placeholder="Additional details…"></textarea>
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('addExpenseModal')">Cancel</button>
+                <button type="submit" id="addExpenseBtn" class="exp-btn exp-btn-primary" data-label="Save Expense">Save Expense</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Payroll -->
+<div id="addPayrollModal" class="exp-modal">
+    <div class="exp-modal-box">
+        <div class="exp-modal-header">
+            <h2>👷 Add Payroll Entry</h2>
+            <button class="exp-modal-close" onclick="closeExpModal('addPayrollModal')">&times;</button>
+        </div>
+        <form id="addPayrollForm">
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Worker Name</label>
+                    <input type="text" id="payWorkerName" required placeholder="Full name">
+                </div>
+                <div class="exp-form-group">
+                    <label>Role / Position</label>
+                    <input type="text" id="payRole" placeholder="e.g. Mason, Carpenter">
+                </div>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Days Worked</label>
+                    <input type="number" id="payDays" required min="0.5" step="0.5" placeholder="0">
+                </div>
+                <div class="exp-form-group">
+                    <label>Daily Rate (₱)</label>
+                    <input type="number" id="payDailyRate" required min="0" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+            <div class="exp-form-group">
+                <label>Total Salary (₱) <small style="font-weight:400;color:#888">(auto-computed)</small></label>
+                <input type="number" id="payTotal" readonly placeholder="0.00">
+            </div>
+            <div class="exp-form-group">
+                <label>Payment Date</label>
+                <input type="datetime-local" id="payDate" required>
+            </div>
+            <div class="exp-form-group">
+                <label>Upload Receipts <small style="font-weight:400;color:#888">(JPG/PNG, optional)</small></label>
+                <label for="payReceipt" style="display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.9rem;background:#f0fdf4;border:2px dashed #00D084;border-radius:8px;cursor:pointer;font-size:0.88rem;color:#15803d;font-weight:600;">
+                    📎 Choose Images
+                    <span style="font-weight:400;color:#888;font-size:0.8rem;">(tap to add more)</span>
+                </label>
+                <input type="file" id="payReceipt" accept="image/jpeg,image/png,image/jpg" multiple style="display:none;">
+                <div id="payReceiptGrid" class="exp-receipt-grid" style="display:none;margin-top:0.5rem;"></div>
+            </div>
+            <div class="exp-form-group">
+                <label>Notes (optional)</label>
+                <textarea id="payNotes" rows="2" placeholder="Additional details…"></textarea>
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('addPayrollModal')">Cancel</button>
+                <button type="submit" id="addPayrollBtn" class="exp-btn exp-btn-primary" data-label="Save Entry">Save Entry</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ══════════ PROJECT DETAIL MODAL ══════════ -->
+<div id="projectDetailModal" class="exp-modal">
+    <div class="exp-modal-box pm-modal-box">
+        <div class="exp-modal-header pm-header">
+            <div class="pm-header-left">
+                <i data-lucide="folder-open" class="pm-header-lucide"></i>
+                <div>
+                    <h2 id="pmTitle">Project</h2>
+                    <span class="pm-budget-label">Monthly Budget: <strong id="pmBudget">₱0.00</strong></span>
+                </div>
+            </div>
+            <button class="exp-modal-close" onclick="closeProjectModal()">&times;</button>
+        </div>
+        <div class="pm-body">
+            <div class="pm-stat-row">
+                <div class="pm-stat pm-stat-green"><div class="pm-stat-label">Expenses</div><div class="pm-stat-val" id="pmTotalExp">₱0.00</div></div>
+                <div class="pm-stat pm-stat-orange"><div class="pm-stat-label">Payroll</div><div class="pm-stat-val" id="pmTotalPay">₱0.00</div></div>
+                <div class="pm-stat pm-stat-red"><div class="pm-stat-label">Total Spent</div><div class="pm-stat-val" id="pmTotalSpent">₱0.00</div></div>
+                <div class="pm-stat pm-stat-teal"><div class="pm-stat-label">Remaining</div><div class="pm-stat-val" id="pmRemaining">₱0.00</div></div>
+                <div class="pm-stat pm-stat-purple"><div class="pm-stat-label">Used %</div><div class="pm-stat-val" id="pmUsedPct">0%</div></div>
+            </div>
+            <div class="pm-progress-wrap">
+                <div class="pm-progress-labels"><span>Budget Utilization</span><span id="pmRemPct">100% remaining</span></div>
+                <div class="exp-progress-track"><div id="pmProgressBar" class="exp-progress-fill" style="width:0%"></div></div>
+            </div>
+            <div class="pm-charts-row">
+                <div class="pm-chart-box">
+                    <div class="pm-section-title">Category Breakdown</div>
+                    <div style="height:180px;position:relative"><canvas id="pmCategoryChart"></canvas></div>
+                </div>
+                <div class="pm-chart-box">
+                    <div class="pm-section-title">Budget vs Actual</div>
+                    <div style="height:180px;position:relative"><canvas id="pmBudgetChart"></canvas></div>
+                </div>
+            </div>
+            <div class="pm-section-title" style="margin-top:1.25rem"><i data-lucide="receipt" class="inline-icon"></i> Expenses</div>
+            <div class="table-container pm-table-wrap">
+                <table class="appointments-table">
+                    <thead><tr><th>Date</th><th>Expense Name</th><th>Category</th><th>Qty</th><th>Amount</th><th>Receipt</th></tr></thead>
+                    <tbody id="pmExpTbody"><tr><td colspan="6" class="exp-empty-row">Loading…</td></tr></tbody>
+                </table>
+            </div>
+            <div class="pm-section-title" style="margin-top:1.25rem">👷 Payroll</div>
+            <div class="table-container pm-table-wrap" style="margin-bottom:0">
+                <table class="appointments-table">
+                    <thead><tr><th>Date</th><th>Worker</th><th>Role</th><th>Days × Rate</th><th>Total Salary</th></tr></thead>
+                    <tbody id="pmPayTbody"><tr><td colspan="5" class="exp-empty-row">Loading…</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="exp-modal-footer">
+            <button class="exp-btn exp-btn-secondary" onclick="closeProjectModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ══════════ EDIT EXPENSE MODAL ══════════ -->
+<div id="editExpenseModal" class="exp-modal">
+    <div class="exp-modal-box">
+        <div class="exp-modal-header">
+            <h2><i data-lucide="pencil" class="modal-icon"></i> Edit Expense</h2>
+            <button class="exp-modal-close" onclick="closeExpModal('editExpenseModal')">&times;</button>
+        </div>
+        <form id="editExpenseForm">
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Expense Name</label>
+                    <input type="text" id="editExpName" required placeholder="e.g. Tiles, Cement">
+                </div>
+                <div class="exp-form-group">
+                    <label>Category</label>
+                    <select id="editExpCategory" required><option value="">Select category…</option></select>
+                </div>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="editExpQty" min="0.01" step="any" required>
+                </div>
+                <div class="exp-form-group">
+                    <label>Unit Cost (₱)</label>
+                    <input type="number" id="editExpUnitCost" min="0" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+            <div class="exp-form-group">
+                <label>Total Amount (₱) <small style="font-weight:400;color:#888">(auto-computed)</small></label>
+                <input type="number" id="editExpAmount" required min="0" step="0.01">
+            </div>
+            <div class="exp-form-group">
+                <label>Date &amp; Time</label>
+                <input type="datetime-local" id="editExpDateTime" required>
+            </div>
+            <div class="exp-form-group">
+                <label>Receipts <small style="font-weight:400;color:#888">— remove or add images</small></label>
+                <div id="editExpReceiptGrid" class="exp-receipt-grid" style="display:none;margin-bottom:0.5rem;"></div>
+                <label for="editExpReceiptInput" style="display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.9rem;background:#f0fdf4;border:2px dashed #00D084;border-radius:8px;cursor:pointer;font-size:0.88rem;color:#15803d;font-weight:600;"> Add More Images</label>
+                <input type="file" id="editExpReceiptInput" accept="image/jpeg,image/png,image/jpg" multiple style="display:none;">
+            </div>
+            <div class="exp-form-group">
+                <label>Notes (optional)</label>
+                <textarea id="editExpNotes" rows="2" placeholder="Additional details…"></textarea>
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('editExpenseModal')">Cancel</button>
+                <button type="submit" id="editExpenseBtn" class="exp-btn exp-btn-primary" data-label="Save Changes"><i data-lucide="check" class="btn-icon"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════ EDIT PAYROLL MODAL ══════════ -->
+<div id="editPayrollModal" class="exp-modal">
+    <div class="exp-modal-box">
+        <div class="exp-modal-header">
+            <h2><i data-lucide="pencil" class="modal-icon"></i> Edit Payroll Entry</h2>
+            <button class="exp-modal-close" onclick="closeExpModal('editPayrollModal')">&times;</button>
+        </div>
+        <form id="editPayrollForm">
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Worker Name</label>
+                    <input type="text" id="editPayWorkerName" required placeholder="Full name">
+                </div>
+                <div class="exp-form-group">
+                    <label>Role / Position</label>
+                    <input type="text" id="editPayRole" placeholder="e.g. Mason, Carpenter">
+                </div>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Days Worked</label>
+                    <input type="number" id="editPayDays" required min="0.5" step="0.5" placeholder="0">
+                </div>
+                <div class="exp-form-group">
+                    <label>Daily Rate (₱)</label>
+                    <input type="number" id="editPayDailyRate" required min="0" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+            <div class="exp-form-group">
+                <label>Total Salary (₱) <small style="font-weight:400;color:#888">(auto-computed)</small></label>
+                <input type="number" id="editPayTotal" readonly placeholder="0.00">
+            </div>
+            <div class="exp-form-group">
+                <label>Payment Date</label>
+                <input type="datetime-local" id="editPayDate" required>
+            </div>
+            <div class="exp-form-group">
+                <label>Receipts <small style="font-weight:400;color:#888">— remove or add images</small></label>
+                <div id="editPayReceiptGrid" class="exp-receipt-grid" style="display:none;margin-bottom:0.5rem;"></div>
+                <label for="editPayReceiptInput" style="display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.9rem;background:#f0fdf4;border:2px dashed #00D084;border-radius:8px;cursor:pointer;font-size:0.88rem;color:#15803d;font-weight:600;"> Add More Images</label>
+                <input type="file" id="editPayReceiptInput" accept="image/jpeg,image/png,image/jpg" multiple style="display:none;">
+            </div>
+            <div class="exp-form-group">
+                <label>Notes (optional)</label>
+                <textarea id="editPayNotes" rows="2" placeholder="Additional details…"></textarea>
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('editPayrollModal')">Cancel</button>
+                <button type="submit" id="editPayrollBtn" class="exp-btn exp-btn-primary" data-label="Save Changes"><i data-lucide="check" class="btn-icon"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════ MOVE TO FOLDER MODAL ══════════ -->
+<div id="moveToFolderModal" class="exp-modal">
+    <div class="exp-modal-box" style="max-width:400px">
+        <div class="exp-modal-header">
+            <h2>📁 Move to Folder</h2>
+            <button class="exp-modal-close" onclick="closeExpModal('moveToFolderModal')">&times;</button>
+        </div>
+        <form id="moveToFolderForm" onsubmit="handleMoveToFolder(event)">
+            <div class="exp-form-group">
+                <label>Moving: <strong id="moveProjectLabel"></strong></label>
+            </div>
+            <div class="exp-form-group">
+                <label>Select Project Folder</label>
+                <select id="moveFolderSelect" required style="width:100%;padding:0.6rem 0.75rem;border:1.5px solid #e5e7eb;border-radius:8px;font-size:0.9rem;">
+                    <option value="">— Select folder —</option>
+                </select>
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('moveToFolderModal')">Cancel</button>
+                <button type="submit" class="exp-btn exp-btn-primary">Move</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="expNotification" class="exp-notification"></div>
+
+<!-- ══════════ SCRIPTS ══════════ -->
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="admin.js"></script>
+<script src="expenses-module.js"></script>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// Patch switchView to handle expense views + boot module
+// ════════════════════════════════════════════════════════════
+(function() {
+    const EXP_VIEWS = ['expOverview','expExpenses','expPayroll','expReports'];
+    const TITLES = {
+        dashboard: 'Dashboard',
+        appointments: 'Appointments',
+        analytics: 'Analytics',
+        expOverview: 'Budget Overview',
+        expExpenses: 'Expenses',
+        expPayroll:  'Payroll',
+        expReports:  'Reports'
+    };
+
+    window.switchView = function(view) {
+        // Nav highlight
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.view === view) item.classList.add('active');
+        });
+
+        // Page title
+        document.getElementById('pageTitle').textContent = TITLES[view] || view;
+
+        // Hide all views
+        document.querySelectorAll('.content-view').forEach(v => v.style.display = 'none');
+
+        // Show target view
+        const el = document.getElementById(view + 'View');
+        if (el) el.style.display = 'block';
+
+        // Original handlers
+        if (view === 'appointments' && typeof displayAllAppointments === 'function') displayAllAppointments();
+        if (view === 'analytics'    && typeof refreshAnalytics === 'function') refreshAnalytics();
+
+        // Boot expense module if needed
+        if (EXP_VIEWS.includes(view) && typeof initExpenseModule === 'function') {
+            initExpenseModule(view);
+        }
+
+        // Init reports dashboard when switching to reports
+        if (view === 'expReports' && typeof initReportsDashboard === 'function') {
+            initReportsDashboard();
+        }
+    };
+
+    // On doc load, init expense module
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initExpenseModule === 'function') initExpenseModule('expOverview');
+        });
+    } else {
+        if (typeof initExpenseModule === 'function') initExpenseModule('expOverview');
+    }
+})();
+</script>
+
+<!-- ══ Receipt Lightbox ══════════════════════════════════════ -->
+<div id="receiptLightbox" class="lb-overlay" onclick="if(event.target===this)closeLightbox()">
+    <div class="lb-box">
+        <div class="lb-header">
+            <span id="lbTitle">Receipt</span>
+            <span id="lbCounter" class="lb-counter"></span>
+            <span id="lbZoomPct" class="lb-zoom-pct" style="display:none"></span>
+            <button class="lb-zoom-btn" id="lbZoomBtn" onclick="lbZoomToggle()" title="Toggle zoom">🔍</button>
+            <button class="lb-zoom-btn" onclick="lbZoomIn()" title="Zoom in">＋</button>
+            <button class="lb-zoom-btn" onclick="lbZoomOut()" title="Zoom out">－</button>
+            <button class="lb-close" onclick="closeLightbox()">✕</button>
+        </div>
+        <div class="lb-img-wrap" id="lbImgWrap">
+            <button id="lbPrev" class="lb-nav lb-nav-prev" onclick="lbPrev()">&#8249;</button>
+            <img id="lbMainImg" src="" alt="Receipt" class="lb-main-img">
+            <button id="lbNext" class="lb-nav lb-nav-next" onclick="lbNext()">&#8250;</button>
+        </div>
+        <div id="lbThumbs" class="lb-thumbs"></div>
+    </div>
+</div>
+    <script>
+        // Initialize Lucide icons after DOM loads
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+        // Re-init after dynamic content changes
+        function refreshIcons() {
+            if (window.lucide) lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
