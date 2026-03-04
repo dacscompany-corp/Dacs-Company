@@ -1,20 +1,22 @@
+// ===========================
 // Navbar scroll effect
+// ===========================
 const navbar = document.getElementById('navbar');
 let lastScroll = 0;
 
 window.addEventListener('scroll', () => {
     const currentScroll = window.pageYOffset;
-    
     if (currentScroll > 50) {
         navbar.classList.add('scrolled');
     } else {
         navbar.classList.remove('scrolled');
     }
-    
     lastScroll = currentScroll;
 });
 
+// ===========================
 // Mobile menu toggle
+// ===========================
 const mobileMenuToggle = document.getElementById('mobileMenuToggle');
 const navLinks = document.querySelector('.nav-links');
 
@@ -23,37 +25,28 @@ mobileMenuToggle.addEventListener('click', () => {
     mobileMenuToggle.classList.toggle('active');
 });
 
-// Smooth scrolling for navigation links
+// ===========================
+// Smooth scrolling for nav links
+// ===========================
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
-        
         if (target) {
             const offsetTop = target.offsetTop - 80;
-            window.scrollTo({
-                top: offsetTop,
-                behavior: 'smooth'
-            });
-            
-            // Close mobile menu if open
+            window.scrollTo({ top: offsetTop, behavior: 'smooth' });
             navLinks.classList.remove('active');
             mobileMenuToggle.classList.remove('active');
-            
-            // Update active nav link
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
             this.classList.add('active');
         }
     });
 });
 
-// Intersection Observer for scroll animations
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-};
+// ===========================
+// Intersection Observer – scroll animations
+// ===========================
+const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
 
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -64,7 +57,6 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Observe all sections and cards
 document.querySelectorAll('section, .about-card, .value-card, .team-member, .objective-step').forEach(el => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(30px)';
@@ -72,88 +64,71 @@ document.querySelectorAll('section, .about-card, .value-card, .team-member, .obj
     observer.observe(el);
 });
 
-// Background Slideshow Functionality - Auto-play every 10 seconds
+// ===========================
+// Background Slideshow – auto-play every 10 seconds
+// ===========================
 let currentSlide = 0;
 const bgSlides = document.querySelectorAll('.bg-slide');
 
-// Show first slide initially
-if (bgSlides.length > 0) {
-    bgSlides[0].classList.add('bg-active');
-}
+if (bgSlides.length > 0) bgSlides[0].classList.add('bg-active');
 
 function showSlide(index) {
-    // Remove active class from all background slides
-    bgSlides.forEach(bgSlide => bgSlide.classList.remove('bg-active'));
-    
-    // Add active class to current background slide
+    bgSlides.forEach(s => s.classList.remove('bg-active'));
     bgSlides[index].classList.add('bg-active');
 }
 
-function nextSlide() {
+function nextBgSlide() {
     currentSlide = (currentSlide + 1) % bgSlides.length;
     showSlide(currentSlide);
 }
 
-// Start automatic slideshow - changes every 10 seconds
-if (bgSlides.length > 1) {
-    setInterval(nextSlide, 10000); // 10 seconds per slide
-}
+if (bgSlides.length > 1) setInterval(nextBgSlide, 10000);
 
+// ===========================
 // Form submission handler
+// ===========================
 const appointmentForm = document.getElementById('appointmentForm');
-const formMessage = document.getElementById('formMessage');
+const formMessage     = document.getElementById('formMessage');
 
 appointmentForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    // Get form data
+
     const formData = {
-        fullname: document.getElementById('fullname').value,
-        email: document.getElementById('email').value,
-        contact: document.getElementById('contact').value,
-        service: document.getElementById('service').value,
-        message: document.getElementById('message').value,
-        status: 'pending',
+        fullname:  document.getElementById('fullname').value,
+        email:     document.getElementById('email').value,
+        contact:   document.getElementById('contact').value,
+        service:   document.getElementById('service').value,
+        message:   document.getElementById('message').value,
+        status:    'pending',
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    
-    // Validate form
+
     if (!formData.fullname || !formData.email || !formData.contact || !formData.service) {
         showMessage('Please fill in all required fields.', 'error');
         return;
     }
-    
-    // Email validation
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
         showMessage('Please enter a valid email address.', 'error');
         return;
     }
-    
-    // Show loading state
+
     const submitButton = appointmentForm.querySelector('.btn-submit');
     const originalText = submitButton.textContent;
     submitButton.textContent = 'Submitting...';
     submitButton.disabled = true;
-    
+
     try {
-        // Save to Firebase Firestore
         await db.collection('appointments').add(formData);
-        
-        // Show success message
         showMessage('Thank you! Your appointment request has been received. We will contact you within 24 hours.', 'success');
-        
-        // Reset form
         appointmentForm.reset();
-        
-        // Scroll to message
         formMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (error) {
         console.error('Error submitting appointment:', error);
         showMessage('Sorry, there was an error submitting your request. Please try again or contact us directly.', 'error');
     } finally {
-        // Reset button
         submitButton.textContent = originalText;
         submitButton.disabled = false;
     }
@@ -162,108 +137,162 @@ appointmentForm.addEventListener('submit', async (e) => {
 function showMessage(message, type) {
     formMessage.textContent = message;
     formMessage.className = `form-message ${type}`;
-    
-    // Auto-hide success message after 5 seconds
     if (type === 'success') {
-        setTimeout(() => {
-            formMessage.style.display = 'none';
-        }, 5000);
+        setTimeout(() => { formMessage.style.display = 'none'; }, 5000);
     }
 }
 
+// ===========================
 // Parallax effect for hero decoration (desktop only)
+// ===========================
 window.addEventListener('scroll', () => {
     const decoration = document.querySelector('.hero-decoration');
     if (decoration && window.innerWidth > 1024) {
-        const scrolled = window.pageYOffset;
-        decoration.style.transform = `translateY(${scrolled * 0.3}px)`;
+        decoration.style.transform = `translateY(${window.pageYOffset * 0.3}px)`;
     }
 });
 
-// Add hover effect to floating cards
-const floatingCards = document.querySelectorAll('.floating-card');
-floatingCards.forEach(card => {
+// ===========================
+// Floating cards hover effect
+// ===========================
+document.querySelectorAll('.floating-card').forEach(card => {
     card.addEventListener('mouseenter', () => {
         card.style.animationPlayState = 'paused';
         card.style.transform = 'scale(1.05)';
     });
-    
     card.addEventListener('mouseleave', () => {
         card.style.animationPlayState = 'running';
         card.style.transform = 'scale(1)';
     });
 });
 
+// ===========================
 // Update active nav link on scroll
+// ===========================
 window.addEventListener('scroll', () => {
     const sections = document.querySelectorAll('section[id]');
-    const scrollY = window.pageYOffset;
-    
+    const scrollY  = window.pageYOffset;
+
     sections.forEach(section => {
-        const sectionHeight = section.offsetHeight;
         const sectionTop = section.offsetTop - 100;
-        const sectionId = section.getAttribute('id');
-        
-        if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+        const sectionId  = section.getAttribute('id');
+        if (scrollY > sectionTop && scrollY <= sectionTop + section.offsetHeight) {
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.classList.remove('active');
-                if (link.getAttribute('href') === `#${sectionId}`) {
-                    link.classList.add('active');
-                }
+                if (link.getAttribute('href') === `#${sectionId}`) link.classList.add('active');
             });
         }
     });
 });
 
-// Add loading animation to images
+// ===========================
+// Image loading animation
+// ===========================
 document.querySelectorAll('.member-image img').forEach(img => {
-    img.addEventListener('load', () => {
-        img.style.opacity = '1';
-    });
     img.style.opacity = '0';
     img.style.transition = 'opacity 0.5s ease';
+    img.addEventListener('load', () => { img.style.opacity = '1'; });
 });
 
-// Initialize animations on page load
+// ===========================
+// Hero animations on page load
+// ===========================
 window.addEventListener('load', () => {
-    // Trigger hero animations
-    document.querySelectorAll('.hero-badge, .hero-title, .hero-subtitle, .hero-cta').forEach((el, index) => {
+    document.querySelectorAll('.hero-badge, .hero-title, .hero-subtitle, .hero-cta').forEach((el, i) => {
         setTimeout(() => {
             el.style.opacity = '1';
             el.style.transform = 'translateY(0)';
-        }, index * 200);
+        }, i * 200);
     });
 });
 
-// Handle form field interactions
+// ===========================
+// Form field focus interactions
+// ===========================
 document.querySelectorAll('.form-group input, .form-group select, .form-group textarea').forEach(field => {
-    field.addEventListener('focus', () => {
-        field.parentElement.classList.add('focused');
-    });
-    
-    field.addEventListener('blur', () => {
-        if (!field.value) {
-            field.parentElement.classList.remove('focused');
-        }
-    });
+    field.addEventListener('focus', () => field.parentElement.classList.add('focused'));
+    field.addEventListener('blur',  () => { if (!field.value) field.parentElement.classList.remove('focused'); });
 });
 
-// Add floating animation to value cards on hover
+// ===========================
+// Value cards icon hover
+// ===========================
 document.querySelectorAll('.value-card').forEach(card => {
+    const icon = card.querySelector('.value-icon');
     card.addEventListener('mouseenter', () => {
-        const icon = card.querySelector('.value-icon');
-        icon.style.transform = 'translateY(-10px) scale(1.1)';
+        icon.style.transform  = 'translateY(-10px) scale(1.1)';
         icon.style.transition = 'transform 0.3s ease';
     });
-    
-    card.addEventListener('mouseleave', () => {
-        const icon = card.querySelector('.value-icon');
-        icon.style.transform = 'translateY(0) scale(1)';
-    });
+    card.addEventListener('mouseleave', () => { icon.style.transform = 'translateY(0) scale(1)'; });
 });
 
-// Console log for debugging
-console.log('DAC\'s Building Design Services - Website Loaded Successfully');
-console.log('Automatic background slideshow initialized with', bgSlides.length, 'slides');
-console.log('Slideshow transitions every 10 seconds');
-console.log('All interactive features initialized');
+// ===========================
+// Card Slider – Clean & Reliable
+// ===========================
+(function () {
+    const track   = document.querySelector('.carousel-track');
+    const cards   = document.querySelectorAll('.carousel-card');
+    const dots    = document.querySelectorAll('.carousel-dot');
+    const prevBtn = document.getElementById('carouselPrev');
+    const nextBtn = document.getElementById('carouselNext');
+    const counter = document.querySelector('.carousel-counter');
+
+    if (!track || cards.length === 0) return;
+
+    let idx = 0;
+    let autoPlayTimer = null;
+    const total = cards.length;
+
+    function goTo(i) {
+        idx = ((i % total) + total) % total;
+        track.style.transform = `translateX(-${idx * 100}%)`;
+        dots.forEach((d, j) => d.classList.toggle('active', j === idx));
+        if (counter) counter.textContent = `${idx + 1} / ${total}`;
+    }
+
+    function next() { goTo(idx + 1); }
+    function prev() { goTo(idx - 1); }
+
+    function startAutoPlay() {
+        stopAutoPlay();
+        autoPlayTimer = setInterval(next, 4500);
+    }
+    function stopAutoPlay() {
+        if (autoPlayTimer) { clearInterval(autoPlayTimer); autoPlayTimer = null; }
+    }
+    function resetAutoPlay() { stopAutoPlay(); setTimeout(startAutoPlay, 6000); }
+
+    // Arrows
+    if (prevBtn) prevBtn.addEventListener('click', () => { prev(); resetAutoPlay(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { next(); resetAutoPlay(); });
+
+    // Dots
+    dots.forEach((d, i) => d.addEventListener('click', () => { goTo(i); resetAutoPlay(); }));
+
+    // Keyboard
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft')  { prev(); resetAutoPlay(); }
+        if (e.key === 'ArrowRight') { next(); resetAutoPlay(); }
+    });
+
+    // Touch swipe
+    let touchStartX = 0;
+    track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    track.addEventListener('touchend',   e => {
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 40) { diff > 0 ? next() : prev(); resetAutoPlay(); }
+    });
+
+    // Pause on hover
+    const wrapper = document.querySelector('.carousel-wrapper');
+    if (wrapper) {
+        wrapper.addEventListener('mouseenter', stopAutoPlay);
+        wrapper.addEventListener('mouseleave', startAutoPlay);
+    }
+
+    goTo(0);
+    startAutoPlay();
+
+    console.log("DAC's Building Design Services – Website Loaded Successfully");
+    console.log('Card Slider initialized with', total, 'cards');
+})();
