@@ -1492,7 +1492,7 @@ function _pmRenderExpTable() {
         <tr class="exp-group-row">
             <td>${formatDate(e.dateTime)}</td>
             <td><strong>${e.expenseName||'—'}</strong></td>
-            <td></td>
+            <td class="exp-notes-cell">${e.notes ? '<span class="exp-notes-text">'+e.notes+'</span>' : '<span class="exp-notes-empty">—</span>'}</td>
             <td>${e.quantity||1}</td>
             <td>₱${formatNum(e.amount)}</td>
             <td>${getReceiptThumbsHTML(e)}</td>
@@ -1528,9 +1528,10 @@ function _pmRenderPayTable() {
             <td class="exp-notes-cell">${p.notes ? '<span class="exp-notes-text">'+p.notes+'</span>' : '<span class="exp-notes-empty">—</span>'}</td>
             <td>${p.daysWorked||0} days × ₱${formatNum(p.dailyRate)}</td>
             <td>₱${formatNum(p.totalSalary)}</td>
+            <td>${getReceiptThumbsHTML(p)}</td>
         </tr>`).join('') + `
         <tr class="exp-pm-total-row">
-            <td colspan="5" style="text-align:right;font-weight:700;padding:0.6rem 0.75rem;border-top:2px solid #e5e7eb;color:#374151;">TOTAL</td>
+            <td colspan="6" style="text-align:right;font-weight:700;padding:0.6rem 0.75rem;border-top:2px solid #e5e7eb;color:#374151;">TOTAL</td>
             <td style="font-weight:800;padding:0.6rem 0.75rem;border-top:2px solid #e5e7eb;color:#1a1a1a;">₱${formatNum(totalSalary)}</td>
         </tr>`;
 }
@@ -2652,31 +2653,93 @@ function _rptRenderTable(groups) {
 // CSV EXPORT
 // ════════════════════════════════════════════════════════════
 function exportRptTable() {
-    if (!_rptState.projects?.length) { showExpNotif('No report data to export.','error'); return; }
+    if (!_rptState.projects?.length) { showExpNotif('No report data to export.', 'error'); return; }
+
     const groups = _computePeriodGroups(_rptState.period, _rptState.year,
         _rptState.projects, _rptState.allExpenses, _rptState.allPayroll);
-    const headers = ['Period','Budget Allocated','Materials & Costs','Labor & Payroll',
-                     'Total Spent','Remaining','% Utilized','Status','Transactions','Workers'];
-    const rows = groups.map(g => [
-        g.label, g.budget.toFixed(2), g.mats.toFixed(2), g.labor.toFixed(2),
-        g.totalSpent.toFixed(2), g.remaining.toFixed(2),
-        g.usedPct.toFixed(1)+'%', g.status, g.txCount, g.workerCount
-    ]);
-    // Add totals
-    const tB = groups.reduce((s,g)=>s+g.budget,0);
-    const tM = groups.reduce((s,g)=>s+g.mats,0);
-    const tL = groups.reduce((s,g)=>s+g.labor,0);
-    const tS = groups.reduce((s,g)=>s+g.totalSpent,0);
-    rows.push(['TOTAL', tB.toFixed(2), tM.toFixed(2), tL.toFixed(2),
-               tS.toFixed(2), (tB-tS).toFixed(2), (tB>0?(tS/tB)*100:0).toFixed(1)+'%','','','']);
-    const csv  = [headers,...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
-    const blob = new Blob(['\uFEFF'+csv], { type:'text/csv;charset=utf-8' }); // BOM for Excel
+
+    // Derive a sensible file name
+    const folderIds = [...new Set(_rptState.projects.map(p => p.folderId).filter(Boolean))];
+    const firstFolder = folderIds.length === 1 ? expFolders.find(f => f.id === folderIds[0]) : null;
+    const reportName = (firstFolder?.name || 'DACs-Report').replace(/\s+/g, '-');
+
+    const esc = v => String(v == null ? '' : v).replace(/"/g, '""');
+    const row = arr => arr.map(c => '"' + esc(c) + '"').join(',');
+
+    let csv = '\uFEFF'; // BOM for Excel
+
+    // Section 1: Period Summary
+    csv += 'PERIOD SUMMARY\n';
+    csv += row(['Period','Budget Allocated','Materials & Costs','Labor & Payroll',
+                'Total Spent','Remaining','% Utilized','Status','Transactions','Workers']) + '\n';
+    groups.forEach(g => {
+        csv += row([
+            g.label,
+            g.budget.toFixed(2), g.mats.toFixed(2), g.labor.toFixed(2),
+            g.totalSpent.toFixed(2), g.remaining.toFixed(2),
+            g.usedPct.toFixed(1) + '%', g.status, g.txCount, g.workerCount
+        ]) + '\n';
+    });
+    const tB = groups.reduce((s,g) => s + g.budget, 0);
+    const tM = groups.reduce((s,g) => s + g.mats, 0);
+    const tL = groups.reduce((s,g) => s + g.labor, 0);
+    const tS = groups.reduce((s,g) => s + g.totalSpent, 0);
+    csv += row(['TOTAL', tB.toFixed(2), tM.toFixed(2), tL.toFixed(2),
+                tS.toFixed(2), (tB - tS).toFixed(2),
+                (tB > 0 ? (tS / tB) * 100 : 0).toFixed(1) + '%', '', '', '']) + '\n';
+
+    // Section 2: Expense Detail
+    csv += '\nEXPENSE DETAIL\n';
+    csv += row(['Date','Project','Category','Expense Name','Notes / Detail','Qty','Amount']) + '\n';
+    const sortedExp = [..._rptState.allExpenses]
+        .sort((a, b) => new Date(b.dateTime || 0) - new Date(a.dateTime || 0));
+    sortedExp.forEach(e => {
+        const proj = _rptState.projects.find(p => p.id === e.projectId);
+        csv += row([
+            e.dateTime ? new Date(e.dateTime).toLocaleString() : '',
+            proj ? proj.month + ' ' + proj.year : '',
+            e.category || '',
+            e.expenseName || '',
+            e.notes || '',
+            e.quantity || 1,
+            (e.amount || 0).toFixed(2)
+        ]) + '\n';
+    });
+    const expTotal = _rptState.allExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+    csv += row(['', '', '', '', '', 'TOTAL', expTotal.toFixed(2)]) + '\n';
+
+    // Section 3: Payroll Detail
+    csv += '\nPAYROLL DETAIL\n';
+    csv += row(['Date','Project','Worker Name','Role','Notes / Detail','Days','Daily Rate','Total Salary']) + '\n';
+    const sortedPay = [..._rptState.allPayroll]
+        .sort((a, b) => new Date(b.paymentDate || 0) - new Date(a.paymentDate || 0));
+    sortedPay.forEach(p => {
+        const proj = _rptState.projects.find(pr => pr.id === p.projectId);
+        csv += row([
+            p.paymentDate ? new Date(p.paymentDate).toLocaleString() : '',
+            proj ? proj.month + ' ' + proj.year : '',
+            p.workerName || '',
+            p.role || '',
+            p.notes || '',
+            p.daysWorked || 0,
+            (p.dailyRate || 0).toFixed(2),
+            (p.totalSalary || 0).toFixed(2)
+        ]) + '\n';
+    });
+    const payTotal = _rptState.allPayroll.reduce((s, p) => s + (p.totalSalary || 0), 0);
+    csv += row(['', '', '', '', '', '', 'TOTAL', payTotal.toFixed(2)]) + '\n';
+
+    // Trigger download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url;
-    a.download = `${folder?.name||'report'}_${_rptState.period}_${_rptState.year}.csv`;
-    a.click(); URL.revokeObjectURL(url);
-    showExpNotif('CSV exported!', 'success');
+    a.href     = url;
+    a.download = reportName + '_' + _rptState.period + '_' + _rptState.year + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showExpNotif('CSV exported successfully!', 'success');
 }
 
 console.log('✅ Reports Dashboard Module Loaded');
