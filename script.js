@@ -188,10 +188,14 @@ window.addEventListener('scroll', () => {
 // ===========================
 // Image loading animation
 // ===========================
-document.querySelectorAll('.member-image img').forEach(img => {
-    img.style.opacity = '0';
+document.querySelectorAll('.card-image-wrap img').forEach(img => {
+    img.style.opacity = '1';
     img.style.transition = 'opacity 0.5s ease';
-    img.addEventListener('load', () => { img.style.opacity = '1'; });
+    img.style.display = 'block';
+    img.addEventListener('load', () => { 
+        img.style.opacity = '1';
+        img.style.display = 'block';
+    });
 });
 
 // ===========================
@@ -240,7 +244,6 @@ document.querySelectorAll('.value-card').forEach(card => {
     if (!track || cards.length === 0) return;
 
     let idx = 0;
-    let autoPlayTimer = null;
     const total = cards.length;
 
     function goTo(i) {
@@ -253,26 +256,17 @@ document.querySelectorAll('.value-card').forEach(card => {
     function next() { goTo(idx + 1); }
     function prev() { goTo(idx - 1); }
 
-    function startAutoPlay() {
-        stopAutoPlay();
-        autoPlayTimer = setInterval(next, 4500);
-    }
-    function stopAutoPlay() {
-        if (autoPlayTimer) { clearInterval(autoPlayTimer); autoPlayTimer = null; }
-    }
-    function resetAutoPlay() { stopAutoPlay(); setTimeout(startAutoPlay, 6000); }
-
     // Arrows
-    if (prevBtn) prevBtn.addEventListener('click', () => { prev(); resetAutoPlay(); });
-    if (nextBtn) nextBtn.addEventListener('click', () => { next(); resetAutoPlay(); });
+    if (prevBtn) prevBtn.addEventListener('click', () => { prev(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { next(); });
 
     // Dots
-    dots.forEach((d, i) => d.addEventListener('click', () => { goTo(i); resetAutoPlay(); }));
+    dots.forEach((d, i) => d.addEventListener('click', () => { goTo(i); }));
 
     // Keyboard
     document.addEventListener('keydown', e => {
-        if (e.key === 'ArrowLeft')  { prev(); resetAutoPlay(); }
-        if (e.key === 'ArrowRight') { next(); resetAutoPlay(); }
+        if (e.key === 'ArrowLeft')  { prev(); }
+        if (e.key === 'ArrowRight') { next(); }
     });
 
     // Touch swipe
@@ -280,19 +274,102 @@ document.querySelectorAll('.value-card').forEach(card => {
     track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
     track.addEventListener('touchend',   e => {
         const diff = touchStartX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 40) { diff > 0 ? next() : prev(); resetAutoPlay(); }
+        if (Math.abs(diff) > 40) { diff > 0 ? next() : prev(); }
     });
 
-    // Pause on hover
-    const wrapper = document.querySelector('.carousel-wrapper');
-    if (wrapper) {
-        wrapper.addEventListener('mouseenter', stopAutoPlay);
-        wrapper.addEventListener('mouseleave', startAutoPlay);
-    }
-
     goTo(0);
-    startAutoPlay();
+    
+    // Attach lightbox handlers after carousel init
+    setTimeout(attachImageClickHandlers, 500);
 
     console.log("DAC's Building Design Services – Website Loaded Successfully");
     console.log('Card Slider initialized with', total, 'cards');
 })();
+
+// ===========================
+// Scroll to Top Button
+// ===========================
+const scrollToTopBtn = document.getElementById('scrollToTop');
+const aboutSection = document.getElementById('about');
+
+window.addEventListener('scroll', () => {
+    if (aboutSection) {
+        const aboutPosition = aboutSection.offsetTop;
+        if (window.pageYOffset >= aboutPosition) {
+            scrollToTopBtn.classList.add('show');
+        } else {
+            scrollToTopBtn.classList.remove('show');
+        }
+    }
+});
+
+scrollToTopBtn.addEventListener('click', () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+});
+
+// ===========================
+// Image Lightbox for Project Images
+// ===========================
+const lightbox = document.getElementById('lightbox');
+const lightboxImage = document.getElementById('lightboxImage');
+const lightboxClose = document.getElementById('lightboxClose');
+
+// Add click event to all project images (works for both desktop and mobile)
+function attachImageClickHandlers() {
+    // Only attach on desktop
+    if (window.innerWidth > 1024) {
+        document.querySelectorAll('.card-image-wrap').forEach(wrap => {
+            wrap.style.cursor = 'pointer';
+            wrap.addEventListener('click', (e) => {
+                const img = wrap.querySelector('img');
+                if (img) {
+                    lightboxImage.src = img.src;
+                    lightboxImage.alt = img.alt;
+                    lightbox.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+        });
+    }
+}
+
+// Zoom functionality on lightbox image
+lightboxImage.addEventListener('click', (e) => {
+    e.stopPropagation();
+    lightboxImage.classList.toggle('zoomed');
+});
+
+// Touch support for mobile zoom
+lightboxImage.addEventListener('touchend', (e) => {
+    e.stopPropagation();
+    lightboxImage.classList.toggle('zoomed');
+});
+
+// Initial attachment
+attachImageClickHandlers();
+
+// Close lightbox
+function closeLightbox() {
+    lightbox.classList.remove('active');
+    lightboxImage.classList.remove('zoomed');
+    document.body.style.overflow = 'auto';
+}
+
+lightboxClose.addEventListener('click', closeLightbox);
+
+// Close on background click
+lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) {
+        closeLightbox();
+    }
+});
+
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+        closeLightbox();
+    }
+});
