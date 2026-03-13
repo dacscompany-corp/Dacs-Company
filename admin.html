@@ -55,6 +55,9 @@
             <a href="#" class="nav-item" data-view="analytics">
                 <span class="nav-icon-wrap"><i data-lucide="bar-chart-2" class="nav-icon"></i></span><span>Analytics</span>
             </a>
+            <a href="#" class="nav-item" data-view="feedback">
+                <span class="nav-icon-wrap"><i data-lucide="message-square" class="nav-icon"></i></span><span>Feedback</span>
+            </a>
             <div class="nav-group-label">EXPENSES TRACKER</div>
             <a href="#" class="nav-item" data-view="expOverview">
                 <span class="nav-icon-wrap"><i data-lucide="wallet" class="nav-icon"></i></span><span>Budget Overview</span>
@@ -199,6 +202,31 @@
                 <div class="section-card">
                     <div class="card-header"><div><h2>Time Preference</h2><p class="card-subtitle">Preferred booking hours</p></div></div>
                     <div class="chart-wrapper" style="height:320px"><canvas id="timeDistributionChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ FEEDBACK ════════════ -->
+        <div id="feedbackView" class="content-view" style="display: none;">
+            <div class="filters-bar">
+                <select id="feedbackStatusFilter" class="filter-select">
+                    <option value="all">All Ratings</option>
+                    <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
+                    <option value="4">⭐⭐⭐⭐ 4 Stars</option>
+                    <option value="3">⭐⭐⭐ 3 Stars</option>
+                    <option value="2">⭐⭐ 2 Stars</option>
+                    <option value="1">⭐ 1 Star</option>
+                </select>
+                <input type="text" id="feedbackSearchInput" class="search-input" placeholder="Search by name or location...">
+            </div>
+            <div class="section-card">
+                <div id="feedbackTable" class="table-container">
+                    <table class="appointments-table">
+                        <thead>
+                            <tr><th>Date</th><th>Name</th><th>Location</th><th>Rating</th><th>Message</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="feedbackTableBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -1078,6 +1106,7 @@
         dashboard: 'Dashboard',
         appointments: 'Appointments',
         analytics: 'Analytics',
+        feedback: 'Feedback',
         expOverview: 'Budget Overview',
         expExpenses: 'Expenses',
         expPayroll:  'Payroll',
@@ -1104,6 +1133,7 @@
         // Original handlers
         if (view === 'appointments' && typeof displayAllAppointments === 'function') displayAllAppointments();
         if (view === 'analytics'    && typeof refreshAnalytics === 'function') refreshAnalytics();
+        if (view === 'feedback' && typeof displayAllFeedback === 'function') displayAllFeedback();
 
         // Boot expense module if needed
         if (EXP_VIEWS.includes(view) && typeof initExpenseModule === 'function') {
