@@ -23,6 +23,12 @@ function checkAuthState() {
     });
 }
 
+// Refresh analytics - can be called manually
+window.refreshAnalytics = function() {
+    console.log('🔄 Manual analytics refresh triggered');
+    displayAnalytics();
+};
+
 // Show login screen
 function showLogin() {
     document.getElementById('loginScreen').style.display = 'flex';
@@ -120,7 +126,13 @@ function switchView(view) {
     if (view === 'appointments') {
         displayAllAppointments();
     } else if (view === 'analytics') {
-        displayAnalytics();
+        // Ensure Chart.js is loaded before displaying analytics
+        if (typeof Chart === 'undefined') {
+            console.error('❌ Chart.js not loaded, waiting...');
+            setTimeout(() => displayAnalytics(), 200);
+        } else {
+            displayAnalytics();
+        }
     }
 }
 
@@ -136,11 +148,18 @@ async function loadData() {
             ...doc.data()
         }));
         
+        console.log('📊 Loaded', appointments.length, 'appointments');
+        
         updateDashboardStats();
         displayRecentAppointments();
         displayServicesChart();
         displayDashboardServiceChart();
         displayDashboardStatusChart();
+        
+        // Refresh analytics if on analytics view
+        if (currentView === 'analytics') {
+            displayAnalytics();
+        }
     } catch (error) {
         console.error('Error loading data:', error);
     }
@@ -412,13 +431,11 @@ function displayServicesChart() {
         }
     });
     
-    // Get last 12 months
+    // Get last 12 months starting from Jan 2026
     const months = [];
-    const now = new Date();
-    for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        const monthName = d.toLocaleDateString('en-US', { month: 'short' });
+    for (let month = 0; month < 12; month++) {
+        const key = `2026-${String(month + 1).padStart(2, '0')}`;
+        const monthName = new Date(2026, month).toLocaleDateString('en-US', { month: 'short' });
         months.push({
             key,
             label: monthName,
@@ -559,13 +576,15 @@ function displayDashboardServiceChart() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'right',
+                    position: 'bottom',
                     labels: {
-                        padding: 16,
-                        font: { size: 12 },
+                        padding: 12,
+                        font: { size: 11 },
                         color: '#4A4A4A',
                         usePointStyle: true,
                         pointStyle: 'circle',
+                        boxWidth: 8,
+                        boxHeight: 8,
                         generateLabels: function(chart) {
                             const data = chart.data;
                             const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
@@ -707,12 +726,41 @@ function displayDashboardStatusChart() {
 
 // Display analytics with Chart.js
 function displayAnalytics() {
+    console.log('📊 displayAnalytics called, appointments:', appointments.length);
+    
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('❌ Chart.js not loaded yet, retrying...');
+        setTimeout(displayAnalytics, 100);
+        return;
+    }
+    
+    if (appointments.length === 0) {
+        console.warn('⚠️ No appointments data available for analytics');
+        // Show empty state message
+        const charts = ['monthlyTrendChart', 'serviceBreakdownChart', 'statusBreakdownChart', 'weeklyActivityChart', 'timeDistributionChart'];
+        charts.forEach(chartId => {
+            const canvas = document.getElementById(chartId);
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#7A7A7A';
+                ctx.font = '14px Barlow, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('No appointment data available', canvas.width / 2, canvas.height / 2);
+            }
+        });
+        return;
+    }
+    
     updateAnalyticsMetrics();
     displayMonthlyTrendChartJS();
     displayServiceBreakdownChartJS();
     displayStatusBreakdownChartJS();
     displayWeeklyActivityChart();
     displayTimeDistributionChart();
+    
+    console.log('✅ All analytics charts rendered');
 }
 
 // Update analytics metrics
@@ -760,26 +808,47 @@ function updateAnalyticsMetrics() {
 // Monthly trend chart with Chart.js
 function displayMonthlyTrendChartJS() {
     const canvas = document.getElementById('monthlyTrendChart');
-    if (!canvas) return;
+    if (!canvas) {
+        console.error('❌ monthlyTrendChart canvas not found');
+        return;
+    }
+    
+    console.log('📊 Rendering monthly trend chart, appointments:', appointments.length);
+    
+    // Check Chart.js
+    if (typeof Chart === 'undefined') {
+        console.error('❌ Chart.js not available in displayMonthlyTrendChartJS');
+        return;
+    }
     
     // Destroy existing chart
     if (canvas.chart) {
         canvas.chart.destroy();
     }
     
-    // Prepare data - last 12 months
-    const monthlyData = {};
-    const now = new Date();
+    if (appointments.length === 0) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#7A7A7A';
+        ctx.font = '14px Barlow, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', canvas.width / 2, canvas.height / 2);
+        return;
+    }
     
-    for (let i = 11; i >= 0; i--) {
-        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    // Prepare data - 2026 only, January to December
+    const currentYear = 2026;
+    const monthlyData = {};
+    
+    // Initialize all 12 months of current year
+    for (let month = 0; month < 12; month++) {
+        const key = `${currentYear}-${String(month + 1).padStart(2, '0')}`;
         monthlyData[key] = 0;
     }
     
     appointments.forEach(a => {
         const date = a.createdAt?.toDate();
-        if (date) {
+        if (date && date.getFullYear() === currentYear) {
             const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             if (monthlyData.hasOwnProperty(key)) {
                 monthlyData[key]++;
@@ -789,7 +858,7 @@ function displayMonthlyTrendChartJS() {
     
     const labels = Object.keys(monthlyData).map(key => {
         const [year, month] = key.split('-');
-        return new Date(year, month - 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        return new Date(year, month - 1).toLocaleDateString('en-US', { month: 'short' });
     });
     
     const data = Object.values(monthlyData);
@@ -860,12 +929,24 @@ function displayMonthlyTrendChartJS() {
             }
         }
     });
+    
+    console.log('✅ Monthly trend chart rendered successfully');
 }
 
 // Service breakdown doughnut chart
 function displayServiceBreakdownChartJS() {
     const canvas = document.getElementById('serviceBreakdownChart');
-    if (!canvas) return;
+    if (!canvas) {
+        console.error('❌ serviceBreakdownChart canvas not found');
+        return;
+    }
+    
+    console.log('📊 Rendering service breakdown chart');
+    
+    if (typeof Chart === 'undefined') {
+        console.error('❌ Chart.js not available in displayServiceBreakdownChartJS');
+        return;
+    }
     
     if (canvas.chart) {
         canvas.chart.destroy();
@@ -909,13 +990,15 @@ function displayServiceBreakdownChartJS() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'right',
+                    position: 'bottom',
                     labels: {
-                        padding: 16,
-                        font: { size: 13 },
+                        padding: 12,
+                        font: { size: 11 },
                         color: '#4A4A4A',
                         usePointStyle: true,
                         pointStyle: 'circle',
+                        boxWidth: 8,
+                        boxHeight: 8,
                         generateLabels: function(chart) {
                             const data = chart.data;
                             const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
@@ -955,7 +1038,17 @@ function displayServiceBreakdownChartJS() {
 // Status breakdown bar chart
 function displayStatusBreakdownChartJS() {
     const canvas = document.getElementById('statusBreakdownChart');
-    if (!canvas) return;
+    if (!canvas) {
+        console.error('❌ statusBreakdownChart canvas not found');
+        return;
+    }
+    
+    console.log('📊 Rendering status breakdown chart');
+    
+    if (typeof Chart === 'undefined') {
+        console.error('❌ Chart.js not available in displayStatusBreakdownChartJS');
+        return;
+    }
     
     if (canvas.chart) {
         canvas.chart.destroy();
@@ -1044,7 +1137,17 @@ function displayStatusBreakdownChartJS() {
 // Weekly activity chart
 function displayWeeklyActivityChart() {
     const canvas = document.getElementById('weeklyActivityChart');
-    if (!canvas) return;
+    if (!canvas) {
+        console.error('❌ weeklyActivityChart canvas not found');
+        return;
+    }
+    
+    console.log('📊 Rendering weekly activity chart');
+    
+    if (typeof Chart === 'undefined') {
+        console.error('❌ Chart.js not available in displayWeeklyActivityChart');
+        return;
+    }
     
     if (canvas.chart) {
         canvas.chart.destroy();
@@ -1121,7 +1224,17 @@ function displayWeeklyActivityChart() {
 // Time distribution chart
 function displayTimeDistributionChart() {
     const canvas = document.getElementById('timeDistributionChart');
-    if (!canvas) return;
+    if (!canvas) {
+        console.error('❌ timeDistributionChart canvas not found');
+        return;
+    }
+    
+    console.log('📊 Rendering time distribution chart');
+    
+    if (typeof Chart === 'undefined') {
+        console.error('❌ Chart.js not available in displayTimeDistributionChart');
+        return;
+    }
     
     if (canvas.chart) {
         canvas.chart.destroy();
@@ -1239,6 +1352,24 @@ db.collection('appointments').onSnapshot(() => {
 
 console.log('✅ Admin Dashboard Loaded Successfully');
 console.log('📊 Advanced Analytics Charts Enabled');
+
+// Verify Chart.js is loaded
+if (typeof Chart !== 'undefined') {
+    console.log('✅ Chart.js version:', Chart.version);
+} else {
+    console.error('❌ Chart.js NOT LOADED - Analytics will not work!');
+    console.log('Attempting to load Chart.js from CDN...');
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    script.onload = () => {
+        console.log('✅ Chart.js loaded dynamically');
+        if (currentView === 'analytics') {
+            displayAnalytics();
+        }
+    };
+    script.onerror = () => console.error('❌ Failed to load Chart.js dynamically');
+    document.head.appendChild(script);
+}
 // ── Mobile Sidebar ────────────────────────────────────────
 function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
