@@ -64,6 +64,8 @@ function setupEventListeners() {
     // Filters
     document.getElementById('statusFilter')?.addEventListener('change', filterAppointments);
     document.getElementById('searchInput')?.addEventListener('input', filterAppointments);
+    document.getElementById('feedbackStatusFilter')?.addEventListener('change', filterFeedback);
+    document.getElementById('feedbackSearchInput')?.addEventListener('input', filterFeedback);
 }
 
 // Handle login
@@ -108,6 +110,7 @@ function switchView(view) {
     // Update page title
     const titles = {
         dashboard: 'Dashboard', appointments: 'Appointments', analytics: 'Analytics',
+        feedback: 'Feedback',
         expOverview: 'Budget Overview', expExpenses: 'Expenses',
         expPayroll: 'Payroll', expReports: 'Reports'
     };
@@ -133,6 +136,8 @@ function switchView(view) {
         } else {
             displayAnalytics();
         }
+    } else if (view === 'feedback') {
+        loadFeedback();
     }
 }
 
@@ -160,9 +165,153 @@ async function loadData() {
         if (currentView === 'analytics') {
             displayAnalytics();
         }
+        
+        // Load feedback if on feedback view
+        if (currentView === 'feedback') {
+            loadFeedback();
+        }
     } catch (error) {
         console.error('Error loading data:', error);
     }
+}
+
+// Load feedback
+let allFeedback = [];
+
+async function loadFeedback() {
+    try {
+        const snapshot = await db.collection('testimonials').get();
+        allFeedback = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        console.log('💬 Loaded', allFeedback.length, 'feedback entries');
+        displayAllFeedback();
+    } catch (error) {
+        console.error('Error loading feedback:', error);
+    }
+}
+
+// Display all feedback
+function displayAllFeedback() {
+    const tbody = document.getElementById('feedbackTableBody');
+    if (!tbody) return;
+    
+    if (allFeedback.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">No feedback found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = allFeedback.map(feedback => {
+        const date = feedback.createdAt?.toDate();
+        const dateStr = date ? date.toLocaleDateString() : 'N/A';
+        const stars = '⭐'.repeat(feedback.rating);
+        
+        return `
+            <tr>
+                <td>${dateStr}</td>
+                <td>${feedback.name}</td>
+                <td>${feedback.location}</td>
+                <td>${stars} ${feedback.rating}</td>
+                <td>${feedback.message}</td>
+                <td><span class="status-badge status-${feedback.status}">${feedback.status}</span></td>
+                <td>
+                    <select onchange="updateFeedbackStatus('${feedback.id}', this.value)" onclick="event.stopPropagation()">
+                        <option value="">Update Status</option>
+                        <option value="approved" ${feedback.status === 'approved' ? 'selected' : ''}>Approved</option>
+                        <option value="pending" ${feedback.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="rejected" ${feedback.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                    </select>
+                    <button class="btn-danger" style="margin-left: 8px; padding: 6px 12px; font-size: 12px;" onclick="deleteFeedback('${feedback.id}')">Delete</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Update feedback status
+async function updateFeedbackStatus(feedbackId, newStatus) {
+    if (!newStatus) return;
+    
+    try {
+        await db.collection('testimonials').doc(feedbackId).update({
+            status: newStatus
+        });
+        
+        const feedback = allFeedback.find(f => f.id === feedbackId);
+        if (feedback) {
+            feedback.status = newStatus;
+        }
+        
+        displayAllFeedback();
+        alert('Status updated successfully!');
+    } catch (error) {
+        console.error('Error updating status:', error);
+        alert('Error updating status. Please try again.');
+    }
+}
+
+// Delete feedback
+async function deleteFeedback(feedbackId) {
+    if (!confirm('Are you sure you want to delete this feedback?')) return;
+    
+    try {
+        await db.collection('testimonials').doc(feedbackId).delete();
+        allFeedback = allFeedback.filter(f => f.id !== feedbackId);
+        displayAllFeedback();
+        alert('Feedback deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting feedback:', error);
+        alert('Error deleting feedback. Please try again.');
+    }
+}
+
+// Filter feedback
+function filterFeedback() {
+    const ratingFilter = document.getElementById('feedbackStatusFilter').value;
+    const searchTerm = document.getElementById('feedbackSearchInput').value.toLowerCase();
+    
+    const filtered = allFeedback.filter(feedback => {
+        const matchesRating = ratingFilter === 'all' || feedback.rating === parseInt(ratingFilter);
+        const matchesSearch = 
+            feedback.name.toLowerCase().includes(searchTerm) ||
+            feedback.location.toLowerCase().includes(searchTerm);
+        
+        return matchesRating && matchesSearch;
+    });
+    
+    const tbody = document.getElementById('feedbackTableBody');
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">No matching feedback found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = filtered.map(feedback => {
+        const date = feedback.createdAt?.toDate();
+        const dateStr = date ? date.toLocaleDateString() : 'N/A';
+        const stars = '⭐'.repeat(feedback.rating);
+        
+        return `
+            <tr>
+                <td>${dateStr}</td>
+                <td>${feedback.name}</td>
+                <td>${feedback.location}</td>
+                <td>${stars} ${feedback.rating}</td>
+                <td>${feedback.message}</td>
+                <td><span class="status-badge status-${feedback.status}">${feedback.status}</span></td>
+                <td>
+                    <select onchange="updateFeedbackStatus('${feedback.id}', this.value)" onclick="event.stopPropagation()">
+                        <option value="">Update Status</option>
+                        <option value="approved" ${feedback.status === 'approved' ? 'selected' : ''}>Approved</option>
+                        <option value="pending" ${feedback.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="rejected" ${feedback.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                    </select>
+                    <button class="btn-danger" style="margin-left: 8px; padding: 6px 12px; font-size: 12px;" onclick="deleteFeedback('${feedback.id}')">Delete</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 // Update dashboard stats
@@ -1398,3 +1547,157 @@ document.querySelectorAll('.nav-item').forEach(item => {
         if (window.innerWidth <= 768) closeSidebar();
     });
 });
+
+// ============================================
+// FEEDBACK MANAGEMENT
+// ============================================
+let feedbackList = [];
+
+async function displayAllFeedback() {
+    try {
+        const snapshot = await db.collection('testimonials')
+            .orderBy('createdAt', 'desc')
+            .get();
+        
+        feedbackList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        renderFeedbackTable();
+        setupFeedbackFilters();
+    } catch (error) {
+        console.error('Error loading feedback:', error);
+    }
+}
+
+function renderFeedbackTable() {
+    const tbody = document.getElementById('feedbackTableBody');
+    
+    if (feedbackList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">No feedback found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = feedbackList.map(t => {
+        const date = t.createdAt?.toDate();
+        const dateStr = date ? date.toLocaleDateString() : 'N/A';
+        const stars = '★'.repeat(t.rating) + '☆'.repeat(5 - t.rating);
+        
+        return `
+            <tr>
+                <td>${dateStr}</td>
+                <td>${t.name}</td>
+                <td>${t.location}</td>
+                <td style="color: #FFD700;">${stars}</td>
+                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.message}</td>
+                <td><span class="status-badge status-${t.status}">${t.status}</span></td>
+                <td>
+                    <select onchange="updateFeedbackStatus('${t.id}', this.value)" onclick="event.stopPropagation()">
+                        <option value="">Update Status</option>
+                        <option value="pending" ${t.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="approved" ${t.status === 'approved' ? 'selected' : ''}>Approved</option>
+                        <option value="rejected" ${t.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                    </select>
+                    <button class="btn-danger" style="margin-left: 8px; padding: 6px 12px; font-size: 13px;" onclick="deleteFeedback('${t.id}')">Delete</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function setupFeedbackFilters() {
+    const statusFilter = document.getElementById('feedbackStatusFilter');
+    const searchInput = document.getElementById('feedbackSearchInput');
+    
+    statusFilter?.addEventListener('change', filterFeedback);
+    searchInput?.addEventListener('input', filterFeedback);
+}
+
+function filterFeedback() {
+    const ratingFilter = document.getElementById('feedbackStatusFilter').value;
+    const searchTerm = document.getElementById('feedbackSearchInput').value.toLowerCase();
+    
+    const filtered = feedbackList.filter(t => {
+        const matchesRating = ratingFilter === 'all' || t.rating === parseInt(ratingFilter);
+        const matchesSearch = 
+            t.name.toLowerCase().includes(searchTerm) ||
+            t.location.toLowerCase().includes(searchTerm) ||
+            t.message.toLowerCase().includes(searchTerm);
+        
+        return matchesRating && matchesSearch;
+    });
+    
+    const tbody = document.getElementById('feedbackTableBody');
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">No matching feedback found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = filtered.map(t => {
+        const date = t.createdAt?.toDate();
+        const dateStr = date ? date.toLocaleDateString() : 'N/A';
+        const stars = '★'.repeat(t.rating) + '☆'.repeat(5 - t.rating);
+        
+        return `
+            <tr>
+                <td>${dateStr}</td>
+                <td>${t.name}</td>
+                <td>${t.location}</td>
+                <td style="color: #FFD700;">${stars}</td>
+                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.message}</td>
+                <td><span class="status-badge status-${t.status}">${t.status}</span></td>
+                <td>
+                    <select onchange="updateFeedbackStatus('${t.id}', this.value)" onclick="event.stopPropagation()">
+                        <option value="">Update Status</option>
+                        <option value="pending" ${t.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="approved" ${t.status === 'approved' ? 'selected' : ''}>Approved</option>
+                        <option value="rejected" ${t.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                    </select>
+                    <button class="btn-danger" style="margin-left: 8px; padding: 6px 12px; font-size: 13px;" onclick="deleteFeedback('${t.id}')">Delete</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function updateFeedbackStatus(feedbackId, newStatus) {
+    if (!newStatus) return;
+    
+    try {
+        await db.collection('testimonials').doc(feedbackId).update({
+            status: newStatus,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        const feedback = feedbackList.find(t => t.id === feedbackId);
+        if (feedback) {
+            feedback.status = newStatus;
+        }
+        
+        renderFeedbackTable();
+        alert('Feedback status updated successfully!');
+    } catch (error) {
+        console.error('Error updating feedback status:', error);
+        alert('Error updating status. Please try again.');
+    }
+}
+
+async function deleteFeedback(feedbackId) {
+    if (!confirm('Are you sure you want to delete this feedback?')) return;
+    
+    try {
+        await db.collection('testimonials').doc(feedbackId).delete();
+        feedbackList = feedbackList.filter(t => t.id !== feedbackId);
+        renderFeedbackTable();
+        alert('Feedback deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting feedback:', error);
+        alert('Error deleting feedback. Please try again.');
+    }
+}
+
+window.displayAllFeedback = displayAllFeedback;
+window.updateFeedbackStatus = updateFeedbackStatus;
+window.deleteFeedback = deleteFeedback;
