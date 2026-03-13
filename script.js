@@ -287,6 +287,157 @@ document.querySelectorAll('.value-card').forEach(card => {
 })();
 
 // ===========================
+// Testimonials / Feedback
+// ===========================
+let selectedRating = 0;
+
+// Load testimonials
+async function loadTestimonials() {
+    const container = document.getElementById('testimonialsGrid');
+    try {
+        const snapshot = await db.collection('testimonials').get();
+        
+        if (snapshot.empty) {
+            container.innerHTML = '<p class="loading-text">No testimonials yet. Be the first to share your experience!</p>';
+            return;
+        }
+        
+        // Filter approved 4-5 star ratings
+        const testimonials = snapshot.docs
+            .map(doc => doc.data())
+            .filter(data => data.status === 'approved' && data.rating >= 4)
+            .sort((a, b) => {
+                if (b.createdAt && a.createdAt) {
+                    return b.createdAt.toMillis() - a.createdAt.toMillis();
+                }
+                return 0;
+            })
+            .slice(0, 6);
+        
+        if (testimonials.length === 0) {
+            container.innerHTML = '<p class="loading-text">No testimonials yet. Be the first to share your experience!</p>';
+            return;
+        }
+        
+        container.innerHTML = testimonials.map(data => {
+            const initials = data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            const stars = '★'.repeat(data.rating) + '☆'.repeat(5 - data.rating);
+            
+            return `
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">"</div>
+                    <div class="testimonial-stars">${stars}</div>
+                    <p class="testimonial-text">"${data.message}"</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">${initials}</div>
+                        <div class="testimonial-info">
+                            <h4>${data.name}</h4>
+                            <p>Client from ${data.location}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading testimonials:', error);
+        container.innerHTML = '<p class="loading-text">No testimonials yet. Be the first to share your experience!</p>';
+    }
+}
+
+// Open feedback modal
+document.getElementById('feedbackBtn').addEventListener('click', () => {
+    document.getElementById('feedbackModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+});
+
+function closeFeedbackModal() {
+    document.getElementById('feedbackModal').classList.remove('show');
+    document.body.style.overflow = 'auto';
+    document.getElementById('feedbackForm').reset();
+    selectedRating = 0;
+    document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+    document.getElementById('feedbackFormMessage').style.display = 'none';
+}
+
+// Star rating
+document.querySelectorAll('.star').forEach(star => {
+    star.addEventListener('click', function() {
+        selectedRating = parseInt(this.dataset.rating);
+        document.getElementById('feedbackRating').value = selectedRating;
+        
+        document.querySelectorAll('.star').forEach((s, index) => {
+            if (index < selectedRating) {
+                s.classList.add('active');
+            } else {
+                s.classList.remove('active');
+            }
+        });
+    });
+});
+
+// Submit feedback
+document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (selectedRating === 0) {
+        showFeedbackMessage('Please select a rating.', 'error');
+        return;
+    }
+    
+    // Auto-approve 4-5 stars, manual approval for 1-3 stars
+    const autoApprove = selectedRating >= 4;
+    
+    const feedbackData = {
+        name: document.getElementById('feedbackName').value,
+        location: document.getElementById('feedbackLocation').value,
+        rating: selectedRating,
+        message: document.getElementById('feedbackMessage').value,
+        status: autoApprove ? 'approved' : 'pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    const submitBtn = e.target.querySelector('.btn-primary');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Submitting...';
+    submitBtn.disabled = true;
+    
+    try {
+        await db.collection('testimonials').add(feedbackData);
+        
+        if (autoApprove) {
+            showFeedbackMessage('Thank you for your feedback! Your review is now live on our website.', 'success');
+        } else {
+            showFeedbackMessage('Thank you for your feedback! It will be reviewed and published soon.', 'success');
+        }
+        
+        setTimeout(() => {
+            closeFeedbackModal();
+            // Reload testimonials if auto-approved
+            if (autoApprove && typeof loadTestimonials === 'function') {
+                loadTestimonials();
+            }
+        }, 2000);
+    } catch (error) {
+        console.error('Error submitting feedback:', error);
+        showFeedbackMessage('Error submitting feedback. Please try again.', 'error');
+    } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }
+});
+
+function showFeedbackMessage(message, type) {
+    const msgEl = document.getElementById('feedbackFormMessage');
+    msgEl.textContent = message;
+    msgEl.className = `form-message ${type}`;
+}
+
+// Load testimonials on page load
+if (typeof db !== 'undefined') {
+    loadTestimonials();
+}
+
+// ===========================
 // Scroll to Top Button
 // ===========================
 const scrollToTopBtn = document.getElementById('scrollToTop');
