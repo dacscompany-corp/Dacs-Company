@@ -18,13 +18,13 @@
 !*.svg
 !*.webp
 !*.ico
-# Videos excluded (too large for GitHub — host on Firebase Storage or YouTube)
-# !*.mp4
-# !*.webm
+!*.mp4
+!*.webm
 !*.ttf
 !*.woff
 !*.woff2
 !.gitignore
+!.gitattributes
 
 # ── Exclude generated/build folders ────────────────────────
 node_modules/
