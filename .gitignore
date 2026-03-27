@@ -23,6 +23,8 @@ assets/
 
 # ── Exclude generated files ─────────────────────────────────
 sw.js
+package.json
+package-lock.json
 *.apk
 *.aab
 *.idsig
