@@ -11,6 +11,18 @@
 !*.json
 !*.md
 !*.rules
+!*.png
+!*.jpg
+!*.jpeg
+!*.gif
+!*.svg
+!*.webp
+!*.ico
+!*.mp4
+!*.webm
+!*.ttf
+!*.woff
+!*.woff2
 !.gitignore
 
 # ── Exclude generated/build folders ────────────────────────
@@ -19,7 +31,6 @@ build/
 .gradle/
 gradle/
 app/
-assets/
 
 # ── Exclude generated files ─────────────────────────────────
 sw.js
