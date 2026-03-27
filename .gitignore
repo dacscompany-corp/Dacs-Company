@@ -1,7 +1,32 @@
-# Ignore everything except HTML, CSS, JS
+# ── Ignore everything by default ──────────────────────────
 *
+
+# ── Allow folders ──────────────────────────────────────────
 !*/
+
+# ── Web project files to include ───────────────────────────
 !*.html
 !*.css
 !*.js
+!*.json
+!*.md
+!*.rules
 !.gitignore
+
+# ── Exclude generated/build folders ────────────────────────
+node_modules/
+build/
+.gradle/
+gradle/
+app/
+assets/
+
+# ── Exclude generated files ─────────────────────────────────
+sw.js
+*.apk
+*.aab
+*.idsig
+*.keystore
+*.txt
+gradlew
+gradlew.bat
