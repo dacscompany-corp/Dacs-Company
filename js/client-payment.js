@@ -263,21 +263,21 @@
 
         return `
         <div style="border-bottom:1px solid #f3f4f6;">
-            <div style="display:flex;align-items:center;gap:16px;padding:16px 22px;">
+            <div class="pr-client-row-inner">
                 <div style="width:42px;height:42px;border-radius:10px;background:${iconBg[r.status]||'#f3f4f6'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${iconColor[r.status]||'#9ca3af'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
                     </svg>
                 </div>
-                <div style="flex:1;min-width:0;">
+                <div class="pr-client-row-text">
                     <div style="font-size:14px;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(r.billingPeriod || '—')}</div>
                     <div style="font-size:12px;color:#9ca3af;margin-top:2px;">${_esc(r.projectName || '')}${dueDisplay ? (r.projectName ? ' &nbsp;·&nbsp; Due ' : 'Due ') + dueDisplay.replace(/<[^>]*>/g,'').trim() : ''}</div>
                 </div>
-                <div style="text-align:right;flex-shrink:0;">
+                <div class="pr-client-row-right">
                     <div style="font-size:15px;font-weight:800;color:#1f2937;white-space:nowrap;">${_formatAmount(r.amount)}</div>
                     <span style="display:inline-block;margin-top:4px;background:${st.bg};color:${st.color};font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;">${st.label}</span>
                 </div>
-                ${actionHtml ? `<div style="flex-shrink:0;margin-left:8px;">${actionHtml}</div>` : ''}
+                ${actionHtml ? `<div class="pr-client-row-action">${actionHtml}</div>` : ''}
             </div>
             ${noteHtml}
         </div>`;
@@ -409,9 +409,9 @@
         const proofSection = document.getElementById('prPaymentProofSection');
         const tabsWrap     = document.getElementById('prMethodTabsWrap');
         if (!input || !reasonWrap || !btn) return;
-        const entered   = parseFloat(input.value);
+        const entered   = parseFloat((input.value || '').replace(/,/g, ''));
         const requested = parseFloat(input.dataset.requested || 0);
-        const isPartial = !isNaN(entered) && !isNaN(requested) && Math.abs(entered - requested) > 0.01;
+        const isPartial = !isNaN(entered) && requested > 0 && !isNaN(requested) && Math.abs(entered - requested) > 0.01;
         reasonWrap.style.display = isPartial ? 'block' : 'none';
         if (!isPartial && reasonTA) reasonTA.value = '';
         // In partial-request mode: hide QR and proof fields (not paying yet, just requesting approval)
@@ -447,7 +447,7 @@
         function clearErr()   { if (errDiv) { errDiv.style.display = 'none'; errDiv.textContent = ''; } }
         clearErr();
 
-        const paidAmountRaw = (document.getElementById('prClientAmountInput')?.value || '').trim();
+        const paidAmountRaw = (document.getElementById('prClientAmountInput')?.value || '').trim().replace(/,/g, '');
         const paidAmount    = parseFloat(paidAmountRaw);
         if (!paidAmountRaw || isNaN(paidAmount) || paidAmount <= 0) return showErr('Please enter a valid amount.');
         const partialReason = (document.getElementById('prPartialReason')?.value || '').trim();
@@ -630,7 +630,7 @@
 
         if (!_currentId && !_selfPayData) return showErr('No payment request selected.');
 
-        const paidAmountRaw   = (document.getElementById('prClientAmountInput')?.value || '').trim();
+        const paidAmountRaw   = (document.getElementById('prClientAmountInput')?.value || '').trim().replace(/,/g, '');
         const referenceNumber = (document.getElementById('prClientRefInput')?.value || '').trim();
         const receiptFile     = document.getElementById('prClientReceiptFile')?.files?.[0];
 

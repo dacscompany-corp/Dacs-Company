@@ -1453,7 +1453,7 @@
                 <div class="pr-form-row">
                     <div class="pr-form-group">
                         <label class="pr-form-label" for="prAmount">Amount (PHP) <span class="req">*</span></label>
-                        <input id="prAmount" class="pr-form-input" type="number" min="0" step="0.01" placeholder="0.00">
+                        <input id="prAmount" class="pr-form-input" type="text" inputmode="numeric" placeholder="0.00" oninput="this.value=this.value.replace(/[^0-9.]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,',')">
                     </div>
                     <div class="pr-form-group">
                         <label class="pr-form-label" for="prDueDate">Due Date <span class="req">*</span></label>

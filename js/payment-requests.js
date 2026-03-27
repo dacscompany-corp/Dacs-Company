@@ -218,7 +218,10 @@
         const email    = _esc(r.clientEmail || '');
         const period   = _esc(r.billingPeriod || '—');
         const project  = _esc(r.projectName  || '—');
-        const amount   = _formatAmount(r.amount);
+        const isPartial = r.paidAmount && r.paidAmount < r.amount;
+        const amount   = isPartial
+            ? `${_formatAmount(r.paidAmount)} <span style="font-size:11px;font-weight:600;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:99px;padding:1px 7px;">Partial</span><br><span style="font-size:11px;color:#9ca3af;font-weight:400;">of ${_formatAmount(r.amount)}</span>`
+            : _formatAmount(r.amount);
         const due      = _formatDate(r.dueDate);
         const statusBadge = _statusBadge(r.status);
 
@@ -242,6 +245,9 @@
                 <div class="un-actions">
                     <button class="un-btn-view" onclick="prViewRequest('${r.id}')">
                         <i data-lucide="eye" style="width:13px;height:13px;"></i> View
+                    </button>
+                    <button class="un-btn-toggle un-btn-deactivate" onclick="prDeleteRequest('${r.id}')">
+                        <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Delete
                     </button>
                 </div>
             </td>
@@ -387,6 +393,23 @@
             showErr('Error creating request: ' + e.message);
         } finally {
             if (btn) { btn.disabled = false; btn.textContent = 'Create Request'; }
+        }
+    };
+
+    // ══════════════════════════════════════════════════════
+    // DELETE REQUEST
+    // ══════════════════════════════════════════════════════
+
+    window.prDeleteRequest = async function (id) {
+        if (!confirm('Are you sure you want to delete this payment request? This cannot be undone.')) return;
+        try {
+            await db.collection('paymentRequests').doc(id).delete();
+            _allRequests = _allRequests.filter(r => r.id !== id);
+            _renderStats(_allRequests);
+            prFilterRequests();
+        } catch (e) {
+            console.error('prDeleteRequest error', e);
+            alert('Could not delete payment request. Please try again.');
         }
     };
 
