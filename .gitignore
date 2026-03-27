@@ -18,8 +18,9 @@
 !*.svg
 !*.webp
 !*.ico
-!*.mp4
-!*.webm
+# Videos excluded (too large for GitHub — host on Firebase Storage or YouTube)
+# !*.mp4
+# !*.webm
 !*.ttf
 !*.woff
 !*.woff2
