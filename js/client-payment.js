@@ -224,7 +224,7 @@
                 style="background:none;color:#c2410c;border:1.5px solid #fed7aa;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;">
                 Cancel Request
             </button>`;
-        } else if (r.status === 'verified' && r.invoiceId) {
+        } else if (r.status === 'verified') {
             actionHtml = `<button onclick="prPrintClientInvoice('${r.id}')"
                 style="display:inline-flex;align-items:center;gap:6px;background:#f8fafc;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;"
                 onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
