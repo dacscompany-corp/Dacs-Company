@@ -597,7 +597,13 @@
             <div class="pr-detail-row">
                 <span class="pr-detail-label">Verified By</span>
                 <span class="pr-detail-value">${_esc(r.verifiedBy || '—')}</span>
-            </div>` : '';
+            </div>
+            ${r.invoiceId ? `<div class="pr-detail-row" style="margin-top:12px;">
+                <button onclick="prPrintInvoice('${_esc(r.invoiceId)}')"
+                    style="display:inline-flex;align-items:center;gap:7px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;">
+                    <i data-lucide="printer" style="width:15px;height:15px;"></i> Print Invoice
+                </button>
+            </div>` : ''}` : '';
 
         body.innerHTML = `
             <div class="pr-detail-section">
@@ -663,6 +669,18 @@
         const modal = document.getElementById('prDetailModal');
         if (modal) modal.style.display = 'none';
         _currentId = null;
+    };
+
+    window.prPrintInvoice = async function (invoiceId) {
+        try {
+            const doc = await db.collection('invoices').doc(invoiceId).get();
+            if (!doc.exists) { _showToast('Invoice not found.', true); return; }
+            if (typeof window.invPrintById === 'function') {
+                window.invPrintById({ id: doc.id, ...doc.data() });
+            }
+        } catch (e) {
+            _showToast('Could not load invoice: ' + e.message, true);
+        }
     };
 
     // ══════════════════════════════════════════════════════
@@ -810,9 +828,32 @@
                 verifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 verifiedBy
             });
+
+            // Auto-generate invoice from this verified payment request
+            const req = _allRequests.find(x => x.id === id) || { id };
+            if (typeof window.invGenerateFromPaymentRequest === 'function') {
+                const invoiceId = await window.invGenerateFromPaymentRequest(req);
+                if (invoiceId) {
+                    // Fetch the generated invoice data and embed a snapshot in the payment request
+                    // so clients can view their invoice without needing direct invoices collection access
+                    let invoiceSnapshot = null;
+                    try {
+                        const invDoc = await db.collection('invoices').doc(invoiceId).get();
+                        if (invDoc.exists) invoiceSnapshot = invDoc.data();
+                    } catch (snapErr) {
+                        console.warn('PaymentRequests: could not fetch invoice snapshot', snapErr);
+                    }
+                    const updateData = { invoiceId };
+                    if (invoiceSnapshot) updateData.invoiceSnapshot = invoiceSnapshot;
+                    await db.collection('paymentRequests').doc(id).update(updateData);
+                    const r = _allRequests.find(x => x.id === id);
+                    if (r) { r.invoiceId = invoiceId; if (invoiceSnapshot) r.invoiceSnapshot = invoiceSnapshot; }
+                }
+            }
+
             prCloseDetailModal();
             _loadRequests();
-            _showToast('Payment marked as paid.');
+            _showToast('Payment marked as paid. Invoice generated.');
         } catch (e) {
             console.error('PaymentRequests: verify error', e);
             if (btn) { btn.disabled = false; btn.textContent = 'Yes, Mark as Paid'; }

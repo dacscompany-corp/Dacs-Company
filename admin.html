@@ -562,7 +562,7 @@
                         <h3 class="ov-empty-title">No billing periods yet</h3>
                         <p class="ov-empty-sub">Add a billing period to start tracking expenses.</p>
                     </div>
-                </div>
+                </div>
             </div>
 
             <!-- Hidden legacy DOM IDs for JS compatibility (dashboard stats hidden for now) -->
@@ -1562,6 +1562,13 @@
         <div class="exp-modal-header"><h2>📅 Add Month</h2><button class="exp-modal-close" onclick="closeExpModal('createProjectModal')">&times;</button></div>
         <form id="createProjectForm" onsubmit="handleCreateProject(event)">
             <div class="exp-form-group"><div id="createProjectFolderLabel" style="font-size:0.85rem;font-weight:700;color:#059669;margin-bottom:0.25rem;min-height:1.2rem;"></div></div>
+            <!-- Payment Request selector -->
+            <div class="exp-form-group" id="pmPrSelectWrap" style="display:none;">
+                <label style="font-weight:600;">Fill from Payment Request <span style="font-weight:400;color:#9ca3af;">(optional)</span></label>
+                <select id="pmPrSelect" onchange="onFillFromPaymentRequest()" style="width:100%;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                    <option value="">— Select a payment request —</option>
+                </select>
+            </div>
             <div class="exp-form-row">
                 <div class="exp-form-group">
                     <label>Month</label>

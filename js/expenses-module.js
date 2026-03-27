@@ -1760,8 +1760,63 @@ function openCreateMonthModal(folderId, defaultFundingType) {
         const radio = document.querySelector(`input[name="fundingType"][value="${defaultFundingType}"]`);
         if (radio) { radio.checked = true; onFundingTypeChange(); }
     }
+
+    // Load payment requests for the folder's client into the selector
+    const wrap   = document.getElementById('pmPrSelectWrap');
+    const select = document.getElementById('pmPrSelect');
+    if (wrap && select && folder && folder.clientEmail) {
+        wrap.style.display = '';
+        select.innerHTML = '<option value="">— Select a payment request —</option>';
+        db.collection('paymentRequests')
+            .where('clientEmail', '==', folder.clientEmail)
+            .get()
+            .then(snap => {
+                const statusLabel = { pending:'Pending', submitted:'Under Review', verified:'Paid', rejected:'Rejected', partial_pending:'Partial Pending', partial_approved:'Partial Approved' };
+                // Sort: pending/submitted first, then others
+                const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => {
+                        const pri = s => (s === 'pending' || s === 'submitted') ? 0 : 1;
+                        return pri(a.status) - pri(b.status) || (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+                    });
+                docs.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.id;
+                    const st  = statusLabel[r.status] || r.status;
+                    const amt = '₱' + Number(r.amount || 0).toLocaleString('en-PH');
+                    opt.textContent = `${r.billingPeriod || '—'}  ·  ${amt}  [${st}]`;
+                    opt.dataset.period = r.billingPeriod || '';
+                    opt.dataset.amount = r.amount || '';
+                    select.appendChild(opt);
+                });
+            })
+            .catch(() => { wrap.style.display = 'none'; });
+    } else if (wrap) {
+        wrap.style.display = 'none';
+    }
+
     openExpModal('createProjectModal');
 }
+
+window.onFillFromPaymentRequest = function () {
+    const select = document.getElementById('pmPrSelect');
+    if (!select || !select.value) return;
+    const opt    = select.options[select.selectedIndex];
+    const period = opt.dataset.period || '';
+    const amount = opt.dataset.amount || '';
+
+    // Fill month
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const monthSel = document.getElementById('projMonth');
+    if (monthSel && months.includes(period)) {
+        monthSel.value = period;
+    }
+
+    // Fill amount
+    const budgetInput = document.getElementById('projBudget');
+    if (budgetInput && amount) {
+        budgetInput.value = Number(amount).toLocaleString('en-PH');
+    }
+};
 
 function onFundingTypeChange() {
     const val = document.querySelector('input[name="fundingType"]:checked')?.value || 'downpayment';
@@ -6124,6 +6179,7 @@ function mvpRenderOvFolderDetail(folderId) {
 
     // Billing periods
     mvpRenderOvBillingPeriods(fid);
+
 }
 
 function mvpRenderOvBillingPeriods(folderId) {
@@ -6213,6 +6269,104 @@ function mvpRenderOvBillingPeriods(folderId) {
             + '</div>';
     }).join('');
 }
+
+// ─── (Client Payments Panel removed) ──────────────────────────────────────────
+
+async function _ovRenderPayments(folder) {
+    var listEl = document.getElementById('mvpOvPaymentList');
+    if (!listEl) return;
+
+    var clientEmail = folder ? folder.clientEmail : null;
+    _ovPayFolderId    = folder ? folder.id    : null;
+    _ovPayFolderEmail = clientEmail || null;
+
+    if (!clientEmail) {
+        listEl.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:16px 0;">No client assigned to this project folder.</div>';
+        return;
+    }
+
+    listEl.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:16px 0;">Loading…</div>';
+
+    try {
+        var snap = await db.collection('paymentRequests')
+            .where('clientEmail', '==', clientEmail)
+            .get();
+
+        var docs = snap.docs.slice().sort(function(a, b) {
+            var at = a.data().createdAt, bt = b.data().createdAt;
+            var am = at ? (at.seconds || 0) : 0, bm = bt ? (bt.seconds || 0) : 0;
+            return bm - am;
+        });
+
+        if (snap.empty) {
+            listEl.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:20px 0;text-align:center;">No payment requests yet. Click <strong>Add Payment</strong> to create one.</div>';
+            return;
+        }
+
+        var statusMap = {
+            pending:         { label: 'Pending',        bg: '#fffbeb', color: '#d97706' },
+            submitted:       { label: 'Under Review',   bg: '#eff6ff', color: '#1d4ed8' },
+            partial_pending: { label: 'Partial Pending', bg: '#ffedd5', color: '#c2410c' },
+            partial_approved:{ label: 'Partial Approved', bg: '#ecfdf5', color: '#059669' },
+            verified:        { label: 'Paid',           bg: '#d1fae5', color: '#065f46' },
+            rejected:        { label: 'Rejected',       bg: '#fee2e2', color: '#b91c1c' },
+        };
+
+        function _fmtTs(ts) {
+            if (!ts) return '—';
+            var d = ts.toDate ? ts.toDate() : new Date(ts.seconds ? ts.seconds * 1000 : ts);
+            return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function _fmtAmt(n) {
+            return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        var rows = docs.map(function(doc) {
+            var r  = doc.data();
+            var st = statusMap[r.status] || { label: r.status, bg: '#f3f4f6', color: '#6b7280' };
+            return '<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f3f4f6;">'
+                + '<div style="flex:1;min-width:0;">'
+                +   '<div style="font-size:13.5px;font-weight:600;color:#111827;">' + (r.billingPeriod || r.description || '—') + '</div>'
+                +   '<div style="font-size:12px;color:#6b7280;margin-top:2px;">' + (r.projectName || '') + (r.projectName && r.createdAt ? ' · ' : '') + _fmtTs(r.createdAt) + '</div>'
+                + '</div>'
+                + '<div style="text-align:right;white-space:nowrap;">'
+                +   '<div style="font-size:13.5px;font-weight:700;color:#111827;">' + _fmtAmt(r.amount) + '</div>'
+                +   '<span style="display:inline-block;margin-top:3px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:' + st.bg + ';color:' + st.color + ';">' + st.label + '</span>'
+                + '</div>'
+                + '</div>';
+        }).join('');
+
+        listEl.innerHTML = '<div style="padding:0 2px;">' + rows + '</div>';
+
+    } catch (e) {
+        listEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:16px 0;">Could not load payments: ' + e.message + '</div>';
+    }
+}
+
+// Opens the payment request create modal with the current folder's client pre-selected
+window.prOpenCreateModalForFolder = async function () {
+    if (typeof window.prOpenCreateModal !== 'function') return;
+    await window.prOpenCreateModal();
+
+    // Pre-fill client if folder has clientEmail
+    var email = _ovPayFolderEmail;
+    if (!email) return;
+
+    var select = document.getElementById('prClientSelect');
+    if (!select) return;
+
+    // Wait a tick for the dropdown to finish populating if needed
+    setTimeout(function () {
+        for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].dataset.email === email) {
+                select.options[i].selected = true;
+                select.dispatchEvent(new Event('change'));
+                break;
+            }
+        }
+    }, 100);
+};
 
 // ─── Billing Period Detail Modal ─────────────────────────────────────────────
 var _pdDonutChart = null;

@@ -188,16 +188,23 @@ service cloud.firestore {
     match /invoices/{invoiceId} {
       allow read, update, delete: if canAccessData(resource.data.userId);
       allow create: if canWriteData(request.resource.data.userId);
+      // Clients can read their own invoices (match by email or uid)
+      allow read: if isAuthenticated() && (
+        resource.data.clientEmail == request.auth.token.email ||
+        resource.data.clientUid   == request.auth.uid
+      );
     }
 
     // Client user profiles — each client can only read/write their own doc
     // Owner/staff can list all clients
     match /clientUsers/{userId} {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
-      allow read: if isOwner() || isStaff();
+      allow read, write: if isOwner() || isStaff();
     }
 
     match /boqDocuments/{boqId} {
+      // Owner/staff can list all (needed for client accounts page)
+      allow read, update, delete: if isOwner() || isStaff();
       allow read, update, delete: if canAccessData(resource.data.userId);
       // Clients read BOQ docs where their email matches the assigned clientEmail
       allow read: if isAuthenticated()
@@ -215,6 +222,12 @@ service cloud.firestore {
       // Clients can read their own payment requests
       allow read: if isAuthenticated()
                   && request.auth.token.email == resource.data.clientEmail;
+
+      // Clients can self-initiate a payment request (must set their own email/uid and status=submitted)
+      allow create: if isAuthenticated()
+                    && request.auth.token.email == request.resource.data.clientEmail
+                    && request.auth.uid          == request.resource.data.clientUid
+                    && request.resource.data.status == 'submitted';
 
       // Clients can update their own requests for allowed status transitions
       allow update: if isAuthenticated()

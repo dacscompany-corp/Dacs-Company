@@ -284,12 +284,6 @@
                     <input type="date" id="invDate" class="inv-input"
                            value="${d.date || _todayStr()}">
                 </div>
-                <div class="inv-field">
-                    <label>VAT Rate (%)</label>
-                    <input type="number" id="invVatRate" class="inv-input"
-                           value="${vatRate}" min="0" max="100" step="0.01"
-                           oninput="window.invRecalc()">
-                </div>
             </div>
 
             <div class="inv-section-title" style="margin-top:20px;">Bill To</div>
@@ -338,10 +332,6 @@
                 <div class="inv-totals-row">
                     <span>Total Sales</span>
                     <span id="invSubtotal">₱ 0.00</span>
-                </div>
-                <div class="inv-totals-row">
-                    <span>VAT (<span id="invVatRateLabel">${vatRate}</span>%)</span>
-                    <span id="invVatAmt">₱ 0.00</span>
                 </div>
                 <div class="inv-totals-row inv-totals-row--total">
                     <span>TOTAL AMOUNT DUE</span>
@@ -452,13 +442,8 @@
             if (amtEl) amtEl.textContent = _fmt(amt);
         });
 
-        const vatRate = parseFloat(document.getElementById('invVatRate')?.value) || 0;
-        const vatAmt  = subtotal * vatRate / 100;
-
-        _setText('invSubtotal',     _fmt(subtotal));
-        _setText('invVatAmt',       _fmt(vatAmt));
-        _setText('invTotal',        _fmt(subtotal + vatAmt));
-        _setText('invVatRateLabel', vatRate);
+        _setText('invSubtotal', _fmt(subtotal));
+        _setText('invTotal',    _fmt(subtotal));
     };
 
     // ══════════════════════════════════════════════════════
@@ -479,9 +464,7 @@
             }
         });
 
-        const vatRate   = parseFloat(document.getElementById('invVatRate')?.value) || 0;
-        const subtotal  = items.reduce((s, it) => s + it.amount, 0);
-        const vatAmount = subtotal * vatRate / 100;
+        const subtotal = items.reduce((s, it) => s + it.amount, 0);
 
         return {
             userId:          _ownerUid,
@@ -494,10 +477,8 @@
             clientTin:       (document.getElementById('invClientTin')?.value       || '').trim(),
             clientAddress:   (document.getElementById('invClientAddress')?.value   || '').trim(),
             items,
-            vatRate,
             subtotal,
-            vatAmount,
-            totalAmount: subtotal + vatAmount,
+            totalAmount: subtotal,
             paymentDetails: {
                 bank:        (document.getElementById('invBank')?.value        || '').trim(),
                 accountNo:   (document.getElementById('invAccountNo')?.value   || '').trim(),
@@ -564,6 +545,62 @@
 
     window.invSaveDraft = function () { _save('draft'); };
     window.invIssue     = function () { _save('issued'); };
+
+    // ══════════════════════════════════════════════════════
+    // AUTO-GENERATE INVOICE FROM VERIFIED PAYMENT REQUEST
+    // ══════════════════════════════════════════════════════
+
+    window.invGenerateFromPaymentRequest = async function (req) {
+        try {
+            // Ensure owner uid and defaults are ready
+            if (!_ownerUid) await _resolveOwnerUid();
+            if (!_defaults || !Object.keys(_defaults).length) await _loadDefaults();
+
+            const invoiceNo = await _generateInvoiceNo();
+            const amount    = parseFloat(req.paidAmount ?? req.amount) || 0;
+            const desc      = [req.projectName, req.billingPeriod].filter(Boolean).join(' – ');
+            const pd        = _defaults.paymentDetails || {};
+
+            const data = {
+                userId:          _ownerUid,
+                invoiceNo,
+                date:            _todayStr(),
+                businessName:    _defaults.businessName    || '',
+                businessTin:     _defaults.businessTin     || '',
+                businessAddress: _defaults.businessAddress || '',
+                clientName:      req.clientName || req.clientEmail || '',
+                clientTin:       req.clientTin  || '',
+                clientAddress:   req.clientAddress || '',
+                items: [{ description: desc || 'Payment', qty: 1, unitPrice: amount, discount: 0, amount }],
+                subtotal:        amount,
+                totalAmount:     amount,
+                paymentDetails:  { bank: pd.bank || '', accountNo: pd.accountNo || '', accountName: pd.accountName || '', branch: pd.branch || '' },
+                notes:           req.referenceNumber ? 'Ref. No.: ' + req.referenceNumber : '',
+                status:          'issued',
+                paymentRequestId: req.id   || '',
+                clientEmail:     req.clientEmail || '',
+                clientUid:       req.clientUid   || ''
+            };
+
+            const now = firebase.firestore.FieldValue.serverTimestamp();
+            const ref = await db.collection('invoices').add({
+                ...data,
+                createdAt: now,
+                updatedAt: now,
+                createdBy: firebase.auth().currentUser?.uid || ''
+            });
+
+            // Keep local cache in sync
+            _invoices.unshift({ id: ref.id, ...data });
+
+            return ref.id;
+        } catch (e) {
+            console.error('InvoiceModule: auto-generate error', e);
+            return null;
+        }
+    };
+
+    window.invPrintById = function (inv) { _doPrint(inv); };
 
     // ══════════════════════════════════════════════════════
     // DELETE
@@ -735,7 +772,6 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff;
   <div class="totals-wrap">
     <table class="totals">
       <tr><td>Total Sales</td><td>${_fmt(inv.subtotal || 0)}</td></tr>
-      <tr><td>VAT (${_pEsc(vatLabel)})</td><td>${_fmt(inv.vatAmount || 0)}</td></tr>
       <tr class="grand"><td>TOTAL AMOUNT DUE</td><td>${_fmt(inv.totalAmount || 0)}</td></tr>
     </table>
   </div>

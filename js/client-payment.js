@@ -6,9 +6,10 @@
 (function () {
     'use strict';
 
-    let _requests   = [];
-    let _globalQR   = null;  // loaded from settings/paymentQR
-    let _currentId  = null;  // id being paid
+    let _requests     = [];
+    let _globalQR     = null;  // loaded from settings/paymentQR
+    let _currentId    = null;  // id being paid (null = self-pay mode)
+    let _selfPayData  = null;  // billing period data for self-initiated payment
 
     // ══════════════════════════════════════════════════════
     // PUBLIC ENTRY POINT
@@ -37,8 +38,11 @@
                 .sort((a, b) => _tsToMs(b.createdAt) - _tsToMs(a.createdAt));
 
 
+            window._clientPayRequests = _requests;
             _renderList(listEl);
             _updateNavBadge();
+            window.initClientSelfPay();
+            if (typeof window.refreshBilledKPI === 'function') window.refreshBilledKPI();
         } catch (e) {
             console.error('ClientPayment: load error', e);
             listEl.innerHTML = `<div style="color:#b91c1c;font-size:13.5px;padding:16px 0;">Could not load payment requests. ${_esc(e.message)}</div>`;
@@ -51,11 +55,15 @@
 
     function _renderList(listEl) {
         if (!_requests.length) {
-            listEl.innerHTML = '<div style="color:#9ca3af;font-size:14px;padding:20px 0;text-align:center;">No payment requests yet.</div>';
+            listEl.innerHTML = `<div style="padding:40px 24px;text-align:center;">
+                <div style="font-size:32px;margin-bottom:10px;">🧾</div>
+                <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:4px;">No payment requests yet</div>
+                <div style="font-size:13px;color:#9ca3af;">Payment requests from your company will appear here.</div>
+            </div>`;
             return;
         }
 
-        listEl.innerHTML = `<div class="pr-client-cards-grid">${_requests.map(_buildCard).join('')}</div>`;
+        listEl.innerHTML = `<div>${_requests.map(_buildRow).join('')}</div>`;
 
         // Init drag-and-drop on upload zones in the pay modal
         listEl.querySelectorAll('.pr-upload-zone').forEach(zone => {
@@ -186,6 +194,95 @@
         </div>`;
     }
 
+    function _buildRow(r) {
+        const duMs    = _tsToMs(r.dueDate);
+        const overdue = duMs && duMs < Date.now() && r.status !== 'verified';
+
+        const statusMap = {
+            pending:         { color:'#d97706', bg:'#fffbeb', label:'Pending'          },
+            partial_pending: { color:'#c2410c', bg:'#ffedd5', label:'Approval Pending' },
+            submitted:       { color:'#1d4ed8', bg:'#eff6ff', label:'Under Review'     },
+            verified:        { color:'#065f46', bg:'#d1fae5', label:'Paid'             },
+            rejected:        { color:'#b91c1c', bg:'#fee2e2', label:'Rejected'         },
+        };
+        const st = statusMap[r.status] || { color:'#6b7280', bg:'#f3f4f6', label: r.status };
+
+        // Icon background per status
+        const iconBg = { pending:'#fef9ee', submitted:'#eff6ff', verified:'#ecfdf5', rejected:'#fff5f5', partial_pending:'#fff7ed' };
+        const iconColor = { pending:'#f59e0b', submitted:'#3b82f6', verified:'#00a85e', rejected:'#ef4444', partial_pending:'#ea580c' };
+
+        // Action
+        let actionHtml = '';
+        if (r.status === 'pending' || r.status === 'rejected') {
+            actionHtml = `<button onclick="prClientOpenPayModal('${r.id}')"
+                style="background:#00a85e;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s;"
+                onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                ${r.status === 'rejected' ? 'Resubmit' : 'Pay Now'}
+            </button>`;
+        } else if (r.status === 'partial_pending') {
+            actionHtml = `<button onclick="prClientShowCancelPartial('${r.id}')"
+                style="background:none;color:#c2410c;border:1.5px solid #fed7aa;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;">
+                Cancel Request
+            </button>`;
+        } else if (r.status === 'verified' && r.invoiceId) {
+            actionHtml = `<button onclick="prPrintClientInvoice('${r.id}')"
+                style="display:inline-flex;align-items:center;gap:6px;background:#f8fafc;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;"
+                onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                </svg>
+                View Invoice
+            </button>`;
+        }
+
+        // Note strip
+        let noteHtml = '';
+        if (r.status === 'rejected' && r.rejectedReason) {
+            noteHtml = `<div style="padding:10px 22px 10px 80px;background:#fff5f5;border-top:1px solid #fee2e2;font-size:12.5px;color:#b91c1c;">
+                <strong>Rejection reason:</strong> ${_esc(r.rejectedReason)}</div>`;
+        } else if (r.status === 'partial_pending') {
+            noteHtml = `<div style="padding:10px 22px 10px 80px;background:#fff7ed;border-top:1px solid #fed7aa;font-size:12.5px;color:#c2410c;">
+                Partial payment of <strong>${_formatAmount(r.requestedPartialAmount)}</strong> pending admin approval.
+                <div id="prCancelPartialConfirm-${r.id}" style="display:none;margin-top:8px;display:flex;gap:8px;align-items:center;">
+                    <span style="font-size:12px;color:#374151;">Cancel this request?</span>
+                    <button onclick="prClientCancelPartialRequest('${r.id}')" style="font-size:12px;color:#fff;background:#dc2626;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;">Yes, Cancel</button>
+                    <button onclick="prClientHideCancelPartial('${r.id}')" style="font-size:12px;color:#6b7280;background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;cursor:pointer;">Keep</button>
+                </div>
+            </div>`;
+        } else if (r.approvedPartialAmount && r.status !== 'verified') {
+            noteHtml = `<div style="padding:10px 22px 10px 80px;background:#f0fdf9;border-top:1px solid #6ee7b7;font-size:12.5px;color:#065f46;">
+                Partial payment approved — please pay <strong>${_formatAmount(r.approvedPartialAmount)}</strong>.</div>`;
+        } else if (r.status === 'submitted' && r.referenceNumber) {
+            noteHtml = `<div style="padding:10px 22px 10px 80px;background:#eff6ff;border-top:1px solid #bfdbfe;font-size:12.5px;color:#1d4ed8;">
+                Ref #: <strong>${_esc(r.referenceNumber)}</strong>${r.paidAmount ? ` &nbsp;·&nbsp; Paid: <strong>${_formatAmount(r.paidAmount)}</strong>` : ''} &nbsp;·&nbsp; Awaiting admin verification.</div>`;
+        }
+
+        const dueDisplay = duMs
+            ? `<span style="color:${overdue ? '#dc2626' : '#6b7280'};font-weight:${overdue ? '600' : '400'};">${_formatDate(r.dueDate)}${overdue ? ' · Overdue' : ''}</span>`
+            : '';
+
+        return `
+        <div style="border-bottom:1px solid #f3f4f6;">
+            <div style="display:flex;align-items:center;gap:16px;padding:16px 22px;">
+                <div style="width:42px;height:42px;border-radius:10px;background:${iconBg[r.status]||'#f3f4f6'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${iconColor[r.status]||'#9ca3af'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                    </svg>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:14px;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(r.billingPeriod || '—')}</div>
+                    <div style="font-size:12px;color:#9ca3af;margin-top:2px;">${_esc(r.projectName || '')}${dueDisplay ? (r.projectName ? ' &nbsp;·&nbsp; Due ' : 'Due ') + dueDisplay.replace(/<[^>]*>/g,'').trim() : ''}</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                    <div style="font-size:15px;font-weight:800;color:#1f2937;white-space:nowrap;">${_formatAmount(r.amount)}</div>
+                    <span style="display:inline-block;margin-top:4px;background:${st.bg};color:${st.color};font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;">${st.label}</span>
+                </div>
+                ${actionHtml ? `<div style="flex-shrink:0;margin-left:8px;">${actionHtml}</div>` : ''}
+            </div>
+            ${noteHtml}
+        </div>`;
+    }
+
     // ══════════════════════════════════════════════════════
     // PAY MODAL
     // ══════════════════════════════════════════════════════
@@ -218,6 +315,10 @@
         // Reset tab active state
         if (tabGcash) tabGcash.classList.toggle('active', defaultMethod !== 'bank');
         if (tabBank)  tabBank.classList.toggle('active',  defaultMethod === 'bank');
+
+        // Hide self-pay description field
+        const descWrap = document.getElementById('prSelfPayDescWrap');
+        if (descWrap) descWrap.style.display = 'none';
 
         // Set billing period heading
         const titleEl = document.getElementById('prClientPayTitle');
@@ -382,17 +483,92 @@
     window.prClientClosePayModal = function () {
         const modal = document.getElementById('prClientPayModal');
         if (modal) modal.style.display = 'none';
-        _currentId = null;
+        _currentId   = null;
+        _selfPayData = null;
+    };
+
+    // ── Self-initiated payment (no admin request needed) ──
+    window.prClientOpenSelfPayModal = function (data) {
+        // data is optional — if not provided, client fills everything in manually
+        _currentId   = null;
+        _selfPayData = data || {};
+
+        const modal = document.getElementById('prClientPayModal');
+        if (!modal) return;
+
+        // QR setup
+        const hasGcash = !!(_globalQR?.gcashQrBase64);
+        const hasBank  = !!(_globalQR?.bankQrBase64);
+        const tabsWrap = document.getElementById('prMethodTabsWrap');
+        const tabGcash = document.getElementById('prTabGcash');
+        const tabBank  = document.getElementById('prTabBank');
+        const tabsVisible = hasGcash && hasBank;
+        if (tabsWrap) { tabsWrap.style.display = tabsVisible ? 'block' : 'none'; }
+        if (tabGcash) tabGcash.style.display = hasGcash ? '' : 'none';
+        if (tabBank)  tabBank.style.display  = hasBank  ? '' : 'none';
+        const defaultMethod = hasGcash ? 'gcash' : (hasBank ? 'bank' : 'any');
+        _setQRForMethod(defaultMethod);
+        if (tabGcash) tabGcash.classList.toggle('active', defaultMethod !== 'bank');
+        if (tabBank)  tabBank.classList.toggle('active',  defaultMethod === 'bank');
+
+        // Title & amount
+        const titleEl = document.getElementById('prClientPayTitle');
+        if (titleEl) titleEl.textContent = 'Self Payment';
+        const amtEl = document.getElementById('prClientPayAmount');
+        if (amtEl) amtEl.textContent = '';
+
+        // Show self-pay fields, auto-fill month
+        const descWrap = document.getElementById('prSelfPayDescWrap');
+        const descInput = document.getElementById('prSelfPayDesc');
+        const monthInput = document.getElementById('prSelfPayMonth');
+        if (descWrap) descWrap.style.display = '';
+        if (descInput) descInput.value = '';
+        if (monthInput) {
+            const now = new Date();
+            monthInput.value = now.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+        }
+        const reqAmtEl = document.getElementById('prClientRequestedAmt');
+        if (reqAmtEl) reqAmtEl.closest?.('.pr-form-group') && (reqAmtEl.parentElement.parentElement.querySelector('div:last-child').style.display = 'none');
+
+        // Amount input — blank, client fills in
+        const amtInput = document.getElementById('prClientAmountInput');
+        if (amtInput) {
+            amtInput.value             = '';
+            amtInput.dataset.requested = 0;
+            amtInput.readOnly          = false;
+            amtInput.style.background  = '';
+            amtInput.style.borderColor = '';
+        }
+
+        // Reset
+        const btn = document.getElementById('prClientSubmitBtn');
+        if (btn) { btn.textContent = 'Submit Payment'; btn.dataset.mode = 'submit'; btn.disabled = false; }
+        const reasonWrap = document.getElementById('prPartialReasonWrap');
+        const reasonTA   = document.getElementById('prPartialReason');
+        if (reasonWrap) reasonWrap.style.display = 'none';
+        if (reasonTA)   reasonTA.value = '';
+        const refInput  = document.getElementById('prClientRefInput');
+        if (refInput) refInput.value = '';
+        const fileInput = document.getElementById('prClientReceiptFile');
+        if (fileInput) fileInput.value = '';
+        const preview = document.getElementById('prClientReceiptPreview');
+        if (preview) preview.style.display = 'none';
+        const errDiv = document.getElementById('prClientPayError');
+        if (errDiv) errDiv.style.display = 'none';
+        const qrSection    = document.getElementById('prQRSection');
+        const proofSection = document.getElementById('prPaymentProofSection');
+        if (qrSection)    qrSection.style.display    = '';
+        if (proofSection) proofSection.style.display  = '';
+
+        modal.style.display = 'flex';
     };
 
     // ── Cancel Partial Request ──
     window.prClientShowCancelPartial = function (id) {
-        document.getElementById(`prCancelPartialWrap-${id}`).style.display    = 'none';
         document.getElementById(`prCancelPartialConfirm-${id}`).style.display = 'block';
     };
 
     window.prClientHideCancelPartial = function (id) {
-        document.getElementById(`prCancelPartialWrap-${id}`).style.display    = 'block';
         document.getElementById(`prCancelPartialConfirm-${id}`).style.display = 'none';
     };
 
@@ -452,7 +628,7 @@
         }
         clearErr();
 
-        if (!_currentId) return showErr('No payment request selected.');
+        if (!_currentId && !_selfPayData) return showErr('No payment request selected.');
 
         const paidAmountRaw   = (document.getElementById('prClientAmountInput')?.value || '').trim();
         const referenceNumber = (document.getElementById('prClientRefInput')?.value || '').trim();
@@ -477,33 +653,67 @@
             // 1. Compress + convert receipt to base64 (avoids CORS/Storage issues)
             const proofBase64 = await _compressImageToBase64(receiptFile, 1200, 0.75);
 
-            // 2. Update Firestore doc
-            await db.collection('paymentRequests').doc(_currentId).update({
-                status:          'submitted',
-                proofBase64,
-                referenceNumber,
-                paidAmount,
-                partialReason:   isPartial ? partialReason : null,
-                submittedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            const now = firebase.firestore.FieldValue.serverTimestamp();
 
-            // 3. Update local cache
-            const req = _requests.find(x => x.id === _currentId);
-            if (req) {
-                req.status          = 'submitted';
-                req.proofBase64     = proofBase64;
-                req.referenceNumber = referenceNumber;
-                req.paidAmount      = paidAmount;
-                req.partialReason   = isPartial ? partialReason : null;
-                req.submittedAt     = new Date();
+            if (_selfPayData !== null) {
+                // Self-initiated: create a new payment request
+                const profile  = typeof currentProfile !== 'undefined' ? currentProfile : {};
+                const user     = typeof currentUser    !== 'undefined' ? currentUser    : {};
+                const descVal  = (document.getElementById('prSelfPayDesc')?.value  || '').trim();
+                const monthVal = (document.getElementById('prSelfPayMonth')?.value || '').trim();
+                if (!descVal) { if (btn) { btn.disabled = false; btn.textContent = 'Submit Payment'; } return showErr('Please enter a payment description.'); }
+                const newReq  = {
+                    clientUid:       user.uid          || '',
+                    clientEmail:     user.email        || '',
+                    clientName:      (profile.firstName ? profile.firstName + ' ' + (profile.lastName || '') : user.email || '').trim(),
+                    billingPeriod:   monthVal ? `${descVal} – ${monthVal}` : descVal,
+                    projectName:     _selfPayData.projectName || '',
+                    amount:          paidAmount,
+                    dueDate:         null,
+                    notes:           'Client-initiated payment',
+                    status:          'submitted',
+                    createdAt:       now,
+                    createdBy:       user.email || '',
+                    proofBase64,
+                    referenceNumber,
+                    paidAmount,
+                    partialReason:   isPartial ? partialReason : null,
+                    submittedAt:     now,
+                    verifiedAt:      null,
+                    verifiedBy:      null,
+                    rejectedReason:  null,
+                    rejectedAt:      null
+                };
+                const ref = await db.collection('paymentRequests').add(newReq);
+                _requests.unshift({ id: ref.id, ...newReq });
+                window._clientPayRequests = _requests;
+            } else {
+                // Existing request: update it
+                await db.collection('paymentRequests').doc(_currentId).update({
+                    status:        'submitted',
+                    proofBase64,
+                    referenceNumber,
+                    paidAmount,
+                    partialReason: isPartial ? partialReason : null,
+                    submittedAt:   now
+                });
+                const req = _requests.find(x => x.id === _currentId);
+                if (req) {
+                    req.status          = 'submitted';
+                    req.proofBase64     = proofBase64;
+                    req.referenceNumber = referenceNumber;
+                    req.paidAmount      = paidAmount;
+                    req.partialReason   = isPartial ? partialReason : null;
+                    req.submittedAt     = new Date();
+                }
             }
 
             prClientClosePayModal();
 
-            // Re-render list
             const listEl = document.getElementById('pr-client-list');
             if (listEl) _renderList(listEl);
             _updateNavBadge();
+            window.initClientSelfPay();
             _showClientToast('Payment submitted! Please wait for admin verification.');
 
         } catch (e) {
@@ -623,5 +833,311 @@
         const label = labels[status] || status;
         return `<span class="pr-status ${cls}"><span class="pr-status-dot"></span>${label}</span>`;
     }
+
+    // ══════════════════════════════════════════════════════
+    // CLIENT SELF-PAY (billing period cards)
+    // ══════════════════════════════════════════════════════
+
+    window.initClientSelfPay = function () {
+        const el = document.getElementById('client-selfpay-list');
+        if (!el) return;
+
+        const projects = typeof currentProjects !== 'undefined' ? currentProjects : [];
+        const folders  = typeof currentFolders  !== 'undefined' ? currentFolders  : [];
+
+        if (!projects.length) {
+            el.innerHTML = '<div style="color:#9ca3af;font-size:14px;padding:20px 0;text-align:center;">No billing periods available.</div>';
+            return;
+        }
+
+        const cards = projects.map(p => {
+            const folder  = folders.find(f => f.id === p.folderId);
+            const period  = [(p.month || ''), (p.year || '')].filter(Boolean).join(' ');
+            const project = folder?.name || '';
+            const amount  = parseFloat(p.monthlyBudget) || 0;
+            const desc    = typeof formatFundingType === 'function'
+                ? formatFundingType(p.fundingType, p.billingNumber)
+                : (p.fundingType || '');
+
+            // Check if already has a matching payment request
+            const req = _requests.find(r => Math.abs((parseFloat(r.amount) || 0) - amount) < 0.01);
+
+            const statusMap = {
+                pending:         ['#f59e0b', 'Pending Payment'],
+                partial_pending: ['#d97706', 'Approval Pending'],
+                submitted:       ['#2563eb', 'Under Review'],
+                verified:        ['#00a85e', 'Paid'],
+                rejected:        ['#dc2626', 'Rejected']
+            };
+
+            let actionHtml = '';
+            let statusHtml = '';
+
+            if (req) {
+                const [color, label] = statusMap[req.status] || ['#6b7280', req.status];
+                statusHtml = `<span style="font-size:11px;font-weight:700;color:${color};">● ${label}</span>`;
+
+                if (req.status === 'pending' || req.status === 'rejected') {
+                    actionHtml = `<button onclick="prClientOpenPayModal('${req.id}')"
+                        class="pr-client-pay-btn" style="margin-top:12px;width:100%;">
+                        ${req.status === 'rejected' ? 'Resubmit Payment' : 'Pay Now'}
+                    </button>`;
+                } else if (req.status === 'verified') {
+                    actionHtml = `<div style="margin-top:12px;background:#ecfdf5;border-radius:8px;padding:10px;text-align:center;font-size:13px;font-weight:600;color:#00a85e;">
+                        ✓ Payment Verified
+                    </div>`;
+                } else if (req.status === 'submitted') {
+                    actionHtml = `<div style="margin-top:12px;background:#eff6ff;border-radius:8px;padding:10px;text-align:center;font-size:13px;font-weight:600;color:#2563eb;">
+                        Awaiting Verification
+                    </div>`;
+                }
+            } else {
+                statusHtml = `<span style="font-size:11px;font-weight:700;color:#9ca3af;">● Unpaid</span>`;
+                const data = JSON.stringify({ billingPeriod: period, projectName: project, amount }).replace(/"/g, '&quot;');
+                actionHtml = `<button onclick="prClientOpenSelfPayModal(${data})"
+                    class="pr-client-pay-btn" style="margin-top:12px;width:100%;">
+                    Pay Now
+                </button>`;
+            }
+
+            return `
+            <div class="pr-client-card">
+                <div class="pr-client-card-header">
+                    <div>
+                        <div class="pr-client-card-title">${_esc(period)}</div>
+                        ${project ? `<div class="pr-client-card-sub">${_esc(project)}</div>` : ''}
+                    </div>
+                    ${statusHtml}
+                </div>
+                <div>
+                    <div class="pr-client-card-amount">${_formatAmount(amount)}</div>
+                    <div style="font-size:12px;color:#6b7280;margin-top:4px;">${_esc(desc)}</div>
+                </div>
+                ${actionHtml}
+            </div>`;
+        });
+
+        el.innerHTML = `<div class="pr-client-cards-grid">${cards.join('')}</div>`;
+    };
+
+    // ══════════════════════════════════════════════════════
+    // CLIENT INVOICES
+    // ══════════════════════════════════════════════════════
+
+    window.initClientInvoices = async function () {
+        if (!currentUser || !currentUser.email) return;
+        const el = document.getElementById('client-invoice-list');
+        if (!el) return;
+
+        el.innerHTML = '<div style="color:#9ca3af;font-size:14px;padding:20px 0;"><div class="un-loading-spinner" style="display:inline-block;vertical-align:middle;margin-right:10px;"></div>Loading invoices\u2026</div>';
+
+        try {
+            const snap = await db.collection('invoices')
+                .where('clientEmail', '==', currentUser.email)
+                .where('status', '==', 'issued')
+                .get();
+
+            const invoices = snap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => _tsToMs(b.createdAt) - _tsToMs(a.createdAt));
+
+            if (!invoices.length) {
+                el.innerHTML = `<div style="padding:40px 24px;text-align:center;">
+                    <div style="font-size:32px;margin-bottom:10px;">📄</div>
+                    <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:4px;">No invoices yet</div>
+                    <div style="font-size:13px;color:#9ca3af;">Invoices will appear here once your payments are verified.</div>
+                </div>`;
+                return;
+            }
+
+            el.innerHTML = `<div>${invoices.map(_buildInvoiceCard).join('')}</div>`;
+        } catch (e) {
+            console.error('ClientInvoices: load error', e);
+            el.innerHTML = `<div style="color:#b91c1c;font-size:13.5px;padding:16px 0;">Could not load invoices. ${_esc(e.message)}</div>`;
+        }
+    };
+
+    function _buildInvoiceCard(inv) {
+        const dateStr = inv.date
+            ? new Date(inv.date + 'T00:00:00').toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' })
+            : '—';
+        const desc = inv.items?.[0]?.description || '';
+        const safeInv = JSON.stringify(inv).replace(/</g,'\\u003c');
+        return `
+        <div style="border-bottom:1px solid #f3f4f6;">
+            <div style="display:flex;align-items:center;gap:16px;padding:16px 22px;">
+                <div style="width:42px;height:42px;border-radius:10px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:14px;font-weight:700;color:#1f2937;">${_esc(inv.invoiceNo || '—')}</div>
+                    <div style="font-size:12px;color:#9ca3af;margin-top:2px;">${dateStr}${desc ? ' &nbsp;·&nbsp; ' + _esc(desc) : ''}</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;margin-right:12px;">
+                    <div style="font-size:15px;font-weight:800;color:#00a85e;">${_formatAmount(inv.totalAmount)}</div>
+                    <span style="font-size:11px;color:#065f46;background:#d1fae5;padding:2px 8px;border-radius:99px;font-weight:700;">Issued</span>
+                </div>
+                <button onclick="clientPrintInvoice(${safeInv})"
+                    style="display:inline-flex;align-items:center;gap:6px;background:#f8fafc;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;"
+                    onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                    </svg>
+                    Print
+                </button>
+            </div>
+        </div>`;
+    }
+
+    window.prPrintClientInvoice = async function (reqId) {
+        // Find the payment request from local cache
+        const req = _requests.find(r => r.id === reqId);
+        if (!req) { _showClientToast('Payment request not found.', true); return; }
+
+        // 1. Best case: use snapshot embedded in the payment request document
+        if (req.invoiceSnapshot) {
+            window.clientPrintInvoice({ id: req.invoiceId || reqId, ...req.invoiceSnapshot });
+            return;
+        }
+
+        // 2. Try reading from invoices collection (works if Firestore rules allow)
+        if (req.invoiceId) {
+            try {
+                const doc = await db.collection('invoices').doc(req.invoiceId).get();
+                if (doc.exists) {
+                    window.clientPrintInvoice({ id: doc.id, ...doc.data() });
+                    return;
+                }
+            } catch (_) {
+                // Permission denied — fall through to minimal invoice build
+            }
+        }
+
+        // 3. Last resort: build a minimal invoice from the payment request data
+        // (no extra Firestore reads required — client already has access to this doc)
+        try {
+            let bizName = "DAC's Building Design Services", bizAddress = '', bizTin = '';
+            try {
+                const biz = await db.collection('settings').doc('businessInfo').get();
+                if (biz.exists) {
+                    bizName    = biz.data().businessName    || bizName;
+                    bizAddress = biz.data().businessAddress || '';
+                    bizTin     = biz.data().tin             || '';
+                }
+            } catch (_) {}
+
+            const amount  = Number(req.amount || 0);
+            const desc    = req.description || req.billingPeriod || 'Payment';
+            const tsToDate = ts => ts
+                ? new Date(ts.seconds ? ts.seconds * 1000 : ts).toISOString().slice(0, 10)
+                : new Date().toISOString().slice(0, 10);
+
+            window.clientPrintInvoice({
+                id:              req.invoiceId || req.id,
+                invoiceNo:       req.invoiceId || req.id,
+                date:            tsToDate(req.verifiedAt || req.createdAt),
+                businessName:    bizName,
+                businessAddress: bizAddress,
+                businessTin:     bizTin,
+                clientName:      req.clientName  || req.clientEmail || '',
+                clientEmail:     req.clientEmail || '',
+                items: [{ description: desc, qty: 1, unitPrice: amount, discount: 0, amount }],
+                subtotal:        amount,
+                totalAmount:     amount,
+            });
+        } catch (e) {
+            _showClientToast('Could not load invoice: ' + e.message, true);
+        }
+    };
+
+    window.clientPrintInvoice = function (inv) {
+        const _e = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const _m = n => '\u20b1' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits:2, maximumFractionDigits:2 });
+        const _d = s => { try { return new Date(s + 'T00:00:00').toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' }); } catch(e) { return s || '—'; } };
+        const pd = inv.paymentDetails || {};
+
+        const itemRows = (inv.items || []).map((item, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${_e(item.description || '')}</td>
+                <td style="text-align:center;">${item.qty}</td>
+                <td style="text-align:right;">${_m(item.unitPrice)}</td>
+                <td style="text-align:center;">${item.discount || 0}%</td>
+                <td style="text-align:right;font-weight:600;">${_m(item.amount)}</td>
+            </tr>`).join('');
+
+        const w = window.open('', '_blank', 'width=870,height=1100');
+        if (!w) { alert('Please allow pop-ups to print the invoice.'); return; }
+        w.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>Invoice ${_e(inv.invoiceNo || '')}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#111;background:#f5f5f5}
+.page{width:210mm;min-height:297mm;margin:20px auto;padding:18mm 16mm 14mm;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+.inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.inv-biz h1{font-size:20px;font-weight:800;color:#1a1a2e}
+.inv-biz p{font-size:12px;color:#555;margin-top:4px;line-height:1.5}
+.inv-title-block{text-align:right}
+.inv-title-block h2{font-size:26px;font-weight:800;color:#1e3a5f;letter-spacing:2px}
+.inv-meta{margin-top:8px;font-size:12px;color:#444;line-height:1.8}
+.inv-meta strong{color:#111}
+.bill-row{display:flex;gap:32px;margin-bottom:18px;padding:14px 0;border-top:2.5px solid #1e3a5f;border-bottom:1px solid #e5e7eb}
+.bill-to h4{font-size:10px;font-weight:700;color:#6b7280;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.bill-to .name{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:3px}
+.bill-to p{font-size:12px;color:#555;line-height:1.5}
+table.items{width:100%;border-collapse:collapse;margin-bottom:14px}
+table.items thead tr{background:#1e3a5f;color:#fff}
+table.items thead th{padding:9px 10px;font-size:11px;font-weight:700;text-align:left;letter-spacing:.4px}
+table.items tbody tr:nth-child(even){background:#f8fafc}
+table.items tbody td{padding:8px 10px;border-bottom:1px solid #e9ecef;vertical-align:top;font-size:12px}
+.totals-wrap{display:flex;justify-content:flex-end;margin-bottom:20px}
+table.totals{width:280px;border-collapse:collapse;font-size:13px}
+table.totals td{padding:6px 10px}
+table.totals td:first-child{color:#555}
+table.totals td:last-child{text-align:right;font-weight:600;color:#111}
+table.totals tr.grand td{font-size:15px;font-weight:800;color:#fff;background:#1e3a5f;padding:10px 12px}
+.pay-box{background:#f1f5f9;border-radius:8px;padding:13px 16px;margin-bottom:18px}
+.pay-box h4{font-size:10px;font-weight:700;color:#6b7280;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 24px;font-size:12px}
+.pay-grid .lbl{color:#6b7280}.pay-grid .val{font-weight:600;color:#111}
+.footer{text-align:center;margin-top:24px;font-size:10px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:10px}
+@media print{body{background:#fff}.page{margin:0;box-shadow:none;padding:10mm 10mm;width:100%}@page{size:A4 portrait;margin:8mm}}
+</style></head><body><div class="page">
+  <div class="inv-header">
+    <div class="inv-biz"><h1>${_e(inv.businessName || 'Business Name')}</h1>
+      <p>TIN: ${_e(inv.businessTin || '—')}<br>${_e(inv.businessAddress || '—')}</p></div>
+    <div class="inv-title-block"><h2>SALES INVOICE</h2>
+      <div class="inv-meta">Receipt No: <strong>${_e(inv.invoiceNo || '—')}</strong><br>Date: <strong>${_d(inv.date)}</strong></div></div>
+  </div>
+  <div class="bill-row"><div class="bill-to">
+    <h4>Bill To</h4>
+    <div class="name">${_e(inv.clientName || '—')}</div>
+    <p>${_e(inv.clientAddress || '')}</p>
+    ${inv.clientTin ? `<p>TIN: ${_e(inv.clientTin)}</p>` : ''}
+  </div></div>
+  <table class="items"><thead><tr>
+    <th style="width:28px;">#</th><th>Item Description / Service</th>
+    <th style="width:55px;text-align:center;">Qty</th>
+    <th style="width:105px;text-align:right;">Unit Price</th>
+    <th style="width:70px;text-align:center;">Disc.(%)</th>
+    <th style="width:110px;text-align:right;">Amount</th>
+  </tr></thead><tbody>${itemRows}</tbody></table>
+  <div class="totals-wrap"><table class="totals">
+    <tr><td>Total Sales</td><td>${_m(inv.subtotal)}</td></tr>
+    <tr class="grand"><td>TOTAL AMOUNT DUE</td><td>${_m(inv.totalAmount)}</td></tr>
+  </table></div>
+  ${(pd.bank || pd.accountNo) ? `<div class="pay-box"><h4>Payment Details</h4><div class="pay-grid">
+    <div><span class="lbl">Bank: </span><span class="val">${_e(pd.bank || '—')}</span></div>
+    <div><span class="lbl">Account No.: </span><span class="val">${_e(pd.accountNo || '—')}</span></div>
+    <div><span class="lbl">Account Name: </span><span class="val">${_e(pd.accountName || '—')}</span></div>
+    <div><span class="lbl">Branch: </span><span class="val">${_e(pd.branch || '—')}</span></div>
+  </div></div>` : ''}
+  ${inv.notes ? `<p style="font-size:12px;color:#555;margin-bottom:16px;">${_e(inv.notes)}</p>` : ''}
+  <div class="footer">This is an official sales invoice. Thank you for your payment.</div>
+</div><script>window.onload=()=>{window.print();}<\/script></body></html>`);
+        w.document.close();
+    };
 
 })();

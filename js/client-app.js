@@ -422,7 +422,12 @@ function populateDashboard() {
     if (budgetEl) animateValue(budgetEl, 0, totalBudget, 1200, formatPeso);
     const usageEl = document.getElementById('stat-usage');
     if (usageEl) animateValue(usageEl, 0, billedPct, 1000, n => n + '%');
-    _setText('stat-usage-sub', formatPeso(totalBilled) + ' of ' + formatPeso(totalBudget) + ' billed');
+    const usageSubEl = document.getElementById('stat-usage-sub');
+    if (usageSubEl) usageSubEl.innerHTML =
+        `<span class="stat-sub-amount">${formatPeso(totalBilled)}</span>`+
+        ` <span class="stat-sub-of">of</span> `+
+        `<span class="stat-sub-amount">${formatPeso(totalBudget)}</span>`+
+        ` <span class="stat-sub-of">billed</span>`;
     setTimeout(() => {
         const bu = document.getElementById('bar-usage');
         if (bu) bu.style.width = Math.min(billedPct, 100) + '%';
@@ -834,16 +839,26 @@ function toRoman(n) {
 }
 
 // ── Populate Billing ─────────────────────────────────────
+// Called after payment requests are loaded to update the Total Billed KPI
+window.refreshBilledKPI = function () {
+    const reqs = window._clientPayRequests || [];
+    const totalBilled = reqs
+        .filter(r => r.status === 'verified')
+        .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+    const billedEl = document.getElementById('bsum-billed');
+    if (billedEl) animateValue(billedEl, 0, totalBilled, 800, formatPeso);
+    _setText('bsum-count', reqs.length);
+};
+
 function populateBilling() {
     const totalBudget = currentFolders.reduce((s, f) => s + (parseFloat(f.totalBudget) || 0), 0);
-    const totalBilled = currentProjects.reduce((s, p) => s + (parseFloat(p.monthlyBudget) || 0), 0);
 
     // Summary cards
     const totalEl = document.getElementById('bsum-total');
     if (totalEl) animateValue(totalEl, 0, totalBudget, 1200, formatPeso);
-    const billedEl = document.getElementById('bsum-billed');
-    if (billedEl) animateValue(billedEl, 0, totalBilled, 1200, formatPeso);
-    _setText('bsum-count', currentProjects.length);
+    // bsum-billed and bsum-count are refreshed by refreshBilledKPI()
+    // once payment requests finish loading (called from initClientPayment)
+    _setText('bsum-count', '…');
 
     const tbody = document.getElementById('billing-tbody');
     if (!tbody) return;
@@ -870,12 +885,12 @@ function populateBilling() {
     }
 
     tbody.innerHTML = currentProjects.map((p, idx) => {
-        const desc      = formatFundingType(p.fundingType, p.billingNumber);
-        const period    = (p.month || '') + (p.year ? ' ' + p.year : '');
-        const amount    = parseFloat(p.monthlyBudget) || 0;
-        const typeTag   = fundingTypeTag(p.fundingType);
-        const folder    = currentFolders.find(f => f.id === p.folderId);
-        const projCell  = multiFolder
+        const desc     = formatFundingType(p.fundingType, p.billingNumber);
+        const period   = (p.month || '') + (p.year ? ' ' + p.year : '');
+        const amount   = parseFloat(p.monthlyBudget) || 0;
+        const typeTag  = fundingTypeTag(p.fundingType);
+        const folder   = currentFolders.find(f => f.id === p.folderId);
+        const projCell = multiFolder
             ? `<td style="font-size:12px;color:var(--text-muted)">${escHtml(folder?.name || '—')}</td>`
             : '';
         return `
@@ -1270,9 +1285,7 @@ function fmt(n) {
     return Number(n).toLocaleString('en-PH', { minimumFractionDigits:2, maximumFractionDigits:2 });
 }
 function formatPeso(n) {
-    if (n >= 1000000) return '\u20B1' + (n / 1000000).toFixed(2) + 'M';
-    if (n >= 1000)    return '\u20B1' + (n / 1000).toFixed(0)    + 'K';
-    return '\u20B1' + n;
+    return '\u20B1' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 function escHtml(s) {

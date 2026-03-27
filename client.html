@@ -389,18 +389,19 @@
 
       <!-- ── Billing Periods ── -->
       <div class="sub-page" id="section-billing">
-        <div class="section-title">Billing Periods</div>
-        <div class="section-sub">View your billing history and payment status.</div>
-
-        <!-- Payment Requests subsection -->
-        <div class="section-title" style="margin-bottom:8px;">Payment Requests</div>
-        <div class="section-sub" style="margin-bottom:16px;">Review and submit payment for your billing periods.</div>
-        <div id="pr-client-list">
-            <div style="color:#9ca3af;font-size:14px;padding:20px 0;">Loading payment requests…</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div class="section-title" style="margin-bottom:4px;">Billing &amp; Payments</div>
+            <div class="section-sub" style="margin-bottom:0;">Manage your payments and view your billing history.</div>
+          </div>
+          <button onclick="prClientOpenSelfPayModal()" style="display:inline-flex;align-items:center;gap:8px;background:#00a85e;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,168,94,.25);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Submit Payment
+          </button>
         </div>
-        <hr style="margin:28px 0;border:none;border-top:1px solid #e5e7eb;">
 
-        <div class="billing-summary-grid">
+        <!-- Summary Cards -->
+        <div class="billing-summary-grid" style="margin-bottom:28px;">
           <div class="billing-sum-card billing-sum-green">
             <div class="bsum-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00a85e" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -430,9 +431,26 @@
           </div>
         </div>
 
-        <div class="content-panel" style="padding:0; overflow:hidden;">
-          <div class="table-toolbar">
-            <span class="panel-title" style="padding:18px 20px; display:block; border-bottom:0;">Billing History</span>
+        <!-- Payment Requests Panel -->
+        <div class="content-panel" style="padding:0;overflow:hidden;margin-bottom:24px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f1f5f9;">
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#1f2937;">Payment Requests</div>
+              <div style="font-size:12.5px;color:#9ca3af;margin-top:2px;">Company-issued billing requests for your review.</div>
+            </div>
+            <span class="billing-badge" id="billing-badge" style="display:none;"></span>
+          </div>
+          <div id="pr-client-list" style="padding:0;">
+            <div style="color:#9ca3af;font-size:14px;padding:32px;text-align:center;">Loading payment requests…</div>
+          </div>
+        </div>
+
+
+        <!-- Billing History Panel -->
+        <div class="content-panel" style="padding:0;overflow:hidden;">
+          <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;">
+            <div style="font-size:15px;font-weight:700;color:#1f2937;">Billing History</div>
+            <div style="font-size:12.5px;color:#9ca3af;margin-top:2px;">Overview of all billing periods from your contract.</div>
           </div>
           <div class="table-scroll">
             <table class="data-table" id="billing-table">
@@ -446,7 +464,7 @@
                 </tr>
               </thead>
               <tbody id="billing-tbody">
-                <tr><td colspan="6" style="text-align:center;padding:32px;color:#b0c8bc;font-style:italic;">Loading billing periods…</td></tr>
+                <tr><td colspan="5" style="text-align:center;padding:32px;color:#b0c8bc;font-style:italic;">Loading…</td></tr>
               </tbody>
             </table>
           </div>
@@ -655,6 +673,18 @@
           <img id="prClientQRImg" src="" alt="QR Code" style="display:none;">
         </div>
         <div style="font-size:15px;font-weight:700;color:#00a85e;margin-top:8px;" id="prClientPayAmount"></div>
+      </div>
+
+      <!-- Self-pay fields -->
+      <div id="prSelfPayDescWrap" style="display:none;">
+        <div class="pr-form-group">
+          <label class="pr-form-label" for="prSelfPayDesc">Payment <span class="req">*</span></label>
+          <input id="prSelfPayDesc" class="pr-form-input" type="text" placeholder="e.g. Payment">
+        </div>
+        <div class="pr-form-group">
+          <label class="pr-form-label">Month</label>
+          <input id="prSelfPayMonth" class="pr-form-input" type="text" readonly style="background:#f9fafb;color:#6b7280;cursor:default;">
+        </div>
       </div>
 
       <!-- Amount to Pay -->

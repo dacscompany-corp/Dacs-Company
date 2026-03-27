@@ -23,9 +23,10 @@
 
         try {
             // Fetch clients and their projects in parallel
+            const uid = auth.currentUser?.uid;
             const [clientSnap, boqSnap] = await Promise.all([
                 db.collection('clientUsers').get(),
-                db.collection('boqDocuments').get()
+                db.collection('boqDocuments').where('userId', '==', uid).get()
             ]);
 
             // Build a map: email → [projectName, ...]
