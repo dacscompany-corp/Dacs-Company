@@ -80,8 +80,7 @@ service cloud.firestore {
       allow read: if isAuthenticated()
                   && resource.data.get('clientEmail', '') != ''
                   && request.auth.token.email == resource.data.clientEmail;
-      allow create: if isAuthenticated()
-                    && request.resource.data.userId == request.auth.uid;
+      allow create: if canWriteData(request.resource.data.userId);
     }
 
     match /projects/{projectId} {
@@ -90,8 +89,7 @@ service cloud.firestore {
       allow read: if isAuthenticated()
                   && get(/databases/$(database)/documents/folders/$(resource.data.folderId)).data.get('clientEmail', '') != ''
                   && request.auth.token.email == get(/databases/$(database)/documents/folders/$(resource.data.folderId)).data.clientEmail;
-      allow create: if isAuthenticated()
-                    && request.resource.data.userId == request.auth.uid;
+      allow create: if canWriteData(request.resource.data.userId);
     }
 
     // Helper: allows owner to write own data, or staff to write with owner's userId
