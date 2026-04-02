@@ -7,6 +7,18 @@ function _uid() {
     return window.currentDataUserId || (currentUser && currentUser.uid) || null;
 }
 
+// ── Custom delete confirmation modal (replaces browser confirm()) ──
+let _deleteConfirmResolve = null;
+let _deleteConfirmReject  = null;
+function showDeleteConfirm(message) {
+    return new Promise((resolve) => {
+        document.getElementById('deleteConfirmMsg').textContent = message;
+        openExpModal('deleteConfirmModal');
+        _deleteConfirmResolve = () => { closeExpModal('deleteConfirmModal'); resolve(true);  };
+        _deleteConfirmReject  = () => { closeExpModal('deleteConfirmModal'); resolve(false); };
+    });
+}
+
 // ── Formats a number value as a comma-separated string ──
 function fmtBudgetVal(num) {
     if (num === null || num === undefined || isNaN(num)) return '0';
@@ -152,7 +164,7 @@ function toggleCatManager() {
 }
 
 async function deleteCategory(id) {
-    if (!confirm('Delete this category?')) return;
+    if (!await showDeleteConfirm('Delete this category?')) return;
     try {
         await db.collection('categories').doc(id).delete();
         expCategories = expCategories.filter(c => c.id !== id);
@@ -1967,7 +1979,7 @@ async function deleteFolder(id) {
     const msg    = count > 0
         ? `Delete folder "${folder?.name}" and its ${count} month(s)? All expenses & payroll inside will also be deleted.`
         : `Delete folder "${folder?.name}"?`;
-    if (!confirm(msg)) return;
+    if (!await showDeleteConfirm(msg)) return;
     try {
         const uid = _uid();
         const projsInFolder = expProjects.filter(p => p.folderId === id);
@@ -1995,7 +2007,7 @@ async function deleteFolder(id) {
 }
 
 async function deleteProject(id) {
-    if (!confirm('Delete this project and ALL its expenses & payroll?')) return;
+    if (!await showDeleteConfirm('Delete this project and ALL its expenses & payroll?')) return;
     try {
         const uid = _uid();
         const [eSnap, pSnap] = await Promise.all([
@@ -2200,7 +2212,7 @@ async function handleAddExpense(e) {
 }
 
 async function deleteExpense(id) {
-    if (!confirm('Delete this expense?')) return;
+    if (!await showDeleteConfirm('Delete this expense?')) return;
     try { await db.collection('expenses').doc(id).delete(); showExpNotif('Deleted.', 'success'); refreshOvAllData(); }
     catch (err) { showExpNotif('Error: ' + err.message, 'error'); }
 }
@@ -2424,7 +2436,7 @@ async function handleAddPayroll(e) {
 }
 
 async function deletePayroll(id) {
-    if (!confirm('Delete this payroll entry?')) return;
+    if (!await showDeleteConfirm('Delete this payroll entry?')) return;
     try { await db.collection('payroll').doc(id).delete(); showExpNotif('Deleted.', 'success'); refreshOvAllData(); }
     catch (err) { showExpNotif('Error: ' + err.message, 'error'); }
 }
