@@ -127,7 +127,7 @@ service cloud.firestore {
     // ═══════════════════════════════════════════════════════════════════
 
     match /requests/{requestId} {
-      allow read: if isOwner() || isWorker();
+      allow read: if isOwner() || isWorker() || isStaff();
 
       // ✅ FIXED: Added || isOwner() so owner role can also create requests
       allow create: if (isWorker() || isOwner())
@@ -142,24 +142,27 @@ service cloud.firestore {
         && request.resource.data.status == 'pending'
         && request.resource.data.requestedBy == resource.data.requestedBy;
 
-      allow update: if isOwner();
+      allow update: if isOwner() || isStaff();
 
-      allow delete: if isOwner();
+      allow delete: if isOwner() || isStaff();
     }
 
     match /batches/{batchId} {
-      allow read: if isOwner() || isWorker();
-      allow create, update: if isOwner();
-      allow delete: if isOwner();
+      allow read: if isOwner() || isWorker() || isStaff();
+      allow create, update: if isOwner() || isStaff();
+      allow delete: if isOwner() || isStaff();
     }
 
     match /inventory/{itemId} {
-      allow read, create, update, delete: if isOwner();
+      allow read, create, update, delete: if isOwner() || isStaff();
     }
 
     match /notifications/{userId}/items/{notifId} {
-      allow read, create, update, delete: if isAuthenticated()
-                                          && request.auth.uid == userId;
+      // Any authenticated user can create a notification for any other user
+      // (required for admin → client and client → admin cross-system notifications)
+      allow create: if isAuthenticated();
+      // Only the recipient can read, mark as read, or delete their own notifications
+      allow read, update, delete: if isAuthenticated() && request.auth.uid == userId;
     }
 
     // ═══════════════════════════════════════════════════════════════════

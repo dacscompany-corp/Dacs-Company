@@ -1804,14 +1804,24 @@ window.onFillFromPaymentRequest = function () {
     const period = opt.dataset.period || '';
     const amount = opt.dataset.amount || '';
 
-    // Fill month
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    // Fill month only if the user has not already picked one.
+    // Supports exact match ("March") or embedded match ("March 2026").
     const monthSel = document.getElementById('projMonth');
-    if (monthSel && months.includes(period)) {
-        monthSel.value = period;
+    if (monthSel && !monthSel.value) {
+        const foundMonth = months.find(m => period.includes(m));
+        if (foundMonth) monthSel.value = foundMonth;
     }
 
-    // Fill amount
+    // Fill year only if the user has not already entered one.
+    const yearInput = document.getElementById('projYear');
+    if (yearInput && !yearInput.value) {
+        const yearMatch = period.match(/\b(20\d{2})\b/);
+        if (yearMatch) yearInput.value = yearMatch[1];
+    }
+
+    // Always fill amount (this is the main purpose of the feature)
     const budgetInput = document.getElementById('projBudget');
     if (budgetInput && amount) {
         budgetInput.value = Number(amount).toLocaleString('en-PH');

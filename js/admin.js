@@ -62,6 +62,8 @@ function checkAuthState() {
             showDashboard();
             showWelcomeToast(user.email, _loginViaForm ? 'Login Successful!' : 'Welcome back!');
             _loginViaForm = false;
+            // Start admin notification bell listener immediately after login
+            if (typeof loadNotifications === 'function') loadNotifications();
         } else {
             showLogin();
         }

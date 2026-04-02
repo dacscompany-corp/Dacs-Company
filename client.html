@@ -714,14 +714,16 @@
           <label class="pr-form-label">Receipt Screenshot <span class="req">*</span></label>
           <div class="pr-upload-zone">
             <input id="prClientReceiptFile" type="file" accept="image/*" onchange="prClientPreviewReceipt(this)">
-            <span class="pr-upload-zone-icon">&#128247;</span>
-            <div class="pr-upload-zone-text">
-              <strong>Click to upload</strong> or drag &amp; drop<br>
-              <span style="font-size:12px;">PNG, JPG up to 10MB</span>
+            <div id="prUploadZoneHint">
+              <span class="pr-upload-zone-icon">&#128247;</span>
+              <div class="pr-upload-zone-text">
+                <strong>Click to upload</strong> or drag &amp; drop<br>
+                <span style="font-size:12px;">PNG, JPG up to 10MB</span>
+              </div>
             </div>
-          </div>
-          <div id="prClientReceiptPreview" class="pr-receipt-preview">
-            <img src="" alt="Receipt preview">
+            <div id="prClientReceiptPreview" class="pr-receipt-preview" style="display:none;">
+              <img src="" alt="Receipt preview">
+            </div>
           </div>
         </div>
       </div>

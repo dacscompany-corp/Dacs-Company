@@ -684,8 +684,10 @@ function renderNotificationDropdown() {
             const createdAt = notif.createdAt?.toDate();
             const timeAgo = createdAt ? getTimeAgo(createdAt) : 'Just now';
             const iconMap = {
-                'new_request': 'inbox',
-                'urgent_request': 'alert-circle'
+                'new_request':       'inbox',
+                'urgent_request':    'alert-circle',
+                'payment_submitted': 'credit-card',
+                'partial_request':   'git-branch',
             };
             
             html += `

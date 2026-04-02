@@ -1223,6 +1223,32 @@
             const badge = qs('.boq-badge');
             if (badge) { badge.className = 'boq-badge boq-badge-saved'; badge.textContent = 'Saved'; }
             boqToast('Report saved successfully!', 'success');
+
+            // Notify the client on every save (status-appropriate message)
+            if (boq.clientEmail) {
+                try {
+                    const clientSnap = await db.collection('clientUsers')
+                        .where('email', '==', boq.clientEmail)
+                        .limit(1).get();
+                    if (!clientSnap.empty) {
+                        const clientUid = clientSnap.docs[0].id;
+                        const reportName = boq.header.subject || 'Accomplishment Report';
+                        const notifMap = {
+                            approved:  { type: 'report_approved',  message: `Your report "${reportName}" has been approved.` },
+                            submitted: { type: 'report_submitted', message: `Your report "${reportName}" has been submitted for review.` },
+                            draft:     { type: 'report_updated',   message: `Your report "${reportName}" has been updated.` },
+                        };
+                        const n = notifMap[boq.status] || notifMap.draft;
+                        await db.collection('notifications').doc(clientUid).collection('items').add({
+                            type:      n.type,
+                            message:   n.message,
+                            isRead:    false,
+                            relatedId: boq.doc?.id || '',
+                            createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+                        });
+                    }
+                } catch (e) { console.warn('BOQ: notification error', e); }
+            }
         } catch (e) {
             console.error('BOQ save error:', e);
             boqToast('Error saving BOQ. Please try again.', 'error');

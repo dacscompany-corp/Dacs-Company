@@ -11,6 +11,19 @@
     let _currentId    = null;  // id being paid (null = self-pay mode)
     let _selfPayData  = null;  // billing period data for self-initiated payment
 
+    // Returns the best available admin/owner UID to send notifications to.
+    // Checks (in order): current request's ownerUid, any loaded request's ownerUid,
+    // then the global _clientOwnerUid derived from BOQ documents.
+    function _getAdminUid() {
+        if (_currentId) {
+            const req = _requests.find(x => x.id === _currentId);
+            if (req && req.ownerUid) return req.ownerUid;
+        }
+        const anyReq = _requests.find(r => r.ownerUid);
+        if (anyReq) return anyReq.ownerUid;
+        return window._clientOwnerUid || null;
+    }
+
     // ══════════════════════════════════════════════════════
     // PUBLIC ENTRY POINT
     // ══════════════════════════════════════════════════════
@@ -375,6 +388,8 @@
 
         const preview = document.getElementById('prClientReceiptPreview');
         if (preview) { preview.style.display = 'none'; preview.querySelector('img').src = ''; }
+        const hint = document.getElementById('prUploadZoneHint');
+        if (hint) hint.style.display = '';
 
         const errDiv = document.getElementById('prClientPayError');
         if (errDiv) { errDiv.style.display = 'none'; errDiv.textContent = ''; }
@@ -467,6 +482,20 @@
                 req.requestedPartialAmount = paidAmount;
                 req.partialReason          = partialReason;
             }
+            // Notify the admin about the partial payment request
+            const _partialAdminUid = _getAdminUid();
+            if (_partialAdminUid) {
+                const _partialReq  = _requests.find(x => x.id === _currentId) || {};
+                const _clientEmail = (typeof currentUser !== 'undefined' && currentUser?.email) || '';
+                db.collection('notifications').doc(_partialAdminUid).collection('items').add({
+                    type:      'partial_request',
+                    message:   `${_clientEmail || 'A client'} requested a partial payment of ₱${paidAmount.toLocaleString('en-PH')}${_partialReq.billingPeriod ? ' for "' + _partialReq.billingPeriod + '"' : ''}`,
+                    isRead:    false,
+                    relatedId: _currentId || '',
+                    createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+                }).catch(e => console.warn('Notification error:', e));
+            }
+
             prClientClosePayModal();
             const listEl = document.getElementById('pr-client-list');
             if (listEl) _renderList(listEl);
@@ -553,6 +582,8 @@
         if (fileInput) fileInput.value = '';
         const preview = document.getElementById('prClientReceiptPreview');
         if (preview) preview.style.display = 'none';
+        const hint = document.getElementById('prUploadZoneHint');
+        if (hint) hint.style.display = '';
         const errDiv = document.getElementById('prClientPayError');
         if (errDiv) errDiv.style.display = 'none';
         const qrSection    = document.getElementById('prQRSection');
@@ -600,6 +631,7 @@
     window.prClientPreviewReceipt = function (input) {
         const file    = input.files && input.files[0];
         const preview = document.getElementById('prClientReceiptPreview');
+        const hint    = document.getElementById('prUploadZoneHint');
         if (!preview) return;
         const img = preview.querySelector('img');
         if (file) {
@@ -607,11 +639,13 @@
             reader.onload = e => {
                 if (img) img.src = e.target.result;
                 preview.style.display = 'flex';
+                if (hint) hint.style.display = 'none';
             };
             reader.readAsDataURL(file);
         } else {
             if (img) img.src = '';
             preview.style.display = 'none';
+            if (hint) hint.style.display = '';
         }
     };
 
@@ -640,7 +674,7 @@
         // If partial, reason is required
         const amtInput    = document.getElementById('prClientAmountInput');
         const requested   = parseFloat(amtInput?.dataset.requested || 0);
-        const isPartial   = Math.abs(paidAmount - requested) > 0.01;
+        const isPartial   = requested > 0 && Math.abs(paidAmount - requested) > 0.01;
         const partialReason = (document.getElementById('prPartialReason')?.value || '').trim();
         if (isPartial && !partialReason) return showErr('Please provide a reason for paying a different amount.');
 
@@ -674,6 +708,7 @@
                     status:          'submitted',
                     createdAt:       now,
                     createdBy:       user.email || '',
+                    ownerUid:        window._clientOwnerUid || '',
                     proofBase64,
                     referenceNumber,
                     paidAmount,
@@ -706,6 +741,34 @@
                     req.partialReason   = isPartial ? partialReason : null;
                     req.submittedAt     = new Date();
                 }
+            }
+
+            // Notify the admin that a payment was submitted
+            const _adminUid = _getAdminUid();
+            const _payBillingPeriod = _selfPayData !== null
+                ? (document.getElementById('prSelfPayDesc')?.value || '').trim()
+                : (_requests.find(x => x.id === _currentId)?.billingPeriod || '');
+            if (_adminUid) {
+                const _clientEmail = (typeof currentUser !== 'undefined' && currentUser?.email) || '';
+                db.collection('notifications').doc(_adminUid).collection('items').add({
+                    type:      'payment_submitted',
+                    message:   `${_clientEmail || 'A client'} submitted payment${_payBillingPeriod ? ' for "' + _payBillingPeriod + '"' : ''} — ₱${paidAmount.toLocaleString('en-PH')}`,
+                    isRead:    false,
+                    relatedId: _currentId || '',
+                    createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+                }).catch(e => console.warn('Notification error:', e));
+            }
+
+            // Notify the client themselves that their payment was submitted
+            const _clientUid = (typeof currentUser !== 'undefined' && currentUser?.uid) || null;
+            if (_clientUid) {
+                db.collection('notifications').doc(_clientUid).collection('items').add({
+                    type:      'payment_submitted',
+                    message:   `Your payment${_payBillingPeriod ? ' for "' + _payBillingPeriod + '"' : ''} of ₱${paidAmount.toLocaleString('en-PH')} has been submitted and is awaiting verification.`,
+                    isRead:    false,
+                    relatedId: _currentId || '',
+                    createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+                }).catch(e => console.warn('Client notification error:', e));
             }
 
             prClientClosePayModal();

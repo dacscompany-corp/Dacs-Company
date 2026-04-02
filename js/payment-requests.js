@@ -363,7 +363,7 @@
             const dueDate   = firebase.firestore.Timestamp.fromDate(new Date(dueDateStr));
             const createdBy = auth.currentUser ? auth.currentUser.email : '';
 
-            await db.collection('paymentRequests').add({
+            const newReqRef = await db.collection('paymentRequests').add({
                 clientUid,
                 clientEmail,
                 clientName,
@@ -375,6 +375,7 @@
                 status:    'pending',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 createdBy,
+                ownerUid:  auth.currentUser?.uid || '',
                 proofBase64:     null,
                 referenceNumber: null,
                 submittedAt:     null,
@@ -383,6 +384,20 @@
                 rejectedReason:  null,
                 rejectedAt:      null
             });
+
+            // Notify the client about the new payment request
+            if (clientUid) {
+                const dueDateLabel = dueDateStr
+                    ? new Date(dueDateStr).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : '';
+                db.collection('notifications').doc(clientUid).collection('items').add({
+                    type:      'payment_request',
+                    message:   `New payment request: ${billingPeriod} — ₱${amount.toLocaleString('en-PH')}${dueDateLabel ? ' due ' + dueDateLabel : ''}`,
+                    isRead:    false,
+                    relatedId: newReqRef.id,
+                    createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+                }).catch(e => console.warn('Notification error:', e));
+            }
 
             prCloseCreateModal();
             _loadRequests();
@@ -765,6 +780,17 @@
                 partialApprovedAt:     firebase.firestore.FieldValue.serverTimestamp(),
                 partialDeclinedReason: null
             });
+            // Notify client their partial payment request was approved
+            if (r.clientUid) {
+                db.collection('notifications').doc(r.clientUid).collection('items').add({
+                    type:      'partial_approved',
+                    message:   `Your partial payment of ${_formatAmount(r.requestedPartialAmount)} for "${r.billingPeriod || 'a billing period'}" has been approved. You can now submit your payment.`,
+                    isRead:    false,
+                    relatedId: id,
+                    createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+                }).catch(e => console.warn('Notification error:', e));
+            }
+
             prCloseDetailModal();
             _loadRequests();
             _showToast(`Partial payment of ${_formatAmount(r.requestedPartialAmount)} approved. Client can now submit payment.`);
@@ -794,6 +820,18 @@
                 partialReason:         null,
                 partialDeclinedReason: reason
             });
+            // Notify client their partial payment request was declined
+            const _decReq = _allRequests.find(x => x.id === id) || {};
+            if (_decReq.clientUid) {
+                db.collection('notifications').doc(_decReq.clientUid).collection('items').add({
+                    type:      'partial_declined',
+                    message:   `Your partial payment request for "${_decReq.billingPeriod || 'a billing period'}" was declined. Reason: ${reason}`,
+                    isRead:    false,
+                    relatedId: id,
+                    createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+                }).catch(e => console.warn('Notification error:', e));
+            }
+
             prCloseDetailModal();
             _loadRequests();
             _showToast('Partial payment request declined. Client must pay full amount.');
@@ -874,6 +912,18 @@
                 }
             }
 
+            // Notify the client their payment has been verified
+            const _verReq = _allRequests.find(x => x.id === id) || {};
+            if (_verReq.clientUid) {
+                db.collection('notifications').doc(_verReq.clientUid).collection('items').add({
+                    type:      'payment_verified',
+                    message:   `Your payment for "${_verReq.billingPeriod || 'a billing period'}" has been verified and marked as paid.`,
+                    isRead:    false,
+                    relatedId: id,
+                    createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+                }).catch(e => console.warn('Notification error:', e));
+            }
+
             prCloseDetailModal();
             _loadRequests();
             _showToast('Payment marked as paid. Invoice generated.');
@@ -902,6 +952,19 @@
                 rejectedReason: reason,
                 rejectedAt:     firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            // Notify the client their payment was rejected
+            const _rejReq = _allRequests.find(x => x.id === id) || {};
+            if (_rejReq.clientUid) {
+                db.collection('notifications').doc(_rejReq.clientUid).collection('items').add({
+                    type:      'payment_rejected',
+                    message:   `Your payment for "${_rejReq.billingPeriod || 'a billing period'}" was rejected. Reason: ${reason}`,
+                    isRead:    false,
+                    relatedId: id,
+                    createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+                }).catch(e => console.warn('Notification error:', e));
+            }
+
             prCloseDetailModal();
             _loadRequests();
             _showToast('Payment request rejected.');

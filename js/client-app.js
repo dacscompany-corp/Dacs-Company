@@ -10,9 +10,11 @@ let currentBoqDocs  = [];     // boqDocuments for this client
 let currentFolder   = null;   // primary folder document (first)
 let currentFolders  = [];     // all folder documents for this client
 let currentProjects = [];     // billing periods across all folders
-let _notifications  = [];
-let _reportFilter   = 'all';
-let sidebarOpen     = true;
+let _notifications      = [];   // local computed (overdue billing)
+let _firestoreNotifs    = [];   // real-time from Firestore notifications subcollection
+let _notifUnsub         = null;
+let _reportFilter       = 'all';
+let sidebarOpen         = true;
 
 // ── Real-time listener handles (so we can unsubscribe) ────
 let _boqUnsub     = null;
@@ -163,9 +165,12 @@ function showLoginPage() {
     document.getElementById('main-content').classList.remove('expanded');
     document.getElementById('overlay').classList.remove('show');
     document.getElementById('burger').classList.remove('open');
-    if (_boqUnsub) { _boqUnsub(); _boqUnsub = null; }
+    if (_boqUnsub)   { _boqUnsub();   _boqUnsub   = null; }
+    if (_notifUnsub) { _notifUnsub(); _notifUnsub = null; }
+    _firestoreNotifs = [];
     currentUser = null; currentProfile = null;
     currentBoqDocs = []; currentFolder = null; currentFolders = []; currentProjects = [];
+    window._clientOwnerUid = null;
 }
 
 // ── Load User Profile ────────────────────────────────────
@@ -195,6 +200,8 @@ function loadClientData(user) {
                 currentBoqDocs = snap.docs
                     .map(d => ({ id: d.id, ...d.data() }))
                     .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+                // Expose the admin/owner UID so client-payment can notify the admin
+                window._clientOwnerUid = currentBoqDocs.length ? (currentBoqDocs[0].userId || null) : null;
 
                 // Fetch folders + projects once per snapshot (they change rarely)
                 if (currentBoqDocs.length) {
@@ -301,7 +308,7 @@ function enterDashboard() {
     populateReports();
     populateBilling();
     buildNotifications();
-    populateNotifications();
+    subscribeToNotifications(currentUser.uid);
     if (typeof initClientPayment === 'function') initClientPayment();
 
     if (localStorage.getItem('dac-dark') === '1') {
@@ -905,26 +912,42 @@ function populateBilling() {
     }).join('');
 }
 
-// ── Build Notifications ──────────────────────────────────
+// ── Build Local Notifications (overdue billing only) ─────
 function buildNotifications() {
     _notifications = [];
-    currentBoqDocs.forEach(doc => {
-        const name = doc.header?.subject || 'Report';
-        if (doc.status === 'approved') {
-            _notifications.push({ type:'green', msg: name + ' has been approved', time: formatTimestamp(doc.updatedAt), read: false });
-        } else if (doc.status === 'submitted') {
-            _notifications.push({ type:'blue', msg: name + ' is under review', time: formatTimestamp(doc.updatedAt), read: false });
-        }
-    });
-    // Add billing notifications for overdue items
+    // Overdue billing — computed locally from project data
     currentProjects.forEach(p => {
         if (p.paymentStatus === 'overdue') {
             _notifications.push({ type:'amber', msg: formatFundingType(p.fundingType, p.billingNumber) + ' payment is overdue', time: formatTimestamp(p.createdAt), read: false });
         }
     });
-    if (!_notifications.length) {
-        _notifications.push({ type:'green', msg:'Welcome to the DAC Client Portal', time:'Just now', read: false });
-    }
+}
+
+// ── Subscribe to Firestore Notifications ─────────────────
+function subscribeToNotifications(uid) {
+    if (_notifUnsub) { _notifUnsub(); _notifUnsub = null; }
+    _notifUnsub = db.collection('notifications').doc(uid).collection('items')
+        .orderBy('createdAt', 'desc')
+        .limit(30)
+        .onSnapshot(snap => {
+            _firestoreNotifs = snap.docs.map(d => {
+                const data = d.data();
+                return {
+                    id:   d.id,
+                    type: _mapNotifType(data.type),
+                    msg:  data.message || '',
+                    time: formatTimestamp(data.createdAt),
+                    read: data.isRead || false
+                };
+            });
+            populateNotifications();
+        }, err => console.warn('Notifications listener error:', err));
+}
+
+function _mapNotifType(type) {
+    if (['payment_verified', 'report_approved', 'partial_approved'].includes(type)) return 'green';
+    if (['payment_rejected', 'partial_declined'].includes(type)) return 'amber';
+    return 'blue';
 }
 
 function populateNotifications() {
@@ -932,7 +955,13 @@ function populateNotifications() {
     const dot  = document.getElementById('notif-dot');
     if (!list) return;
 
-    const unread = _notifications.filter(n => !n.read).length;
+    // Combine Firestore (real) + local (overdue billing)
+    const combined = [..._firestoreNotifs, ..._notifications];
+    const display  = combined.length
+        ? combined
+        : [{ type:'green', msg:'Welcome to the DAC Client Portal', time:'Just now', read: false }];
+
+    const unread = display.filter(n => !n.read).length;
     if (dot) dot.style.display = unread ? '' : 'none';
 
     const icons = {
@@ -941,11 +970,7 @@ function populateNotifications() {
         amber: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
     };
 
-    if (!_notifications.length) {
-        list.innerHTML = '<div style="padding:24px;text-align:center;color:#b0c8bc;font-size:12.5px;">No notifications</div>';
-        return;
-    }
-    list.innerHTML = _notifications.map((n, i) => `
+    list.innerHTML = display.map((n, i) => `
         <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markOneRead(${i})">
           <div class="notif-icon notif-icon-${n.type}">${icons[n.type] || icons.blue}</div>
           <div class="notif-body">
@@ -960,13 +985,41 @@ function toggleNotifications() {
     document.getElementById('notif-dropdown')?.classList.toggle('open');
 }
 function markOneRead(i) {
-    _notifications[i].read = true;
+    const combined = [..._firestoreNotifs, ..._notifications];
+    const n = combined[i];
+    if (!n || n.read) return;
+    // Mark in correct backing array
+    if (i < _firestoreNotifs.length) {
+        _firestoreNotifs[i].read = true;
+        // Persist to Firestore
+        if (n.id && currentUser) {
+            db.collection('notifications').doc(currentUser.uid).collection('items')
+                .doc(n.id).update({ isRead: true }).catch(e => console.warn('markRead error:', e));
+        }
+    } else {
+        _notifications[i - _firestoreNotifs.length].read = true;
+    }
     populateNotifications();
 }
 function markAllRead() {
+    const unreadFirestore = _firestoreNotifs.filter(n => !n.read);
+    _firestoreNotifs.forEach(n => n.read = true);
     _notifications.forEach(n => n.read = true);
     populateNotifications();
     showToast('All notifications marked as read ✓');
+    // Batch-persist Firestore reads
+    if (currentUser && unreadFirestore.length) {
+        const batch = db.batch();
+        unreadFirestore.forEach(n => {
+            if (n.id) {
+                batch.update(
+                    db.collection('notifications').doc(currentUser.uid).collection('items').doc(n.id),
+                    { isRead: true }
+                );
+            }
+        });
+        batch.commit().catch(e => console.warn('markAllRead error:', e));
+    }
 }
 document.addEventListener('click', e => {
     const wrap = document.getElementById('notif-wrap');
