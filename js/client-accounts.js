@@ -23,7 +23,7 @@
 
         try {
             // Fetch clients and their projects in parallel
-            const uid = auth.currentUser?.uid;
+            const uid = window.currentDataUserId || auth.currentUser?.uid;
             const [clientSnap, boqSnap] = await Promise.all([
                 db.collection('clientUsers').get(),
                 db.collection('boqDocuments').where('userId', '==', uid).get()

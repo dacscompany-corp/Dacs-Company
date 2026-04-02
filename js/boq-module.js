@@ -992,7 +992,7 @@
     };
 
     window.boqDeleteTemplate = async function (templateId, btn) {
-        if (!confirm('Delete this template?')) return;
+        if (!await showDeleteConfirm('Delete this template?')) return;
         try {
             await db.collection('boqTemplates').doc(templateId).delete();
             btn.closest('.boq-tmpl-item')?.remove();
@@ -1646,7 +1646,7 @@
     };
 
     window.boqDeleteImage = async function (ciId, siId, imgIdx) {
-        if (!confirm('Delete this photo?')) return;
+        if (!await showDeleteConfirm('Delete this photo?')) return;
         const ci = boq.costItems.find(c => c.id === ciId);
         const si = ci?.subItems.find(s => s.id === siId);
         if (!si || !si.images) return;

@@ -606,8 +606,8 @@
     // DELETE
     // ══════════════════════════════════════════════════════
 
-    window.invDelete = function (id) {
-        if (!confirm('Delete this invoice? This cannot be undone.')) return;
+    window.invDelete = async function (id) {
+        if (!await showDeleteConfirm('Delete this invoice? This cannot be undone.')) return;
         db.collection('invoices').doc(id).delete()
             .then(() => {
                 _invoices = _invoices.filter(i => i.id !== id);

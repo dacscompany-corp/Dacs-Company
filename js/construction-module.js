@@ -1036,10 +1036,10 @@ function adjustStock() {
     });
 }
 
-function deleteInventoryItem(itemId) {
+async function deleteInventoryItem(itemId) {
     const item = inventoryData.find(i => i.id === itemId);
     const name = item ? item.itemName : 'this item';
-    if (!confirm(`Delete "${name}" from inventory? This cannot be undone.`)) return;
+    if (!await showDeleteConfirm(`Delete "${name}" from inventory? This cannot be undone.`)) return;
 
     db.collection('inventory').doc(itemId).delete()
         .then(() => showConsNotification('Item deleted from inventory', 'success'))

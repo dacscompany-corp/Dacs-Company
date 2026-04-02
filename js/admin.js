@@ -563,7 +563,7 @@ function closeModal() {
 async function deleteAppointment() {
     if (!currentAppointment) return;
     
-    if (!confirm('Are you sure you want to delete this appointment?')) return;
+    if (!await showDeleteConfirm('Are you sure you want to delete this appointment?')) return;
     
     try {
         await db.collection('appointments').doc(currentAppointment.id).delete();
@@ -1610,7 +1610,7 @@ async function updateFeedbackStatus(feedbackId, newStatus) {
 }
 
 async function deleteFeedback(feedbackId) {
-    if (!confirm('Are you sure you want to delete this feedback?')) return;
+    if (!await showDeleteConfirm('Are you sure you want to delete this feedback?')) return;
     
     try {
         await db.collection('testimonials').doc(feedbackId).delete();
