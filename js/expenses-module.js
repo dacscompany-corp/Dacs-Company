@@ -8,16 +8,17 @@ function _uid() {
 }
 
 // ── Custom delete confirmation modal (replaces browser confirm()) ──
-let _deleteConfirmResolve = null;
-let _deleteConfirmReject  = null;
+window._deleteConfirmResolve = null;
+window._deleteConfirmReject  = null;
 function showDeleteConfirm(message) {
     return new Promise((resolve) => {
         document.getElementById('deleteConfirmMsg').textContent = message;
         openExpModal('deleteConfirmModal');
-        _deleteConfirmResolve = () => { closeExpModal('deleteConfirmModal'); resolve(true);  };
-        _deleteConfirmReject  = () => { closeExpModal('deleteConfirmModal'); resolve(false); };
+        window._deleteConfirmResolve = () => { closeExpModal('deleteConfirmModal'); resolve(true);  };
+        window._deleteConfirmReject  = () => { closeExpModal('deleteConfirmModal'); resolve(false); };
     });
 }
+window.showDeleteConfirm = showDeleteConfirm;
 
 // ── Formats a number value as a comma-separated string ──
 function fmtBudgetVal(num) {

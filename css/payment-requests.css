@@ -1205,6 +1205,18 @@
     padding: 16px;
 }
 
+/* ── Client row & View button ── */
+.rpt-client-cell { display: flex; align-items: center; gap: 10px; }
+.rpt-view-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 7px;
+    border: 1.5px solid #d1fae5; background: #f0fdf4;
+    color: #059669; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: background .15s, border-color .15s;
+}
+.rpt-view-btn:hover { background: #d1fae5; border-color: #059669; }
+
 @media (max-width: 900px) {
     .rpt-charts-row { grid-template-columns: 1fr; }
 }

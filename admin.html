@@ -1372,9 +1372,10 @@
                         <th>Outstanding</th>
                         <th style="text-align:center;">Overdue</th>
                         <th>Last Activity</th>
+                        <th style="text-align:center;">Action</th>
                     </tr></thead>
                     <tbody id="rptClientTbody">
-                        <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:28px;">Loading…</td></tr>
+                        <tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:28px;">Loading…</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1384,6 +1385,37 @@
 </div>
 
 
+<!-- Client Receipts Modal -->
+<div id="clientReceiptsModal" class="exp-modal">
+    <div class="exp-modal-box" style="max-width:760px;width:95vw;">
+        <div class="exp-modal-header">
+            <div>
+                <h2 style="font-size:1rem;font-weight:700;color:#111827;margin:0;" id="clientReceiptsTitle">Receipts</h2>
+                <div style="font-size:12px;color:#6b7280;margin-top:2px;" id="clientReceiptsEmail"></div>
+            </div>
+            <button class="exp-modal-close" onclick="closeExpModal('clientReceiptsModal')">&times;</button>
+        </div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                    <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+                        <th style="padding:10px 14px;text-align:left;font-weight:600;color:#374151;">Billing Period</th>
+                        <th style="padding:10px 14px;text-align:left;font-weight:600;color:#374151;">Project</th>
+                        <th style="padding:10px 14px;text-align:right;font-weight:600;color:#374151;">Amount Billed</th>
+                        <th style="padding:10px 14px;text-align:right;font-weight:600;color:#374151;">Amount Collected</th>
+                        <th style="padding:10px 14px;text-align:center;font-weight:600;color:#374151;">Due Date</th>
+                        <th style="padding:10px 14px;text-align:center;font-weight:600;color:#374151;">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="clientReceiptsTbody"></tbody>
+            </table>
+        </div>
+        <div style="padding:12px 24px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;">
+            <button class="exp-btn exp-btn-secondary" onclick="closeExpModal('clientReceiptsModal')">Close</button>
+        </div>
+    </div>
+</div>
+
 <!-- Invoice Receipt Generator View -->
 <div id="invoicesView" class="content-view" style="display:none;">
     <div id="invLoading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:80px 0;">

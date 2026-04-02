@@ -416,7 +416,7 @@
     // ══════════════════════════════════════════════════════
 
     window.prDeleteRequest = async function (id) {
-        if (!await showDeleteConfirm('Are you sure you want to delete this payment request? This cannot be undone.')) return;
+        if (!await window.showDeleteConfirm('Are you sure you want to delete this payment request? This cannot be undone.')) return;
         try {
             await db.collection('paymentRequests').doc(id).delete();
             _allRequests = _allRequests.filter(r => r.id !== id);
@@ -701,6 +701,7 @@
 
         modal.style.display = 'flex';
         if (typeof lucide !== 'undefined') lucide.createIcons();
+
     };
 
     window.prCloseDetailModal = function () {
