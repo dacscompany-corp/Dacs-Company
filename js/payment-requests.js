@@ -6,10 +6,20 @@
 (function () {
     'use strict';
 
+<<<<<<< HEAD
     let _allRequests = [];
     let _loading     = false;
     let _currentId   = null;   // id in detail modal
     let _qrSettings  = null;   // cached global QR from settings/paymentQR
+=======
+    let _allRequests       = [];
+    let _loading           = false;
+    let _currentId         = null;   // id in detail modal
+    let _qrSettings        = null;   // cached global QR from settings/paymentQR
+    let _pendingSOWAEmails = new Set(); // client emails with pending SOWA requests
+    let _sowaClientEmail   = null;   // client email for currently open SOWA modal
+    let _sowaClientName    = null;   // client name for currently open SOWA modal
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
     // ══════════════════════════════════════════════════════
     // PUBLIC ENTRY POINT
@@ -19,9 +29,35 @@
         if (_loading) return;
         _loadQRSettings();
         _loadRequests();
+<<<<<<< HEAD
     };
 
     // ══════════════════════════════════════════════════════
+=======
+        _loadPendingSOWARequests();
+    };
+
+    // ══════════════════════════════════════════════════════
+    // PENDING SOWA REQUESTS
+    // ══════════════════════════════════════════════════════
+
+    async function _loadPendingSOWARequests() {
+        try {
+            const uid  = window.currentDataUserId || firebase.auth().currentUser?.uid;
+            if (!uid) return;
+            const snap = await db.collection('sowaRequests')
+                .where('ownerUid', '==', uid)
+                .where('status',   '==', 'pending')
+                .get();
+            _pendingSOWAEmails.clear();
+            snap.forEach(doc => _pendingSOWAEmails.add(doc.data().clientEmail));
+        } catch (e) {
+            console.warn('PaymentRequests: could not load SOWA requests', e);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     // GLOBAL QR SETTINGS
     // ══════════════════════════════════════════════════════
 
@@ -246,6 +282,13 @@
                     <button class="un-btn-view" onclick="prViewRequest('${r.id}')">
                         <i data-lucide="eye" style="width:13px;height:13px;"></i> View
                     </button>
+<<<<<<< HEAD
+=======
+                    <button class="un-btn-sowa" onclick="prOpenSOWA('${_esc(r.clientEmail)}','${_esc(r.clientName || _nameFromEmail(r.clientEmail))}','${_esc(r.projectName || '')}')">
+                        <i data-lucide="file-text" style="width:13px;height:13px;"></i> SOWA
+                        ${_pendingSOWAEmails.has(r.clientEmail) ? '<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#ef4444;color:#fff;font-size:9px;font-weight:800;margin-left:2px;">!</span>' : ''}
+                    </button>
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     <button class="un-btn-toggle un-btn-deactivate" onclick="prDeleteRequest('${r.id}')">
                         <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Delete
                     </button>
@@ -416,7 +459,11 @@
     // ══════════════════════════════════════════════════════
 
     window.prDeleteRequest = async function (id) {
+<<<<<<< HEAD
         if (!confirm('Are you sure you want to delete this payment request? This cannot be undone.')) return;
+=======
+        if (!await window.showDeleteConfirm('Are you sure you want to delete this payment request? This cannot be undone.')) return;
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         try {
             await db.collection('paymentRequests').doc(id).delete();
             _allRequests = _allRequests.filter(r => r.id !== id);
@@ -465,7 +512,11 @@
 
         const rejectedHtml = (r.status === 'rejected' && r.rejectedReason) ? `
             <div class="pr-rejected-note">
+<<<<<<< HEAD
                 <strong>Rejection Reason</strong>
+=======
+                <strong>Reason for Rejection</strong>
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 ${_esc(r.rejectedReason)}
             </div>` : '';
 
@@ -518,7 +569,11 @@
                 <div class="pr-detail-section-title">Admin Actions</div>
                 <div id="prActionMain" style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
                     <button class="pr-btn-verify" onclick="prShowVerifyConfirm()">
+<<<<<<< HEAD
                         <i data-lucide="check-circle" style="width:15px;height:15px;"></i> Mark as Paid
+=======
+                        <i data-lucide="check-circle" style="width:15px;height:15px;"></i> Verify Payment
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     </button>
                     <button class="pr-btn-reject" onclick="prShowRejectInput()">
                         <i data-lucide="x-circle" style="width:15px;height:15px;"></i> Reject
@@ -528,16 +583,27 @@
                     </button>
                 </div>
                 <div id="prVerifyConfirm" style="display:none;margin-top:14px;background:#f0fdf9;border:1.5px solid #6ee7b7;border-radius:10px;padding:14px;">
+<<<<<<< HEAD
                     <p style="font-size:13.5px;color:#065f46;font-weight:500;margin:0 0 12px;">Confirm marking this payment as verified and paid?</p>
                     <div style="display:flex;gap:8px;">
                         <button class="pr-btn-verify" onclick="prConfirmVerify('${id}')">
                             <i data-lucide="check" style="width:14px;height:14px;"></i> Yes, Mark as Paid
+=======
+                    <p style="font-size:13.5px;color:#065f46;font-weight:500;margin:0 0 12px;">Confirm that payment has been received and verified?</p>
+                    <div style="display:flex;gap:8px;">
+                        <button class="pr-btn-verify" onclick="prConfirmVerify('${id}')">
+                            <i data-lucide="check" style="width:14px;height:14px;"></i> Yes, Verify Payment
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                         </button>
                         <button class="pr-btn-cancel" onclick="prCancelAction()">Cancel</button>
                     </div>
                 </div>
                 <div id="prRejectForm" style="display:none;margin-top:14px;background:#fff5f5;border:1.5px solid #fecaca;border-radius:10px;padding:14px;">
+<<<<<<< HEAD
                     <label style="font-size:12.5px;font-weight:600;color:#b91c1c;display:block;margin-bottom:8px;">Rejection Reason <span style="color:#ef4444;">*</span></label>
+=======
+                    <label style="font-size:12.5px;font-weight:600;color:#b91c1c;display:block;margin-bottom:8px;">Reason for Rejection <span style="color:#ef4444;">*</span></label>
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     <textarea id="prRejectReason" class="pr-form-textarea" placeholder="Enter the reason for rejection…" style="border-color:#fca5a5;min-height:70px;resize:vertical;"></textarea>
                     <div id="prRejectError" style="display:none;color:#b91c1c;font-size:12.5px;margin-top:6px;"></div>
                     <div style="display:flex;gap:8px;margin-top:10px;">
@@ -572,7 +638,11 @@
                         <i data-lucide="check-circle" style="width:15px;height:15px;"></i> Approve Partial
                     </button>
                     <button class="pr-btn-reject" onclick="prShowDeclinePartialInput()">
+<<<<<<< HEAD
                         <i data-lucide="x-circle" style="width:15px;height:15px;"></i> Decline Request
+=======
+                        <i data-lucide="x-circle" style="width:15px;height:15px;"></i> Reject
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     </button>
                     <button class="pr-btn-delete" onclick="prShowDeleteConfirm()">
                         <i data-lucide="trash-2" style="width:15px;height:15px;"></i> Delete
@@ -590,12 +660,20 @@
                     </div>
                 </div>
                 <div id="prDeclinePartialForm" style="display:none;margin-top:14px;background:#fff5f5;border:1.5px solid #fecaca;border-radius:10px;padding:14px;">
+<<<<<<< HEAD
                     <label style="font-size:12.5px;font-weight:600;color:#b91c1c;display:block;margin-bottom:8px;">Reason for Declining <span style="color:#ef4444;">*</span></label>
+=======
+                    <label style="font-size:12.5px;font-weight:600;color:#b91c1c;display:block;margin-bottom:8px;">Reason for Rejection <span style="color:#ef4444;">*</span></label>
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     <textarea id="prDeclinePartialReason" class="pr-form-textarea" placeholder="e.g. Full payment is required per contract terms…" style="border-color:#fca5a5;min-height:70px;"></textarea>
                     <div id="prDeclinePartialError" style="display:none;color:#b91c1c;font-size:12.5px;margin-top:6px;"></div>
                     <div style="display:flex;gap:8px;margin-top:10px;">
                         <button class="pr-btn-reject" onclick="prConfirmDeclinePartial('${id}')">
+<<<<<<< HEAD
                             <i data-lucide="x-circle" style="width:14px;height:14px;"></i> Confirm Decline
+=======
+                            <i data-lucide="x-circle" style="width:14px;height:14px;"></i> Confirm Rejection
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                         </button>
                         <button class="pr-btn-cancel" onclick="prCancelPartialAction()">Cancel</button>
                     </div>
@@ -614,7 +692,11 @@
                 <div class="pr-detail-section-title">Admin Actions</div>
                 <div id="prSingleAction" style="margin-top:10px;">
                     <button class="pr-btn-delete" onclick="prShowDeleteConfirm()">
+<<<<<<< HEAD
                         <i data-lucide="trash-2" style="width:15px;height:15px;"></i> Delete Request
+=======
+                        <i data-lucide="trash-2" style="width:15px;height:15px;"></i> Delete
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     </button>
                 </div>
                 <div id="prDeleteConfirm" style="display:none;margin-top:14px;background:#fff5f5;border:1.5px solid #fecaca;border-radius:10px;padding:14px;">
@@ -701,6 +783,10 @@
 
         modal.style.display = 'flex';
         if (typeof lucide !== 'undefined') lucide.createIcons();
+<<<<<<< HEAD
+=======
+
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     };
 
     window.prCloseDetailModal = function () {
@@ -825,7 +911,11 @@
             if (_decReq.clientUid) {
                 db.collection('notifications').doc(_decReq.clientUid).collection('items').add({
                     type:      'partial_declined',
+<<<<<<< HEAD
                     message:   `Your partial payment request for "${_decReq.billingPeriod || 'a billing period'}" was declined. Reason: ${reason}`,
+=======
+                    message:   `Your partial payment request for "${_decReq.billingPeriod || 'a billing period'}" was rejected. Reason: ${reason}`,
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     isRead:    false,
                     relatedId: id,
                     createdAt: firebase.firestore.Timestamp.fromDate(new Date())
@@ -834,10 +924,17 @@
 
             prCloseDetailModal();
             _loadRequests();
+<<<<<<< HEAD
             _showToast('Partial payment request declined. Client must pay full amount.');
         } catch (e) {
             console.error('PaymentRequests: decline partial error', e);
             if (btn) { btn.disabled = false; btn.textContent = 'Confirm Decline'; }
+=======
+            _showToast('Partial payment request rejected. Client must pay full amount.');
+        } catch (e) {
+            console.error('PaymentRequests: decline partial error', e);
+            if (btn) { btn.disabled = false; btn.textContent = 'Confirm Rejection'; }
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             if (errEl) { errEl.textContent = 'Error: ' + e.message; errEl.style.display = 'block'; }
         }
     };
@@ -917,7 +1014,11 @@
             if (_verReq.clientUid) {
                 db.collection('notifications').doc(_verReq.clientUid).collection('items').add({
                     type:      'payment_verified',
+<<<<<<< HEAD
                     message:   `Your payment for "${_verReq.billingPeriod || 'a billing period'}" has been verified and marked as paid.`,
+=======
+                    message:   `Your payment for "${_verReq.billingPeriod || 'a billing period'}" has been verified and marked as paid. Your invoice has been generated and is available under Invoice Receipt.`,
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     isRead:    false,
                     relatedId: id,
                     createdAt: firebase.firestore.Timestamp.fromDate(new Date())
@@ -929,7 +1030,11 @@
             _showToast('Payment marked as paid. Invoice generated.');
         } catch (e) {
             console.error('PaymentRequests: verify error', e);
+<<<<<<< HEAD
             if (btn) { btn.disabled = false; btn.textContent = 'Yes, Mark as Paid'; }
+=======
+            if (btn) { btn.disabled = false; btn.textContent = 'Yes, Verify Payment'; }
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             prCancelAction();
             _showToast('Could not verify payment: ' + e.message, true);
         }
@@ -992,6 +1097,7 @@
     };
 
     // ══════════════════════════════════════════════════════
+<<<<<<< HEAD
     // PRINT ALL REQUESTS
     // ══════════════════════════════════════════════════════
 
@@ -1126,6 +1232,8 @@
     };
 
     // ══════════════════════════════════════════════════════
+=======
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     // HELPERS
     // ══════════════════════════════════════════════════════
 
@@ -1239,13 +1347,282 @@
     function _statusBadge(status) {
         const map = {
             pending:         ['pr-status-pending',  'clock',        'Pending'],
+<<<<<<< HEAD
             partial_pending: ['pr-status-partial',  'help-circle',  'Approval Pending'],
             submitted:       ['pr-status-submitted', 'upload',      'Submitted'],
             verified:        ['pr-status-verified',  'check-circle','Verified'],
+=======
+            partial_pending: ['pr-status-partial',  'help-circle',  'Awaiting Approval'],
+            submitted:       ['pr-status-submitted', 'upload',      'Under Review'],
+            verified:        ['pr-status-verified',  'check-circle','Paid'],
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             rejected:        ['pr-status-rejected',  'x-circle',   'Rejected']
         };
         const [cls, icon, label] = map[status] || ['pr-status-pending', 'clock', status];
         return `<span class="pr-status ${cls}"><span class="pr-status-dot"></span>${label}</span>`;
     }
 
+<<<<<<< HEAD
+=======
+    // ══════════════════════════════════════════════════════
+    // SOWA — Statement of Work Accomplished
+    // ══════════════════════════════════════════════════════
+
+    window.prOpenSOWA = function (clientEmail, clientName, projectName) {
+        const modal = document.getElementById('sowaModal');
+        if (!modal) return;
+
+        // If clientName is an email address or empty, try to find the proper name
+        if (!clientName || clientName.includes('@')) {
+            const found = _allRequests.find(r => r.clientEmail === clientEmail && r.clientName && !r.clientName.includes('@'));
+            clientName = found ? found.clientName : _nameFromEmail(clientEmail);
+        }
+
+        // Filter requests for this client (and project if specified)
+        const requests = _allRequests
+            .filter(r => r.clientEmail === clientEmail && (!projectName || r.projectName === projectName))
+            .sort((a, b) => _tsToMs(a.createdAt) - _tsToMs(b.createdAt));
+
+        // Group by project — only group if at least one request has a projectName
+        const hasProject = requests.some(r => r.projectName);
+        const projects = {};
+        requests.forEach(r => {
+            const proj = hasProject ? (r.projectName || 'No Project') : '_all_';
+            if (!projects[proj]) projects[proj] = [];
+            projects[proj].push(r);
+        });
+
+        const fundingOrder = { mobilization: 1, downpayment: 2, progress: 3, final: 4, president: 5 };
+        const typeLabel    = { mobilization: 'Mobilization', downpayment: 'Downpayment', progress: 'Progress Billing', final: 'Final Payment', president: 'Cover Expenses' };
+        const statusLabel  = { pending: 'Pending', partial_pending: 'Awaiting Approval', partial_approved: 'Partial Approved', submitted: 'Under Review', verified: 'Paid', rejected: 'Rejected' };
+        const statusColor  = { pending: '#f59e0b', partial_pending: '#f97316', partial_approved: '#3b82f6', submitted: '#3b82f6', verified: '#059669', rejected: '#dc2626' };
+
+        const dateGenerated = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
+
+        let projectsHtml = '';
+        let grandBilled = 0, grandPaid = 0;
+
+        // Build one combined table across all projects
+        let tableRows = '';
+        let projNum   = 0;
+
+        Object.entries(projects).forEach(([proj, reqs]) => {
+            projNum++;
+            let projBilled = 0, projPaid = 0;
+
+            // Red category row (project name)
+            if (proj !== '_all_') {
+                const roman = ['I','II','III','IV','V','VI','VII','VIII','IX','X'][projNum - 1] || projNum;
+                tableRows += `<tr class="sowa-cat-row">
+                    <td style="text-align:center;font-weight:700;">${roman}.</td>
+                    <td colspan="5" style="font-weight:700;letter-spacing:.5px;text-transform:uppercase;">${_esc(proj)}</td>
+                    <td></td>
+                </tr>`;
+            }
+
+            reqs.forEach((r, idx) => {
+                const type    = typeLabel[r.fundingType] || r.fundingType || '—';
+                const billed  = r.amount || 0;
+                const paid    = r.status === 'verified' ? (r.paidAmount != null ? r.paidAmount : billed) : 0;
+                const balance = billed - paid;
+                const pct     = billed > 0 ? Math.round((paid / billed) * 100) : 0;
+                const st      = r.status || 'pending';
+                const color   = statusColor[st] || '#6b7280';
+                const label   = statusLabel[st]  || st;
+                projBilled += billed;
+                projPaid   += paid;
+
+                tableRows += `<tr class="sowa-item-row">
+                    <td style="text-align:center;color:#6b7280;">${idx + 1}</td>
+                    <td>${_esc(r.billingPeriod || '—')}</td>
+                    <td>${_esc(type)}</td>
+                    <td style="text-align:right;font-weight:600;">${_formatAmount(billed)}</td>
+                    <td style="text-align:right;font-weight:600;color:#059669;">${paid > 0 ? _formatAmount(paid) : '<span style="color:#9ca3af;">—</span>'}</td>
+                    <td style="text-align:right;font-weight:600;color:${balance > 0.01 ? '#cc0000' : '#059669'};">${_formatAmount(balance)}</td>
+                    <td style="text-align:center;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <div style="flex:1;background:#e5e7eb;border-radius:99px;height:8px;min-width:50px;">
+                                <div style="width:${pct}%;background:#059669;height:8px;border-radius:99px;transition:width .3s;"></div>
+                            </div>
+                            <span style="font-size:11px;font-weight:700;color:${color};white-space:nowrap;">${pct}%</span>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+
+            grandBilled += projBilled;
+            grandPaid   += projPaid;
+
+            // Yellow subtotal row
+            if (proj !== '_all_') {
+                tableRows += `<tr class="sowa-subtotal-row">
+                    <td colspan="3" style="font-style:italic;font-weight:600;color:#7a5a00;">Subtotal — ${_esc(proj)}</td>
+                    <td style="text-align:right;font-weight:700;">${_formatAmount(projBilled)}</td>
+                    <td style="text-align:right;font-weight:700;color:#059669;">${_formatAmount(projPaid)}</td>
+                    <td style="text-align:right;font-weight:700;color:${(projBilled-projPaid)>0.01?'#cc0000':'#059669'};">${_formatAmount(projBilled-projPaid)}</td>
+                    <td></td>
+                </tr>`;
+            }
+        });
+
+        document.getElementById('sowaContent').innerHTML = `
+        <div class="sowa-header-block">
+            <div class="sowa-company">DAC'S Building Design Services</div>
+            <div class="sowa-doc-title">STATEMENT OF WORK ACCOMPLISHED</div>
+            <div class="sowa-meta">
+                <div><span class="sowa-meta-label">Client:</span> <strong>${_esc(clientName)}</strong></div>
+                <div><span class="sowa-meta-label">Date Generated:</span> <strong>${dateGenerated}</strong></div>
+            </div>
+        </div>
+        <table class="sowa-table">
+            <thead>
+                <tr class="sowa-thead-row">
+                    <th style="width:44px;text-align:center;">NO.</th>
+                    <th>BILLING PERIOD</th>
+                    <th>TYPE</th>
+                    <th style="text-align:right;">AMOUNT BILLED</th>
+                    <th style="text-align:right;">AMOUNT PAID</th>
+                    <th style="text-align:right;">BALANCE</th>
+                    <th style="text-align:center;">% PAID</th>
+                </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+            <tfoot>
+                <tr class="sowa-grand-row">
+                    <td colspan="3" style="font-weight:800;font-size:13px;letter-spacing:.5px;">GRAND TOTAL</td>
+                    <td style="text-align:right;font-weight:800;font-size:13px;">${_formatAmount(grandBilled)}</td>
+                    <td style="text-align:right;font-weight:800;font-size:13px;color:#6ee7b7;">${_formatAmount(grandPaid)}</td>
+                    <td style="text-align:right;font-weight:800;font-size:13px;color:${(grandBilled-grandPaid)>0.01?'#fca5a5':'#6ee7b7'};">${_formatAmount(grandBilled-grandPaid)}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>`;
+
+        _sowaClientEmail = clientEmail;
+        _sowaClientName  = clientName;
+
+        // Reset Send button state
+        const sendBtn = document.getElementById('sowaSendBtn');
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send to Client`;
+            sendBtn.style.background  = '#eff6ff';
+            sendBtn.style.borderColor = '#bfdbfe';
+            sendBtn.style.color       = '#1d4ed8';
+            sendBtn.style.cursor      = 'pointer';
+        }
+
+        modal.style.display = 'flex';
+
+        // Mark any pending SOWA requests from this client as viewed
+        if (_pendingSOWAEmails.has(clientEmail)) {
+            _pendingSOWAEmails.delete(clientEmail);
+            // Remove the badge dot from all SOWA buttons for this client in the DOM
+            document.querySelectorAll('.un-btn-sowa').forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(_esc(clientEmail))) {
+                    btn.querySelectorAll('span').forEach(s => s.remove());
+                }
+            });
+            const uid = window.currentDataUserId || firebase.auth().currentUser?.uid;
+            db.collection('sowaRequests')
+                .where('clientEmail', '==', clientEmail)
+                .where('ownerUid',    '==', uid)
+                .where('status',      '==', 'pending')
+                .get()
+                .then(snap => snap.forEach(doc => doc.ref.update({
+                    status:   'viewed',
+                    viewedAt: firebase.firestore.Timestamp.fromDate(new Date())
+                })))
+                .catch(e => console.warn('SOWA request update error:', e));
+        }
+    };
+
+    window.prPrintSOWA = function () {
+        const content = document.getElementById('sowaContent');
+        if (!content) return;
+        const w = window.open('', '_blank');
+        w.document.write(`<!DOCTYPE html><html><head><title>SOWA</title>
+        <style>
+            body { font-family: Arial, sans-serif; font-size: 13px; color: #111; padding: 32px; }
+            .sowa-company { font-size: 18px; font-weight: 700; color: #059669; }
+            .sowa-doc-title { font-size: 15px; font-weight: 700; letter-spacing: 1px; margin: 4px 0 12px; text-transform: uppercase; }
+            .sowa-meta { display: flex; gap: 32px; margin-bottom: 20px; font-size: 13px; }
+            .sowa-meta-label { color: #6b7280; }
+            .sowa-project-title { font-weight: 700; font-size: 13px; background: #f0fdf4; padding: 7px 12px; border-left: 4px solid #059669; margin: 18px 0 8px; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th { background: #1e3a2f; color: #fff; padding: 8px 10px; text-align: left; }
+            td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+            .sowa-cat-row td { background: #cc0000; color: #fff; font-weight: 700; border: 1px solid #a80000; }
+            .sowa-subtotal-row td { background: #fffde7; color: #7a5a00; font-weight: 700; border: 1px solid #f5c518; }
+            .sowa-grand-row td { background: #1e3a2f; color: #fff; font-weight: 800; padding: 12px 10px; border: 1px solid #0f2018; }
+            @media print { body { padding: 16px; } }
+        </style></head><body>${content.innerHTML}</body></html>`);
+        w.document.close();
+        w.focus();
+        setTimeout(() => w.print(), 400);
+    };
+
+    window.prCloseSOWA = function () {
+        const modal = document.getElementById('sowaModal');
+        if (modal) modal.style.display = 'none';
+        _sowaClientEmail = null;
+        _sowaClientName  = null;
+    };
+
+    window.prShareSOWA = async function (btn) {
+        if (!_sowaClientEmail) return;
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+        try {
+            // Find client UID from loaded requests
+            const req = _allRequests.find(r => r.clientEmail === _sowaClientEmail && r.clientUid);
+            const clientUid = req?.clientUid || null;
+
+            // Notify the client
+            if (clientUid) {
+                await db.collection('notifications').doc(clientUid).collection('items').add({
+                    type:      'sowa_ready',
+                    message:   `Your Statement of Work Accomplished (SOWA) has been reviewed and is ready for you to view.`,
+                    read:      false,
+                    createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+                });
+            }
+
+            // Update sowaRequests status to 'shared'
+            const uid  = window.currentDataUserId || firebase.auth().currentUser?.uid;
+            const snap = await db.collection('sowaRequests')
+                .where('clientEmail', '==', _sowaClientEmail)
+                .where('ownerUid',    '==', uid)
+                .where('status', 'in', ['pending', 'viewed'])
+                .get();
+            const batch = db.batch();
+            snap.forEach(doc => batch.update(doc.ref, {
+                status:   'shared',
+                sharedAt: firebase.firestore.Timestamp.fromDate(new Date())
+            }));
+            if (!snap.empty) await batch.commit();
+
+            if (btn) {
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Sent`;
+                btn.style.background  = '#d1fae5';
+                btn.style.borderColor = '#6ee7b7';
+                btn.style.color       = '#059669';
+                btn.style.cursor      = 'default';
+            }
+        } catch (e) {
+            console.error('prShareSOWA error:', e);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'Send to Client';
+                btn.style.background  = '#eff6ff';
+                btn.style.borderColor = '#bfdbfe';
+                btn.style.color       = '#1d4ed8';
+                btn.style.cursor      = 'pointer';
+            }
+            alert('Error sending SOWA to client. Please try again.');
+        }
+    };
+
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 })();

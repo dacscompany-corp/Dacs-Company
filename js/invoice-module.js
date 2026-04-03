@@ -99,6 +99,52 @@
     // LIST VIEW
     // ══════════════════════════════════════════════════════
 
+<<<<<<< HEAD
+=======
+    // Track which client groups are expanded
+    const _expandedGroups = new Set();
+
+    // Delegated click handler — set up once, survives re-renders
+    document.addEventListener('click', function (e) {
+        const row = e.target.closest('.inv-group-toggle');
+        if (!row) return;
+        const key = row.getAttribute('data-group-key');
+        if (!key) return;
+        if (_expandedGroups.has(key)) {
+            _expandedGroups.delete(key);
+        } else {
+            _expandedGroups.add(key);
+        }
+        _renderList();
+    });
+
+    function _invoiceRow(inv) {
+        return `
+        <tr>
+            <td><span class="inv-no">${_esc(inv.invoiceNo || '—')}</span></td>
+            <td style="white-space:nowrap;">${inv.date ? _fmtDate(inv.date) : '—'}</td>
+            <td class="inv-amt">${_fmt(inv.totalAmount || 0)}</td>
+            <td>${_esc(inv.clientName || '—')}</td>
+            <td style="font-family:monospace;font-size:12px;">${_esc(inv.clientTin || '—')}</td>
+            <td class="inv-addr">${_esc(inv.clientAddress || '—')}</td>
+            <td><span class="inv-status inv-status--${inv.status || 'draft'}">${inv.status === 'issued' ? 'Issued' : 'Draft'}</span></td>
+            <td>
+                <div class="inv-actions">
+                    <button class="inv-action-btn" title="Print" onclick="window.invPrint('${inv.id}')">
+                        <i data-lucide="printer" style="width:14px;height:14px;"></i>
+                    </button>
+                    <button class="inv-action-btn" title="Edit" onclick="window.invShowForm('${inv.id}')">
+                        <i data-lucide="pencil" style="width:14px;height:14px;"></i>
+                    </button>
+                    <button class="inv-action-btn inv-action-btn--danger" title="Delete" onclick="window.invDelete('${inv.id}')">
+                        <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }
+
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     function _renderList() {
         _editId = null;
         const startOfMonth = new Date();
@@ -112,6 +158,7 @@
             if (_tsToMs(inv.createdAt) >= startOfMonth.getTime()) monthAmt += amt;
         });
 
+<<<<<<< HEAD
         const rows = _invoices.length === 0
             ? `<tr><td colspan="8" class="inv-empty">No invoices yet. Click <strong>New Invoice</strong> to create one.</td></tr>`
             : _invoices.map(inv => `
@@ -137,12 +184,60 @@
                     </div>
                 </td>
             </tr>`).join('');
+=======
+        // Group invoices by clientName
+        const groups = {};
+        _invoices.forEach(inv => {
+            const key = (inv.clientName || '—').trim();
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(inv);
+        });
+
+        let rows = '';
+        if (_invoices.length === 0) {
+            rows = `<tr><td colspan="8" class="inv-empty">No invoices yet. Click <strong>New Invoice</strong> to create one.</td></tr>`;
+        } else {
+            Object.entries(groups).forEach(([clientName, invList]) => {
+                if (invList.length === 1) {
+                    // Single receipt — show normal row
+                    rows += _invoiceRow(invList[0]);
+                } else {
+                    // Multiple receipts — show collapsible group
+                    const key      = _esc(clientName);
+                    const expanded = _expandedGroups.has(clientName);
+                    const groupTotal = invList.reduce((s, i) => s + (i.totalAmount || 0), 0);
+                    const chevron  = expanded
+                        ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`
+                        : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+                    rows += `
+                    <tr class="inv-group-row inv-group-toggle" data-group-key="${key}" style="cursor:pointer;">
+                        <td colspan="2">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="color:#059669;">${chevron}</span>
+                                <span style="font-weight:700;color:#111827;">${key}</span>
+                                <span class="inv-group-badge">${invList.length} receipts</span>
+                            </div>
+                        </td>
+                        <td class="inv-amt" style="font-weight:700;">${_fmt(groupTotal)}</td>
+                        <td colspan="5" style="color:#6b7280;font-size:12px;">${expanded ? 'Click to collapse' : 'Click to view receipts'}</td>
+                    </tr>`;
+                    if (expanded) {
+                        invList.forEach(inv => { rows += _invoiceRow(inv); });
+                    }
+                }
+            });
+        }
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
         _setContent(`
         <div class="inv-header">
             <div>
                 <h2 class="inv-page-title">
+<<<<<<< HEAD
                     <span class="inv-title-icon">🧾</span> Invoice Receipt Generator
+=======
+                    <span class="inv-title-icon">🧾</span> Invoice Generator
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 </h2>
                 <p class="inv-page-subtitle">Create, manage and print sales invoices</p>
             </div>
@@ -181,17 +276,29 @@
 
         <div class="inv-table-card">
             <div class="inv-table-header">
+<<<<<<< HEAD
                 <div class="inv-table-title">Receipt Listing</div>
                 <div class="inv-total-badge">Total No. of Receipts: <strong>${_invoices.length}</strong></div>
+=======
+                <div class="inv-table-title">Invoice Listing</div>
+                <div class="inv-total-badge">Total Invoices: <strong>${_invoices.length}</strong></div>
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             </div>
             <div class="inv-table-wrap">
                 <table class="inv-table">
                     <thead>
                         <tr>
+<<<<<<< HEAD
                             <th>Receipt No.</th>
                             <th>Billing Date</th>
                             <th>Total Amount</th>
                             <th>Customer Name</th>
+=======
+                            <th>Invoice No.</th>
+                            <th>Invoice Date</th>
+                            <th>Total Amount</th>
+                            <th>Client Name</th>
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                             <th>TIN No.</th>
                             <th>Business Address</th>
                             <th>Status</th>
@@ -289,7 +396,11 @@
             <div class="inv-section-title" style="margin-top:20px;">Bill To</div>
             <div class="inv-form-grid inv-form-grid--3">
                 <div class="inv-field">
+<<<<<<< HEAD
                     <label>Customer Name</label>
+=======
+                    <label>Client Name</label>
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     <input type="text" id="invClientName" class="inv-input"
                            placeholder="Full name"
                            value="${_esc(d.clientName || '')}">
@@ -606,8 +717,13 @@
     // DELETE
     // ══════════════════════════════════════════════════════
 
+<<<<<<< HEAD
     window.invDelete = function (id) {
         if (!confirm('Delete this invoice? This cannot be undone.')) return;
+=======
+    window.invDelete = async function (id) {
+        if (!await window.showDeleteConfirm('Delete this invoice? This cannot be undone.')) return;
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         db.collection('invoices').doc(id).delete()
             .then(() => {
                 _invoices = _invoices.filter(i => i.id !== id);
@@ -737,7 +853,11 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff;
     <div class="inv-title-block">
       <h2>SALES INVOICE</h2>
       <div class="inv-meta">
+<<<<<<< HEAD
         Receipt No: <strong>${_pEsc(inv.invoiceNo || '—')}</strong><br>
+=======
+        Invoice No: <strong>${_pEsc(inv.invoiceNo || '—')}</strong><br>
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         Date: <strong>${inv.date ? _fmtDate(inv.date) : '—'}</strong>
       </div>
     </div>

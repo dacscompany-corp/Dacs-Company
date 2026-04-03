@@ -226,7 +226,11 @@
         _statusChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
+<<<<<<< HEAD
                 labels:   ['Pending', 'Approval Pending', 'Submitted', 'Verified', 'Rejected'],
+=======
+                labels:   ['Pending', 'Awaiting Approval', 'Under Review', 'Paid', 'Rejected'],
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 datasets: [{
                     data: [c.pending, c.partial_pending, c.submitted, c.verified, c.rejected],
                     backgroundColor: ['#fbbf24', '#f97316', '#3b82f6', '#00a85e', '#ef4444'],
@@ -272,7 +276,11 @@
         const rows = Object.values(clients).sort((a, b) => a.name.localeCompare(b.name));
 
         if (!rows.length) {
+<<<<<<< HEAD
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:28px;">No payment data yet.</td></tr>';
+=======
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:28px;">No payment data yet.</td></tr>';
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             return;
         }
 
@@ -298,9 +306,16 @@
             const overdueHtml = overdueCount > 0
                 ? `<span class="rpt-overdue-pill">${overdueCount} Overdue</span>`
                 : '<span style="color:#9ca3af;">—</span>';
+<<<<<<< HEAD
 
             return `
             <tr>
+=======
+            const idx = rows.indexOf(c);
+
+            return `
+            <tr class="rpt-client-row">
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 <td>
                     <div class="rpt-client-cell">
                         <div class="rpt-avatar">${initials}</div>
@@ -316,11 +331,70 @@
                 <td class="rpt-td-amt ${outstanding > 0.01 ? 'rpt-outstanding' : 'rpt-zero'}">${_fmt(outstanding)}</td>
                 <td class="rpt-td-center">${overdueHtml}</td>
                 <td class="rpt-td-date">${lastDate}</td>
+<<<<<<< HEAD
             </tr>`;
         }).join('');
     }
 
     // ══════════════════════════════════════════════════════
+=======
+                <td class="rpt-td-center">
+                    <button class="rpt-view-btn" onclick="window.rptViewClientReceipts(${idx})">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        View
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+
+        // Store rows for modal access
+        tbody._rptRows = rows;
+    }
+
+    // ══════════════════════════════════════════════════════
+    // CLIENT RECEIPTS MODAL
+    // ══════════════════════════════════════════════════════
+
+    window.rptViewClientReceipts = function (idx) {
+        const tbody = document.getElementById('rptClientTbody');
+        const rows  = tbody && tbody._rptRows;
+        if (!rows) return;
+        const c = rows[idx];
+        if (!c) return;
+
+        document.getElementById('clientReceiptsTitle').textContent = c.name;
+        document.getElementById('clientReceiptsEmail').textContent = c.email;
+
+        const statusLabel = { pending: 'Pending', partial_pending: 'Awaiting Approval', partial_approved: 'Partial Approved', submitted: 'Under Review', verified: 'Paid', rejected: 'Rejected' };
+        const statusColor = { pending: '#f59e0b', partial_pending: '#f97316', partial_approved: '#3b82f6', submitted: '#3b82f6', verified: '#059669', rejected: '#dc2626' };
+
+        const sorted = [...c.requests].sort((a, b) => _tsToMs(b.createdAt) - _tsToMs(a.createdAt));
+
+        document.getElementById('clientReceiptsTbody').innerHTML = sorted.map(r => {
+            const dueMs  = _tsToMs(r.dueDate);
+            const dueStr = dueMs ? new Date(dueMs).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+            const st     = r.status || 'pending';
+            const color  = statusColor[st] || '#6b7280';
+            const label  = statusLabel[st]  || st;
+            const paid   = r.status === 'verified' ? (r.paidAmount != null ? r.paidAmount : (r.amount || 0)) : null;
+            return `
+            <tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:10px 14px;color:#111827;font-weight:600;">${_esc(r.billingPeriod || '—')}</td>
+                <td style="padding:10px 14px;color:#6b7280;">${_esc(r.projectName || '—')}</td>
+                <td style="padding:10px 14px;text-align:right;font-weight:600;">${_fmt(r.amount || 0)}</td>
+                <td style="padding:10px 14px;text-align:right;color:#059669;font-weight:600;">${paid !== null ? _fmt(paid) : '<span style="color:#9ca3af;">—</span>'}</td>
+                <td style="padding:10px 14px;text-align:center;color:#6b7280;">${dueStr}</td>
+                <td style="padding:10px 14px;text-align:center;">
+                    <span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;background:${color}18;color:${color};">${label}</span>
+                </td>
+            </tr>`;
+        }).join('');
+
+        openExpModal('clientReceiptsModal');
+    };
+
+    // ══════════════════════════════════════════════════════
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     // CSV EXPORT
     // ══════════════════════════════════════════════════════
 

@@ -56,6 +56,10 @@
             _updateNavBadge();
             window.initClientSelfPay();
             if (typeof window.refreshBilledKPI === 'function') window.refreshBilledKPI();
+<<<<<<< HEAD
+=======
+            _checkSOWARequestState();
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         } catch (e) {
             console.error('ClientPayment: load error', e);
             listEl.innerHTML = `<div style="color:#b91c1c;font-size:13.5px;padding:16px 0;">Could not load payment requests. ${_esc(e.message)}</div>`;
@@ -66,7 +70,43 @@
     // RENDER LIST
     // ══════════════════════════════════════════════════════
 
+<<<<<<< HEAD
     function _renderList(listEl) {
+=======
+    function _renderOutstandingAlert() {
+        const alertEl = document.getElementById('outstanding-balance-alert');
+        if (!alertEl) return;
+        const now = Date.now();
+        const unpaid = _requests.filter(r => r.status !== 'verified' && r.status !== 'rejected');
+        const overdue = unpaid.filter(r => _tsToMs(r.dueDate) && _tsToMs(r.dueDate) < now);
+        const totalOutstanding = unpaid.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+
+        if (!unpaid.length) { alertEl.style.display = 'none'; return; }
+
+        const overdueHtml = overdue.length
+            ? `<span style="background:#dc2626;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:8px;">${overdue.length} Overdue</span>`
+            : '';
+        alertEl.style.display = 'flex';
+        alertEl.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:${overdue.length ? '#dc2626' : '#d97706'}">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <div style="flex:1;">
+                <div style="font-weight:700;font-size:13.5px;color:${overdue.length ? '#b91c1c' : '#92400e'};">
+                    Outstanding Balance: ${_formatAmount(totalOutstanding)}${overdueHtml}
+                </div>
+                <div style="font-size:12px;color:${overdue.length ? '#dc2626' : '#b45309'};margin-top:2px;">
+                    ${unpaid.length} payment${unpaid.length > 1 ? 's' : ''} pending — please settle at your earliest convenience.
+                </div>
+            </div>
+            <button onclick="window.showSection('billing')" style="flex-shrink:0;background:${overdue.length ? '#dc2626' : '#d97706'};color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer;">
+                View
+            </button>`;
+    }
+
+    function _renderList(listEl) {
+        _renderOutstandingAlert();
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         if (!_requests.length) {
             listEl.innerHTML = `<div style="padding:40px 24px;text-align:center;">
                 <div style="font-size:32px;margin-bottom:10px;">🧾</div>
@@ -213,7 +253,11 @@
 
         const statusMap = {
             pending:         { color:'#d97706', bg:'#fffbeb', label:'Pending'          },
+<<<<<<< HEAD
             partial_pending: { color:'#c2410c', bg:'#ffedd5', label:'Approval Pending' },
+=======
+            partial_pending: { color:'#c2410c', bg:'#ffedd5', label:'Awaiting Approval' },
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             submitted:       { color:'#1d4ed8', bg:'#eff6ff', label:'Under Review'     },
             verified:        { color:'#065f46', bg:'#d1fae5', label:'Paid'             },
             rejected:        { color:'#b91c1c', bg:'#fee2e2', label:'Rejected'         },
@@ -266,6 +310,7 @@
             noteHtml = `<div style="padding:10px 22px 10px 80px;background:#f0fdf9;border-top:1px solid #6ee7b7;font-size:12.5px;color:#065f46;">
                 Partial payment approved — please pay <strong>${_formatAmount(r.approvedPartialAmount)}</strong>.</div>`;
         } else if (r.status === 'submitted' && r.referenceNumber) {
+<<<<<<< HEAD
             noteHtml = `<div style="padding:10px 22px 10px 80px;background:#eff6ff;border-top:1px solid #bfdbfe;font-size:12.5px;color:#1d4ed8;">
                 Ref #: <strong>${_esc(r.referenceNumber)}</strong>${r.paidAmount ? ` &nbsp;·&nbsp; Paid: <strong>${_formatAmount(r.paidAmount)}</strong>` : ''} &nbsp;·&nbsp; Awaiting admin verification.</div>`;
         }
@@ -274,6 +319,70 @@
             ? `<span style="color:${overdue ? '#dc2626' : '#6b7280'};font-weight:${overdue ? '600' : '400'};">${_formatDate(r.dueDate)}${overdue ? ' · Overdue' : ''}</span>`
             : '';
 
+=======
+            noteHtml = `<div style="padding:10px 22px 10px 22px;background:#eff6ff;border-top:1px solid #bfdbfe;font-size:12.5px;color:#1d4ed8;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                <span>Ref #: <strong>${_esc(r.referenceNumber)}</strong>${r.paidAmount ? ` &nbsp;·&nbsp; Paid: <strong>${_formatAmount(r.paidAmount)}</strong>` : ''} &nbsp;·&nbsp; Awaiting admin verification.</span>
+                <button onclick="navigator.clipboard.writeText('${_esc(r.referenceNumber)}').then(()=>{this.textContent='Copied!';setTimeout(()=>{this.innerHTML='<svg width=\\'11\\' height=\\'11\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2\\'><rect x=\\'9\\' y=\\'9\\' width=\\'13\\' height=\\'13\\' rx=\\'2\\'/><path d=\\'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\\'/></svg> Copy Ref #\\'};this.innerHTML=\\'<svg width=\\'11\\' height=\\'11\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2\\'><rect x=\\'9\\' y=\\'9\\' width=\\'13\\' height=\\'13\\' rx=\\'2\\'/><path d=\\'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\\'/></svg> Copy Ref #\\'},2000);})"
+                    style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:#1d4ed8;background:#dbeafe;border:1px solid #bfdbfe;border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    Copy Ref #
+                </button>
+            </div>`;
+        } else if (r.status === 'verified') {
+            const paid   = r.paidAmount != null ? r.paidAmount : r.amount;
+            const billed = r.amount || 0;
+            const bal    = billed - paid;
+            noteHtml = `<div style="padding:10px 22px;background:#f0fdf9;border-top:1px solid #6ee7b7;font-size:12.5px;display:flex;gap:20px;flex-wrap:wrap;">
+                <span style="color:#065f46;">Billed: <strong>${_formatAmount(billed)}</strong></span>
+                <span style="color:#065f46;">Paid: <strong>${_formatAmount(paid)}</strong></span>
+                <span style="color:${bal > 0.01 ? '#dc2626' : '#065f46'};">Balance: <strong>${_formatAmount(bal)}</strong></span>
+                ${r.referenceNumber ? `<span style="color:#6b7280;">Ref #: <strong>${_esc(r.referenceNumber)}</strong></span>` : ''}
+            </div>`;
+        }
+
+        // Due date countdown
+        let countdownText = '';
+        if (duMs && r.status !== 'verified') {
+            const diffDays = Math.ceil((duMs - Date.now()) / 86400000);
+            if (overdue) countdownText = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
+            else if (diffDays === 0) countdownText = 'Due today';
+            else if (diffDays <= 7) countdownText = `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+            else countdownText = `Due ${_formatDate(r.dueDate)}`;
+        } else if (duMs && r.status === 'verified') {
+            countdownText = _formatDate(r.dueDate);
+        }
+        const dueDisplay = duMs
+            ? `<span style="color:${overdue ? '#dc2626' : (countdownText.startsWith('Due in') && parseInt(countdownText.split(' ')[2]) <= 3 ? '#d97706' : '#6b7280')};font-weight:${overdue ? '700' : '400'};">${countdownText}</span>`
+            : '';
+
+        // Payment timeline
+        const steps = ['Pending', 'Under Review', 'Paid'];
+        const stepIdx = { pending: 0, partial_pending: 0, rejected: 0, submitted: 1, verified: 2 };
+        const currentStep = stepIdx[r.status] ?? 0;
+        const timelineHtml = `
+            <div style="display:flex;align-items:center;gap:0;padding:10px 22px 12px 22px;background:#fafafa;border-top:1px solid #f1f5f9;">
+                ${steps.map((step, i) => {
+                    const done = i < currentStep;
+                    const active = i === currentStep && r.status !== 'rejected';
+                    const rejected = r.status === 'rejected' && i === 0;
+                    const color = rejected ? '#dc2626' : done ? '#00a85e' : active ? '#2563eb' : '#d1d5db';
+                    const bgColor = rejected ? '#fee2e2' : done ? '#ecfdf5' : active ? '#eff6ff' : '#f3f4f6';
+                    const label = rejected && i === 0 ? 'Rejected' : step;
+                    return `
+                        <div style="display:flex;align-items:center;flex:1;min-width:0;">
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+                                <div style="width:24px;height:24px;border-radius:50%;background:${bgColor};border:2px solid ${color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    ${done ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`
+                                           : `<div style="width:8px;height:8px;border-radius:50%;background:${active||rejected ? color : '#d1d5db'};"></div>`}
+                                </div>
+                                <span style="font-size:10.5px;font-weight:${active||done ? '700' : '400'};color:${color};white-space:nowrap;">${label}</span>
+                            </div>
+                            ${i < steps.length - 1 ? `<div style="height:2px;flex:1;background:${done ? '#00a85e' : '#e5e7eb'};margin:0 4px;margin-bottom:18px;"></div>` : ''}
+                        </div>`;
+                }).join('')}
+            </div>`;
+
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         return `
         <div style="border-bottom:1px solid #f3f4f6;">
             <div class="pr-client-row-inner">
@@ -284,7 +393,11 @@
                 </div>
                 <div class="pr-client-row-text">
                     <div style="font-size:14px;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(r.billingPeriod || '—')}</div>
+<<<<<<< HEAD
                     <div style="font-size:12px;color:#9ca3af;margin-top:2px;">${_esc(r.projectName || '')}${dueDisplay ? (r.projectName ? ' &nbsp;·&nbsp; Due ' : 'Due ') + dueDisplay.replace(/<[^>]*>/g,'').trim() : ''}</div>
+=======
+                    <div style="font-size:12px;color:${overdue ? '#dc2626' : '#9ca3af'};margin-top:2px;font-weight:${overdue ? '600' : '400'};">${_esc(r.projectName || '')}${dueDisplay ? (r.projectName ? ' &nbsp;·&nbsp; ' : '') + dueDisplay.replace(/<[^>]*>/g,'').trim() : ''}</div>
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 </div>
                 <div class="pr-client-row-right">
                     <div style="font-size:15px;font-weight:800;color:#1f2937;white-space:nowrap;">${_formatAmount(r.amount)}</div>
@@ -292,6 +405,10 @@
                 </div>
                 ${actionHtml ? `<div class="pr-client-row-action">${actionHtml}</div>` : ''}
             </div>
+<<<<<<< HEAD
+=======
+            ${timelineHtml}
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             ${noteHtml}
         </div>`;
     }
@@ -887,8 +1004,13 @@
         };
         const labels = {
             pending:         'Pending',
+<<<<<<< HEAD
             partial_pending: 'Approval Pending',
             submitted:       'Submitted',
+=======
+            partial_pending: 'Awaiting Approval',
+            submitted:       'Under Review',
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             verified:        'Paid',
             rejected:        'Rejected'
         };
@@ -927,7 +1049,11 @@
 
             const statusMap = {
                 pending:         ['#f59e0b', 'Pending Payment'],
+<<<<<<< HEAD
                 partial_pending: ['#d97706', 'Approval Pending'],
+=======
+                partial_pending: ['#d97706', 'Awaiting Approval'],
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 submitted:       ['#2563eb', 'Under Review'],
                 verified:        ['#00a85e', 'Paid'],
                 rejected:        ['#dc2626', 'Rejected']
@@ -1203,4 +1329,253 @@ table.totals tr.grand td{font-size:15px;font-weight:800;color:#fff;background:#1
         w.document.close();
     };
 
+<<<<<<< HEAD
+=======
+    // ══════════════════════════════════════════════════════
+    // SOWA REQUEST (client → admin)
+    // ══════════════════════════════════════════════════════
+
+    window.clientRequestSOWA = async function (btn) {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const adminUid = _getAdminUid();
+        if (!adminUid) {
+            alert('Unable to send request — no admin linked. Please try again after your payment requests load.');
+            return;
+        }
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+        try {
+            // Check if a pending request already exists
+            const existing = await db.collection('sowaRequests')
+                .where('clientUid', '==', user.uid)
+                .where('ownerUid', '==', adminUid)
+                .where('status',   '==', 'pending')
+                .get();
+
+            if (!existing.empty) {
+                _setSOWABtnPending(btn);
+                return;
+            }
+
+            await db.collection('sowaRequests').add({
+                clientEmail: user.email,
+                clientName:  user.displayName || user.email,
+                clientUid:   user.uid,
+                ownerUid:    adminUid,
+                status:      'pending',
+                requestedAt: firebase.firestore.Timestamp.fromDate(new Date())
+            });
+
+            await db.collection('notifications').doc(adminUid).collection('items').add({
+                type:      'sowa_request',
+                message:   `${user.displayName || user.email} requested a Statement of Work Accomplished (SOWA)`,
+                read:      false,
+                createdAt: firebase.firestore.Timestamp.fromDate(new Date())
+            }).catch(e => console.warn('SOWA notify error:', e));
+
+            _setSOWABtnPending(btn);
+        } catch (e) {
+            console.error('SOWA request error:', e);
+            if (btn) { btn.disabled = false; btn.innerHTML = 'Request SOWA'; }
+            alert('Error sending SOWA request. Please try again.');
+        }
+    };
+
+    function _setSOWABtnPending(btn) {
+        if (!btn) return;
+        btn.disabled = true;
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Request Sent`;
+        btn.style.background    = '#d1fae5';
+        btn.style.borderColor   = '#6ee7b7';
+        btn.style.color         = '#059669';
+        btn.style.cursor        = 'default';
+    }
+
+    async function _checkSOWARequestState() {
+        const user = firebase.auth().currentUser;
+        const requestBtn = document.getElementById('clientRequestSOWABtn');
+        const viewBtn    = document.getElementById('clientViewSOWABtn');
+        if (!user || !requestBtn) return;
+        const adminUid = _getAdminUid();
+        if (!adminUid) return;
+        try {
+            const snap = await db.collection('sowaRequests')
+                .where('clientUid', '==', user.uid)
+                .where('ownerUid', '==', adminUid)
+                .get();
+
+            if (snap.empty) return;
+
+            // Find the most recent request
+            let latest = null;
+            snap.forEach(doc => {
+                const d = doc.data();
+                if (!latest || _tsToMs(d.requestedAt) > _tsToMs(latest.requestedAt)) latest = d;
+            });
+
+            if (latest.status === 'shared') {
+                // Admin has shared — show View SOWA, hide Request SOWA
+                requestBtn.style.display = 'none';
+                if (viewBtn) viewBtn.style.display = 'inline-flex';
+            } else if (latest.status === 'pending' || latest.status === 'viewed') {
+                _setSOWABtnPending(requestBtn);
+            }
+        } catch (e) { /* silent */ }
+    }
+
+    // ══════════════════════════════════════════════════════
+    // CLIENT SOWA
+    // ══════════════════════════════════════════════════════
+
+    window.clientOpenSOWA = function () {
+        const modal = document.getElementById('clientSowaModal');
+        if (!modal) return;
+
+        const requests = [..._requests].sort((a, b) => _tsToMs(a.createdAt) - _tsToMs(b.createdAt));
+        const user     = firebase.auth().currentUser;
+        const clientName = (user && (user.displayName || user.email)) || 'Client';
+
+        const typeLabel   = { mobilization: 'Mobilization', downpayment: 'Downpayment', progress: 'Progress Billing', final: 'Final Payment', president: 'Cover Expenses' };
+        const statusColor = { pending: '#f59e0b', partial_pending: '#f97316', partial_approved: '#3b82f6', submitted: '#3b82f6', verified: '#059669', rejected: '#dc2626' };
+
+        const dateGenerated = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
+
+        // Group by project
+        const hasProject = requests.some(r => r.projectName);
+        const projects = {};
+        requests.forEach(r => {
+            const proj = hasProject ? (r.projectName || 'No Project') : '_all_';
+            if (!projects[proj]) projects[proj] = [];
+            projects[proj].push(r);
+        });
+
+        let tableRows = '';
+        let grandBilled = 0, grandPaid = 0;
+        let projNum = 0;
+
+        Object.entries(projects).forEach(([proj, reqs]) => {
+            projNum++;
+            let projBilled = 0, projPaid = 0;
+
+            // Red category row (project name)
+            if (proj !== '_all_') {
+                const roman = ['I','II','III','IV','V','VI','VII','VIII','IX','X'][projNum - 1] || projNum;
+                tableRows += `<tr class="sowa-cat-row">
+                    <td style="text-align:center;font-weight:700;">${roman}.</td>
+                    <td colspan="5" style="font-weight:700;letter-spacing:.5px;text-transform:uppercase;">${_esc(proj)}</td>
+                    <td></td>
+                </tr>`;
+            }
+
+            reqs.forEach((r, idx) => {
+                const type    = typeLabel[r.fundingType] || r.fundingType || '—';
+                const billed  = r.amount || 0;
+                const paid    = r.status === 'verified' ? (r.paidAmount != null ? r.paidAmount : billed) : 0;
+                const balance = billed - paid;
+                const pct     = billed > 0 ? Math.round((paid / billed) * 100) : 0;
+                const st      = r.status || 'pending';
+                const color   = statusColor[st] || '#6b7280';
+                projBilled += billed;
+                projPaid   += paid;
+
+                tableRows += `<tr class="sowa-item-row">
+                    <td style="text-align:center;color:#6b7280;">${idx + 1}</td>
+                    <td>${_esc(r.billingPeriod || '—')}</td>
+                    <td>${_esc(type)}</td>
+                    <td style="text-align:right;font-weight:600;">${_formatAmount(billed)}</td>
+                    <td style="text-align:right;font-weight:600;color:#059669;">${paid > 0 ? _formatAmount(paid) : '<span style="color:#9ca3af;">—</span>'}</td>
+                    <td style="text-align:right;font-weight:600;color:${balance > 0.01 ? '#cc0000' : '#059669'};">${_formatAmount(balance)}</td>
+                    <td style="text-align:center;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <div style="flex:1;background:#e5e7eb;border-radius:99px;height:8px;min-width:50px;">
+                                <div style="width:${pct}%;background:#059669;height:8px;border-radius:99px;transition:width .3s;"></div>
+                            </div>
+                            <span style="font-size:11px;font-weight:700;color:${color};white-space:nowrap;">${pct}%</span>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+
+            grandBilled += projBilled;
+            grandPaid   += projPaid;
+
+            // Yellow subtotal row
+            if (proj !== '_all_') {
+                tableRows += `<tr class="sowa-subtotal-row">
+                    <td colspan="3" style="font-style:italic;font-weight:600;color:#7a5a00;">Subtotal — ${_esc(proj)}</td>
+                    <td style="text-align:right;font-weight:700;">${_formatAmount(projBilled)}</td>
+                    <td style="text-align:right;font-weight:700;color:#059669;">${_formatAmount(projPaid)}</td>
+                    <td style="text-align:right;font-weight:700;color:${(projBilled-projPaid)>0.01?'#cc0000':'#059669'};">${_formatAmount(projBilled-projPaid)}</td>
+                    <td></td>
+                </tr>`;
+            }
+        });
+
+        document.getElementById('clientSowaContent').innerHTML = `
+        <div class="sowa-header-block">
+            <div class="sowa-company">DAC'S Building Design Services</div>
+            <div class="sowa-doc-title">STATEMENT OF WORK ACCOMPLISHED</div>
+            <div class="sowa-meta">
+                <div><span class="sowa-meta-label">Client:</span> <strong>${_esc(clientName)}</strong></div>
+                <div><span class="sowa-meta-label">Date Generated:</span> <strong>${dateGenerated}</strong></div>
+            </div>
+        </div>
+        <table class="sowa-table">
+            <thead>
+                <tr class="sowa-thead-row">
+                    <th style="width:44px;text-align:center;">NO.</th>
+                    <th>BILLING PERIOD</th>
+                    <th>TYPE</th>
+                    <th style="text-align:right;">AMOUNT BILLED</th>
+                    <th style="text-align:right;">AMOUNT PAID</th>
+                    <th style="text-align:right;">BALANCE</th>
+                    <th style="text-align:center;">% PAID</th>
+                </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+            <tfoot>
+                <tr class="sowa-grand-row">
+                    <td colspan="3" style="font-weight:800;font-size:13px;letter-spacing:.5px;">GRAND TOTAL</td>
+                    <td style="text-align:right;font-weight:800;font-size:13px;">${_formatAmount(grandBilled)}</td>
+                    <td style="text-align:right;font-weight:800;font-size:13px;color:#6ee7b7;">${_formatAmount(grandPaid)}</td>
+                    <td style="text-align:right;font-weight:800;font-size:13px;color:${(grandBilled-grandPaid)>0.01?'#fca5a5':'#6ee7b7'};">${_formatAmount(grandBilled-grandPaid)}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>`;
+
+        modal.style.display = 'flex';
+    };
+
+    window.clientCloseSOWA = function () {
+        const modal = document.getElementById('clientSowaModal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    window.clientPrintSOWA = function () {
+        const content = document.getElementById('clientSowaContent');
+        if (!content) return;
+        const w = window.open('', '_blank');
+        w.document.write(`<!DOCTYPE html><html><head><title>SOWA</title>
+        <style>
+            body{font-family:Arial,sans-serif;font-size:13px;color:#111;padding:32px;}
+            .sowa-company{font-size:18px;font-weight:700;color:#059669;}
+            .sowa-doc-title{font-size:15px;font-weight:700;letter-spacing:1px;margin:4px 0 12px;text-transform:uppercase;}
+            .sowa-meta{display:flex;gap:32px;margin-bottom:20px;font-size:13px;}
+            .sowa-meta-label{color:#6b7280;}
+            .sowa-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+            .sowa-thead-row th{background:#f5c518;color:#1a1a1a;padding:9px 12px;font-weight:800;text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
+            .sowa-cat-row td{background:#cc0000;color:#fff;padding:8px 12px;font-size:12px;}
+            .sowa-item-row td{background:#fff;padding:8px 12px;border-bottom:1px solid #f1f5f9;}
+            .sowa-subtotal-row td{background:#fffde7;color:#7a5a00;padding:8px 12px;border-top:1.5px solid #f5c518;border-bottom:1.5px solid #f5c518;}
+            .sowa-grand-row td{background:#1e3a2f;color:#fff;padding:10px 12px;}
+        </style></head><body>${content.innerHTML}</body></html>`);
+        w.document.close();
+        setTimeout(() => w.print(), 400);
+    };
+
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 })();

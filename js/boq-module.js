@@ -875,7 +875,11 @@
     function boqStatusBadgeHtml(status) {
         const cfg = {
             draft:     { cls: 'boq-status-draft',     label: 'Draft' },
+<<<<<<< HEAD
             submitted: { cls: 'boq-status-submitted',  label: 'Submitted' },
+=======
+            submitted: { cls: 'boq-status-submitted',  label: 'For Review' },
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             approved:  { cls: 'boq-status-approved',   label: 'Approved' },
         };
         const s = cfg[status] || cfg.draft;
@@ -891,7 +895,12 @@
     window.boqSetStatus = async function (status) {
         boq.status = status;
         markDirty();
+<<<<<<< HEAD
         boqToast(`Status set to ${status}.`, 'success');
+=======
+        const statusDisplay = { draft: 'Draft', submitted: 'For Review', approved: 'Approved' };
+        boqToast(`Status set to ${statusDisplay[status] || status}.`, 'success');
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         // Re-render toolbar fully to be safe
         renderBuilderArea();
     };
@@ -992,7 +1001,11 @@
     };
 
     window.boqDeleteTemplate = async function (templateId, btn) {
+<<<<<<< HEAD
         if (!confirm('Delete this template?')) return;
+=======
+        if (!await window.showDeleteConfirm('Delete this template?')) return;
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         try {
             await db.collection('boqTemplates').doc(templateId).delete();
             btn.closest('.boq-tmpl-item')?.remove();
@@ -1235,7 +1248,11 @@
                         const reportName = boq.header.subject || 'Accomplishment Report';
                         const notifMap = {
                             approved:  { type: 'report_approved',  message: `Your report "${reportName}" has been approved.` },
+<<<<<<< HEAD
                             submitted: { type: 'report_submitted', message: `Your report "${reportName}" has been submitted for review.` },
+=======
+                            submitted: { type: 'report_submitted', message: `Your report "${reportName}" has been submitted and is now awaiting approval.` },
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                             draft:     { type: 'report_updated',   message: `Your report "${reportName}" has been updated.` },
                         };
                         const n = notifMap[boq.status] || notifMap.draft;
@@ -1646,7 +1663,11 @@
     };
 
     window.boqDeleteImage = async function (ciId, siId, imgIdx) {
+<<<<<<< HEAD
         if (!confirm('Delete this photo?')) return;
+=======
+        if (!await window.showDeleteConfirm('Delete this photo?')) return;
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         const ci = boq.costItems.find(c => c.id === ciId);
         const si = ci?.subItems.find(s => s.id === siId);
         if (!si || !si.images) return;

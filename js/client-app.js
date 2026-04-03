@@ -422,7 +422,13 @@ function populateDashboard() {
 
     // ── Budget stats (aggregate across all folders)
     const totalBudget = currentFolders.reduce((s, f) => s + (parseFloat(f.totalBudget) || 0), 0);
+<<<<<<< HEAD
     const totalBilled = currentProjects.reduce((s, p) => s + (parseFloat(p.monthlyBudget) || 0), 0);
+=======
+    const totalBilled = (window._clientPayRequests || [])
+        .filter(r => r.status === 'verified')
+        .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     const billedPct   = totalBudget > 0 ? Math.round((totalBilled / totalBudget) * 100) : 0;
 
     const budgetEl = document.getElementById('stat-budget');
@@ -482,7 +488,12 @@ function populateDashboard() {
                 const docAcc   = calcTotalAcc(doc.costItems);
                 const pct      = docTotal > 0 ? Math.round((docAcc / docTotal) * 100) : statusToPct(doc.status);
                 const stClass  = 'phase-status-' + (doc.status || 'draft');
+<<<<<<< HEAD
                 const stLabel  = capitalize(doc.status || 'draft');
+=======
+                const _boqStatusLabel = { draft: 'Draft', submitted: 'For Review', approved: 'Approved' };
+                const stLabel  = _boqStatusLabel[doc.status] || capitalize(doc.status || 'draft');
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 const folder   = currentFolders.find(f => f.id === doc.folderId);
                 const folderTag = (currentFolders.length > 1 && folder)
                     ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px;">${escHtml(folder.name)}</span>`
@@ -516,6 +527,12 @@ function populateDashboard() {
 
     // ── Activity feed
     populateActivity();
+<<<<<<< HEAD
+=======
+
+    // ── Project timeline
+    renderProjectTimeline();
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 }
 
 function populateActivity() {
@@ -607,7 +624,11 @@ function renderReports() {
               <span style="font-size:12px;font-weight:600;color:var(--text-dark)">${accPct}%</span>
             </div>
           </td>
+<<<<<<< HEAD
           <td><span class="badge badge-${escHtml(status)}">${capitalize(status)}</span></td>
+=======
+          <td><span class="badge badge-${escHtml(status)}">${({draft:'Draft',submitted:'For Review',approved:'Approved'})[status] || capitalize(status)}</span></td>
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
           <td><button class="btn-view" onclick="viewReport('${doc.id}')">View</button></td>
         </tr>`;
     }).join('');
@@ -644,7 +665,11 @@ function viewReport(docId) {
 
     const status = doc.status || 'draft';
     const badge = document.getElementById('rmd-status-badge');
+<<<<<<< HEAD
     if (badge) { badge.className = 'badge badge-' + status; badge.textContent = capitalize(status); }
+=======
+    if (badge) { badge.className = 'badge badge-' + status; badge.textContent = ({draft:'Draft',submitted:'For Review',approved:'Approved'})[status] || capitalize(status); }
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
     document.getElementById('rmd-body').innerHTML = renderBoqContent(doc) + renderBoqFooter(doc);
     document.getElementById('rmd-footer').innerHTML = '';
@@ -855,6 +880,27 @@ window.refreshBilledKPI = function () {
     const billedEl = document.getElementById('bsum-billed');
     if (billedEl) animateValue(billedEl, 0, totalBilled, 800, formatPeso);
     _setText('bsum-count', reqs.length);
+<<<<<<< HEAD
+=======
+
+    // Also refresh the dashboard stat-usage if dashboard is active
+    const totalBudget = currentFolders.reduce((s, f) => s + (parseFloat(f.totalBudget) || 0), 0);
+    const billedPct   = totalBudget > 0 ? Math.round((totalBilled / totalBudget) * 100) : 0;
+    const usageEl = document.getElementById('stat-usage');
+    if (usageEl) animateValue(usageEl, 0, billedPct, 800, n => n + '%');
+    const usageSubEl = document.getElementById('stat-usage-sub');
+    if (usageSubEl) usageSubEl.innerHTML =
+        `<span class="stat-sub-amount">${formatPeso(totalBilled)}</span>`+
+        ` <span class="stat-sub-of">of</span> `+
+        `<span class="stat-sub-amount">${formatPeso(totalBudget)}</span>`+
+        ` <span class="stat-sub-of">billed</span>`;
+    const bu = document.getElementById('bar-usage');
+    if (bu) bu.style.width = Math.min(billedPct, 100) + '%';
+
+    // Refresh timeline and documents now that payments are loaded
+    renderProjectTimeline();
+    if (document.getElementById('section-documents')?.classList.contains('active')) renderDocuments();
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 };
 
 function populateBilling() {
@@ -933,11 +979,20 @@ function subscribeToNotifications(uid) {
             _firestoreNotifs = snap.docs.map(d => {
                 const data = d.data();
                 return {
+<<<<<<< HEAD
                     id:   d.id,
                     type: _mapNotifType(data.type),
                     msg:  data.message || '',
                     time: formatTimestamp(data.createdAt),
                     read: data.isRead || false
+=======
+                    id:      d.id,
+                    rawType: data.type || '',
+                    type:    _mapNotifType(data.type),
+                    msg:     data.message || '',
+                    time:    formatTimestamp(data.createdAt),
+                    read:    data.isRead || false
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 };
             });
             populateNotifications();
@@ -963,6 +1018,11 @@ function populateNotifications() {
 
     const unread = display.filter(n => !n.read).length;
     if (dot) dot.style.display = unread ? '' : 'none';
+<<<<<<< HEAD
+=======
+    const nb = document.getElementById('notif-nav-badge');
+    if (nb) { nb.textContent = unread; nb.style.display = unread ? '' : 'none'; }
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
     const icons = {
         green: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`,
@@ -970,6 +1030,7 @@ function populateNotifications() {
         amber: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
     };
 
+<<<<<<< HEAD
     list.innerHTML = display.map((n, i) => `
         <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markOneRead(${i})">
           <div class="notif-icon notif-icon-${n.type}">${icons[n.type] || icons.blue}</div>
@@ -979,6 +1040,26 @@ function populateNotifications() {
           </div>
           ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
         </div>`).join('');
+=======
+    const _notifNavMap = {
+        payment_verified: 'billing', payment_rejected: 'billing',
+        partial_approved: 'billing', partial_declined: 'billing', sowa_ready: 'billing',
+        report_approved: 'accomplishment', report_submitted: 'accomplishment', report_updated: 'accomplishment',
+    };
+
+    list.innerHTML = display.map((n, i) => {
+        const dest = _notifNavMap[n.rawType] || null;
+        return `
+        <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markOneRead(${i});${dest ? `document.getElementById('notif-dropdown').classList.remove('open');showSection('${dest}')` : ''}">
+          <div class="notif-icon notif-icon-${n.type}">${icons[n.type] || icons.blue}</div>
+          <div class="notif-body">
+            <div class="notif-msg">${escHtml(n.msg)}</div>
+            <div class="notif-time">${n.time}${dest ? ' &nbsp;·&nbsp; <span style="color:#059669;font-size:11px;">Tap to view</span>' : ''}</div>
+          </div>
+          ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
+        </div>`;
+    }).join('');
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 }
 
 function toggleNotifications() {
@@ -1182,7 +1263,11 @@ window.addEventListener('resize', () => {
 });
 
 // ── Section Navigation ───────────────────────────────────
+<<<<<<< HEAD
 const SECTION_TITLES = { dashboard:'Dashboard', accomplishment:'Accomplishment Reports', billing:'Billing Periods', soa:'Statement of Account', profile:'Profile' };
+=======
+const SECTION_TITLES = { dashboard:'Dashboard', accomplishment:'Accomplishment Reports', billing:'Billing Periods', profile:'Profile', notifications:'Notifications', documents:'Documents' };
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
 function showSection(id) {
     document.querySelectorAll('.sub-page').forEach(el => el.classList.remove('active'));
@@ -1195,10 +1280,195 @@ function showSection(id) {
     });
     _setText('topbar-title', SECTION_TITLES[id] || id);
     if (id === 'billing' && typeof initClientPayment === 'function') initClientPayment();
+<<<<<<< HEAD
     if (id === 'soa'     && typeof initSOAClient     === 'function') initSOAClient();
     if (isMobile()) closeSidebar();
 }
 
+=======
+    if (id === 'notifications') renderNotifHistory();
+    if (id === 'documents') renderDocuments();
+    if (isMobile()) closeSidebar();
+}
+
+// ── Notification History Page ─────────────────────────────
+window.renderNotifHistory = function () {
+    const el = document.getElementById('notif-history-list');
+    if (!el) return;
+    const combined = [..._firestoreNotifs, ..._notifications];
+    if (!combined.length) {
+        el.innerHTML = `<div style="padding:48px;text-align:center;color:#9ca3af;">
+            <div style="font-size:32px;margin-bottom:10px;">🔔</div>
+            <div style="font-weight:600;font-size:14px;color:#374151;">No notifications yet</div>
+            <div style="font-size:13px;margin-top:4px;">Updates from your project team will appear here.</div>
+        </div>`;
+        return;
+    }
+    const icons = {
+        green: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`,
+        blue:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+        amber: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+    };
+    const bgMap = { green:'#ecfdf5', blue:'#eff6ff', amber:'#fffbeb' };
+    const colorMap = { green:'#059669', blue:'#2563eb', amber:'#d97706' };
+    const navMap = {
+        payment_verified:  'billing',
+        payment_rejected:  'billing',
+        partial_approved:  'billing',
+        partial_declined:  'billing',
+        sowa_ready:        'billing',
+        report_approved:   'accomplishment',
+        report_submitted:  'accomplishment',
+        report_updated:    'accomplishment',
+    };
+    const hintMap = {
+        payment_verified:  'Go to Billing Periods →',
+        payment_rejected:  'Go to Billing Periods →',
+        partial_approved:  'Go to Billing Periods →',
+        partial_declined:  'Go to Billing Periods →',
+        sowa_ready:        'Go to Billing Periods →',
+        report_approved:   'Go to Accomplishment Reports →',
+        report_submitted:  'Go to Accomplishment Reports →',
+        report_updated:    'Go to Accomplishment Reports →',
+    };
+
+    el.innerHTML = combined.map((n, i) => {
+        const dest = navMap[n.rawType] || null;
+        const hint = hintMap[n.rawType] || null;
+        return `
+        <div onclick="markOneRead(${i});${dest ? `showSection('${dest}')` : ''}" style="display:flex;align-items:flex-start;gap:14px;padding:16px 22px;border-bottom:1px solid #f3f4f6;cursor:${dest ? 'pointer' : 'default'};background:${n.read ? '#fff' : '#f8faff'};transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${n.read ? '#fff' : '#f8faff'}'">
+            <div style="width:36px;height:36px;border-radius:10px;background:${bgMap[n.type]||'#f3f4f6'};color:${colorMap[n.type]||'#6b7280'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                ${icons[n.type] || icons.blue}
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:13.5px;color:#1f2937;font-weight:${n.read ? '400' : '600'};line-height:1.45;">${escHtml(n.msg)}</div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">${n.time}${hint ? ` &nbsp;·&nbsp; <span style="color:#2563eb;">${hint}</span>` : ''}</div>
+            </div>
+            ${!n.read ? '<div style="width:8px;height:8px;border-radius:50%;background:#2563eb;flex-shrink:0;margin-top:6px;"></div>' : ''}
+        </div>`;
+    }).join('');
+
+    // Update nav badge
+    const unread = combined.filter(n => !n.read).length;
+    const nb = document.getElementById('notif-nav-badge');
+    if (nb) { nb.textContent = unread; nb.style.display = unread ? '' : 'none'; }
+};
+
+// ── Documents Page ────────────────────────────────────────
+window.renderDocuments = function () {
+    _renderDocInvoices();
+    _renderDocSOWA();
+};
+
+function _renderDocInvoices() {
+    const el = document.getElementById('docs-invoice-list');
+    if (!el) return;
+    const reqs = (window._clientPayRequests || []).filter(r => r.status === 'verified');
+    if (!reqs.length) {
+        el.innerHTML = `<div style="padding:32px;text-align:center;color:#9ca3af;font-size:14px;">No invoices yet. Invoices are generated after your payment is verified.</div>`;
+        return;
+    }
+    el.innerHTML = reqs.map(r => `
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid #f3f4f6;">
+            <div style="width:38px;height:38px;border-radius:10px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:700;color:#1f2937;">${escHtml(r.billingPeriod || '—')}</div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:2px;">${escHtml(r.projectName || '')}${r.projectName ? ' &nbsp;·&nbsp; ' : ''}Amount Paid: <strong style="color:#059669;">${_formatAmount(r.paidAmount != null ? r.paidAmount : r.amount)}</strong></div>
+            </div>
+            <button onclick="prPrintClientInvoice('${r.id}')"
+                style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;color:#059669;border:1.5px solid #d1fae5;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Invoice
+            </button>
+        </div>`).join('');
+}
+
+function _formatAmount(v) {
+    if (typeof v !== 'number' && !v) return '₱0.00';
+    return '₱' + parseFloat(v).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function _renderDocSOWA() {
+    const el = document.getElementById('docs-sowa-section');
+    if (!el) return;
+    const sowaBtn = document.getElementById('clientViewSOWABtn');
+    const sowaVisible = sowaBtn && sowaBtn.style.display !== 'none';
+    if (sowaVisible) {
+        el.innerHTML = `
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:38px;height:38px;border-radius:10px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:14px;font-weight:700;color:#1f2937;">Statement of Work Accomplished</div>
+                    <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Your SOWA is ready to view.</div>
+                </div>
+                <button onclick="clientOpenSOWA()" style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    View SOWA
+                </button>
+            </div>`;
+    } else {
+        el.innerHTML = `<div style="color:#9ca3af;font-size:13.5px;">No SOWA available yet. You can request one from the Billing Periods section.</div>`;
+    }
+}
+
+// ── Project Completion Timeline ────────────────────────────
+function renderProjectTimeline() {
+    const el = document.getElementById('project-timeline');
+    const badge = document.getElementById('timeline-badge');
+    if (!el) return;
+
+    const events = [];
+
+    // Contract start — use earliest folder/project created date
+    if (currentFolders.length) {
+        events.push({ label: 'Contract Started', sub: currentFolders[0]?.name || 'Project', ts: currentFolders[0]?.createdAt, color: '#6b7280', done: true });
+    }
+
+    // Approved reports
+    currentBoqDocs.filter(d => d.status === 'approved').forEach(d => {
+        events.push({ label: escHtml(d.header?.subject || 'Report Approved'), sub: 'Accomplishment report approved', ts: d.updatedAt, color: '#059669', done: true });
+    });
+
+    // Verified payments
+    (window._clientPayRequests || []).filter(r => r.status === 'verified').forEach(r => {
+        events.push({ label: escHtml(r.billingPeriod || 'Payment Received'), sub: _formatAmount(r.paidAmount != null ? r.paidAmount : r.amount) + ' verified', ts: r.verifiedAt, color: '#2563eb', done: true });
+    });
+
+    // Sort by timestamp
+    events.sort((a, b) => {
+        const ta = a.ts?.seconds ? a.ts.seconds : 0;
+        const tb = b.ts?.seconds ? b.ts.seconds : 0;
+        return ta - tb;
+    });
+
+    if (!events.length) {
+        el.innerHTML = `<div style="color:#9ca3af;font-size:13px;text-align:center;padding:16px 0;">No milestones yet.</div>`;
+        if (badge) badge.style.display = 'none';
+        return;
+    }
+
+    if (badge) { badge.textContent = events.length + ' Milestone' + (events.length !== 1 ? 's' : ''); badge.style.display = ''; }
+
+    el.innerHTML = events.map((e, i) => `
+        <div style="display:flex;gap:14px;padding:8px 16px;align-items:flex-start;">
+            <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+                <div style="width:28px;height:28px;border-radius:50%;background:${e.color}22;border:2.5px solid ${e.color};display:flex;align-items:center;justify-content:center;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${e.color}" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                ${i < events.length - 1 ? `<div style="width:2px;flex:1;min-height:20px;background:#e5e7eb;margin:4px 0;"></div>` : ''}
+            </div>
+            <div style="padding-bottom:${i < events.length - 1 ? '8' : '0'}px;">
+                <div style="font-size:13.5px;font-weight:700;color:#1f2937;">${e.label}</div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:2px;">${e.sub}</div>
+            </div>
+        </div>`).join('');
+}
+
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 // ── Form Switchers ───────────────────────────────────────
 function switchToSignup() { document.getElementById('form-login').style.display = 'none'; document.getElementById('form-signup').style.display = 'block'; clearLoginErrors(); }
 function switchToLogin()  { document.getElementById('form-signup').style.display = 'none'; document.getElementById('form-login').style.display = 'block'; clearSignupErrors(); }

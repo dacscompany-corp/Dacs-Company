@@ -455,7 +455,11 @@ function closeCategoryDetail() {
 // ── Delete ─────────────────────────────────────────────────────
 async function deleteOverheadExpense(id) {
     if (!id) return;
+<<<<<<< HEAD
     if (!confirm('Delete this overhead expense?')) return;
+=======
+    if (!await showDeleteConfirm('Delete this overhead expense?')) return;
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     try {
         await db.collection('overheadExpenses').doc(id).delete();
         _ovhdExpenses = _ovhdExpenses.filter(e => e.id !== id);

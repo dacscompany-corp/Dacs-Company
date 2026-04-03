@@ -26,4 +26,3 @@ git push origin main
 - Always `git add .` — safe because `.gitignore` excludes `node_modules/`, `build/`, and `sw.js`
 - Push frequently to avoid conflicts
 
-

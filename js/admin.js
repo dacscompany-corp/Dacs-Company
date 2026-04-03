@@ -563,7 +563,11 @@ function closeModal() {
 async function deleteAppointment() {
     if (!currentAppointment) return;
     
+<<<<<<< HEAD
     if (!confirm('Are you sure you want to delete this appointment?')) return;
+=======
+    if (!await showDeleteConfirm('Are you sure you want to delete this appointment?')) return;
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     
     try {
         await db.collection('appointments').doc(currentAppointment.id).delete();
@@ -1610,7 +1614,11 @@ async function updateFeedbackStatus(feedbackId, newStatus) {
 }
 
 async function deleteFeedback(feedbackId) {
+<<<<<<< HEAD
     if (!confirm('Are you sure you want to delete this feedback?')) return;
+=======
+    if (!await showDeleteConfirm('Are you sure you want to delete this feedback?')) return;
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     
     try {
         await db.collection('testimonials').doc(feedbackId).delete();

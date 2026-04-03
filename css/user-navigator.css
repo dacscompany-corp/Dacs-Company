@@ -289,7 +289,29 @@
 .un-login-never  { color: #d1d5db; font-style: italic; }
 
 /* ── Action Buttons ── */
+<<<<<<< HEAD
 .un-actions { display: flex; align-items: center; gap: 8px; }
+=======
+.un-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* ── SOWA Button ── */
+.un-btn-sowa {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1.5px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .2s, color .2s;
+}
+.un-btn-sowa:hover { background: #1d4ed8; color: #fff; }
+>>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
 .un-btn-view {
     display: inline-flex;
