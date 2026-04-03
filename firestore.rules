@@ -254,6 +254,9 @@ service cloud.firestore {
                       // Submit payment: pending or partial_approved → submitted
                       || ((resource.data.status == 'pending' || resource.data.status == 'partial_approved')
                         && request.resource.data.status == 'submitted')
+                      // Resubmit payment after rejection: rejected → submitted
+                      || (resource.data.status == 'rejected'
+                        && request.resource.data.status == 'submitted')
                     );
     }
   }
