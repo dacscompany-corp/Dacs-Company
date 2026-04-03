@@ -141,11 +141,7 @@
                 <span class="nav-icon-wrap"><i data-lucide="bar-chart-2" class="nav-icon"></i></span><span>Payment Reports</span>
             </a>
             <a href="#" class="nav-item" data-view="invoices">
-<<<<<<< HEAD
                 <span class="nav-icon-wrap"><i data-lucide="receipt-text" class="nav-icon"></i></span><span>Invoice Receipt</span>
-=======
-                <span class="nav-icon-wrap"><i data-lucide="receipt-text" class="nav-icon"></i></span><span>Invoices</span>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             </a>
             <!-- Construction Management Section -->
             <div class="nav-group-label">CONSTRUCTION</div>
@@ -179,17 +175,11 @@
             <h1 id="pageTitle">Dashboard</h1>
             <div class="header-right" style="display: flex; align-items: center; gap: 1rem;">
                 <!-- Construction Notification Bell -->
-<<<<<<< HEAD
                 <div class="cons-notification-bell" id="consNotificationBell">
                     <span class="cons-notif-bell-trigger" onclick="toggleNotificationDropdown(event)">
                         <i data-lucide="bell"></i>
                         <div class="cons-notification-badge" id="consNotificationBadge">0</div>
                     </span>
-=======
-                <div class="cons-notification-bell" id="consNotificationBell" onclick="toggleNotificationDropdown()">
-                    <i data-lucide="bell"></i>
-                    <div class="cons-notification-badge" id="consNotificationBadge">0</div>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     <div class="cons-notification-dropdown" id="consNotificationDropdown">
                         <!-- Notifications loaded dynamically -->
                     </div>
@@ -1225,33 +1215,21 @@
                     <div class="pr-stat-icon pr-icon-partial"><i data-lucide="help-circle" style="width:22px;height:22px;"></i></div>
                     <div class="pr-stat-info">
                         <h3 id="prPartialCount">0</h3>
-<<<<<<< HEAD
                         <p>Approval Pending</p>
-=======
-                        <p>Awaiting Approval</p>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     </div>
                 </div>
                 <div class="pr-stat-card">
                     <div class="pr-stat-icon pr-icon-submitted"><i data-lucide="upload" style="width:22px;height:22px;"></i></div>
                     <div class="pr-stat-info">
                         <h3 id="prSubmittedCount">0</h3>
-<<<<<<< HEAD
                         <p>Submitted</p>
-=======
-                        <p>Under Review</p>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     </div>
                 </div>
                 <div class="pr-stat-card">
                     <div class="pr-stat-icon pr-icon-verified"><i data-lucide="check-circle" style="width:22px;height:22px;"></i></div>
                     <div class="pr-stat-info">
                         <h3 id="prVerifiedCount">0</h3>
-<<<<<<< HEAD
                         <p>Verified / Paid</p>
-=======
-                        <p>Paid</p>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     </div>
                 </div>
             </div>
@@ -1267,18 +1245,12 @@
                     <option value="pending">Pending</option>
                     <option value="submitted">Submitted</option>
                     <option value="verified">Verified</option>
-<<<<<<< HEAD
                     <option value="partial_pending">Approval Pending</option>
                     <option value="rejected">Rejected</option>
                 </select>
                 <button class="pr-btn-qrsettings" onclick="prPrintAllRequests()" title="Print all payment requests">
                     <i data-lucide="printer" style="width:16px;height:16px;"></i> Print
                 </button>
-=======
-                    <option value="partial_pending">Awaiting Approval</option>
-                    <option value="rejected">Rejected</option>
-                </select>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 <button class="pr-btn-qrsettings" onclick="prOpenQRSettings()" title="Manage global QR codes">
                     <i data-lucide="qr-code" style="width:16px;height:16px;"></i> QR Settings
                 </button><button class="pr-btn-create" onclick="prOpenCreateModal()">
@@ -1405,16 +1377,10 @@
                         <th>Outstanding</th>
                         <th style="text-align:center;">Overdue</th>
                         <th>Last Activity</th>
-<<<<<<< HEAD
-                    </tr></thead>
-                    <tbody id="rptClientTbody">
-                        <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:28px;">Loading…</td></tr>
-=======
                         <th style="text-align:center;">Action</th>
                     </tr></thead>
                     <tbody id="rptClientTbody">
                         <tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:28px;">Loading…</td></tr>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     </tbody>
                 </table>
             </div>
@@ -1424,8 +1390,6 @@
 </div>
 
 
-<<<<<<< HEAD
-=======
 <!-- SOWA Modal -->
 <div id="sowaModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:16px;width:95vw;max-width:860px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
@@ -1483,7 +1447,6 @@
     </div>
 </div>
 
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 <!-- Invoice Receipt Generator View -->
 <div id="invoicesView" class="content-view" style="display:none;">
     <div id="invLoading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:80px 0;">
@@ -1493,10 +1456,7 @@
     <div id="invContent"></div>
 </div>
 
-<<<<<<< HEAD
 
-=======
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     </main>
 
     <!-- ════ USER NAVIGATOR: Profile Modal ════ -->
@@ -1584,11 +1544,7 @@
     <div class="pr-modal-card pr-modal-card-wide">
         <div class="pr-modal-header">
             <div class="pr-modal-header-icon"><i data-lucide="file-text" style="width:20px;height:20px;"></i></div>
-<<<<<<< HEAD
-            <h3>Payment Request Detail</h3>
-=======
             <h3>Payment Request — Details & Actions</h3>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             <button class="pr-modal-close" onclick="prCloseDetailModal()"><i data-lucide="x"></i></button>
         </div>
         <div id="prDetailBody" class="pr-modal-body"></div>
@@ -1734,8 +1690,6 @@
     </div>
 </div>
 
-<<<<<<< HEAD
-=======
 <!-- Delete Confirm -->
 <div id="deleteConfirmModal" class="exp-modal">
     <div class="exp-modal-box" style="max-width:380px">
@@ -1754,7 +1708,6 @@
     </div>
 </div>
 
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 <!-- Edit Project -->
 <div id="editProjectModal" class="exp-modal">
     <div class="exp-modal-box">
@@ -2399,12 +2352,8 @@
         boqBuilder: 'Accomplishment Report',
         userNavigator: '🎯 User Navigator',
         paymentRequests: '💳 Payment Requests',
-<<<<<<< HEAD
-        invoices:        '🧾 Invoice Receipt Generator'
-=======
         paymentReports:  '📊 Payment Reports',
-        invoices:        '🧾 Invoices'
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
+        invoices:        '🧾 Invoice Receipt Generator'
     };
 
     window.switchView = function(view) {
@@ -2453,12 +2402,8 @@
         if (view === 'userNavigator'  && typeof initUserNavigator      === 'function') initUserNavigator();
         if (view === 'clientAccounts' && typeof initClientAccounts     === 'function') initClientAccounts();
         if (view === 'paymentRequests' && typeof initPaymentRequests === 'function') initPaymentRequests();
-<<<<<<< HEAD
         if (view === 'paymentRequests' && typeof initSOAModule      === 'function') initSOAModule();
         if (view === 'paymentReports'  && typeof initPaymentReports === 'function') initPaymentReports();
-=======
-        if (view === 'paymentReports' && typeof initPaymentReports === 'function') initPaymentReports();
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         if (view === 'invoices'        && typeof initInvoiceModule  === 'function') initInvoiceModule();
 
         if (typeof lucide !== 'undefined') lucide.createIcons();

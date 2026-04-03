@@ -289,9 +289,6 @@
 .un-login-never  { color: #d1d5db; font-style: italic; }
 
 /* ── Action Buttons ── */
-<<<<<<< HEAD
-.un-actions { display: flex; align-items: center; gap: 8px; }
-=======
 .un-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 /* ── SOWA Button ── */
@@ -311,7 +308,6 @@
     transition: background .2s, color .2s;
 }
 .un-btn-sowa:hover { background: #1d4ed8; color: #fff; }
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
 .un-btn-view {
     display: inline-flex;

@@ -428,8 +428,6 @@
 }
 .inv-save-defaults-label input { cursor: pointer; accent-color: #00a85e; }
 
-<<<<<<< HEAD
-=======
 /* ── Client Group Row ────────────────────────────────────────────── */
 .inv-group-row {
     background: #f0fdf4;
@@ -449,7 +447,7 @@
     border-radius: 999px;
 }
 
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
+
 /* ── Loading State ───────────────────────────────────────────────── */
 #invLoading {
     display: flex;

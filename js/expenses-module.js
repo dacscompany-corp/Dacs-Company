@@ -7,8 +7,6 @@ function _uid() {
     return window.currentDataUserId || (currentUser && currentUser.uid) || null;
 }
 
-<<<<<<< HEAD
-=======
 // ── Custom delete confirmation modal (replaces browser confirm()) ──
 window._deleteConfirmResolve = null;
 window._deleteConfirmReject  = null;
@@ -22,7 +20,7 @@ function showDeleteConfirm(message) {
 }
 window.showDeleteConfirm = showDeleteConfirm;
 
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
+
 // ── Formats a number value as a comma-separated string ──
 function fmtBudgetVal(num) {
     if (num === null || num === undefined || isNaN(num)) return '0';
@@ -168,11 +166,7 @@ function toggleCatManager() {
 }
 
 async function deleteCategory(id) {
-<<<<<<< HEAD
-    if (!confirm('Delete this category?')) return;
-=======
     if (!await showDeleteConfirm('Delete this category?')) return;
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     try {
         await db.collection('categories').doc(id).delete();
         expCategories = expCategories.filter(c => c.id !== id);
@@ -1987,11 +1981,7 @@ async function deleteFolder(id) {
     const msg    = count > 0
         ? `Delete folder "${folder?.name}" and its ${count} month(s)? All expenses & payroll inside will also be deleted.`
         : `Delete folder "${folder?.name}"?`;
-<<<<<<< HEAD
-    if (!confirm(msg)) return;
-=======
     if (!await showDeleteConfirm(msg)) return;
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     try {
         const uid = _uid();
         const projsInFolder = expProjects.filter(p => p.folderId === id);
@@ -2019,11 +2009,7 @@ async function deleteFolder(id) {
 }
 
 async function deleteProject(id) {
-<<<<<<< HEAD
-    if (!confirm('Delete this project and ALL its expenses & payroll?')) return;
-=======
     if (!await showDeleteConfirm('Delete this project and ALL its expenses & payroll?')) return;
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     try {
         const uid = _uid();
         const [eSnap, pSnap] = await Promise.all([
@@ -2228,11 +2214,7 @@ async function handleAddExpense(e) {
 }
 
 async function deleteExpense(id) {
-<<<<<<< HEAD
-    if (!confirm('Delete this expense?')) return;
-=======
     if (!await showDeleteConfirm('Delete this expense?')) return;
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     try { await db.collection('expenses').doc(id).delete(); showExpNotif('Deleted.', 'success'); refreshOvAllData(); }
     catch (err) { showExpNotif('Error: ' + err.message, 'error'); }
 }
@@ -2456,11 +2438,7 @@ async function handleAddPayroll(e) {
 }
 
 async function deletePayroll(id) {
-<<<<<<< HEAD
-    if (!confirm('Delete this payroll entry?')) return;
-=======
     if (!await showDeleteConfirm('Delete this payroll entry?')) return;
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     try { await db.collection('payroll').doc(id).delete(); showExpNotif('Deleted.', 'success'); refreshOvAllData(); }
     catch (err) { showExpNotif('Error: ' + err.message, 'error'); }
 }

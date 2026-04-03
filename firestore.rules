@@ -80,12 +80,7 @@ service cloud.firestore {
       allow read: if isAuthenticated()
                   && resource.data.get('clientEmail', '') != ''
                   && request.auth.token.email == resource.data.clientEmail;
-<<<<<<< HEAD
-      allow create: if isAuthenticated()
-                    && request.resource.data.userId == request.auth.uid;
-=======
       allow create: if canWriteData(request.resource.data.userId);
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     }
 
     match /projects/{projectId} {
@@ -94,12 +89,7 @@ service cloud.firestore {
       allow read: if isAuthenticated()
                   && get(/databases/$(database)/documents/folders/$(resource.data.folderId)).data.get('clientEmail', '') != ''
                   && request.auth.token.email == get(/databases/$(database)/documents/folders/$(resource.data.folderId)).data.clientEmail;
-<<<<<<< HEAD
-      allow create: if isAuthenticated()
-                    && request.resource.data.userId == request.auth.uid;
-=======
       allow create: if canWriteData(request.resource.data.userId);
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     }
 
     // Helper: allows owner to write own data, or staff to write with owner's userId
@@ -224,8 +214,6 @@ service cloud.firestore {
                     && request.resource.data.userId == request.auth.uid;
     }
 
-<<<<<<< HEAD
-=======
     match /sowaRequests/{requestId} {
       // Clients can create their own SOWA request
       allow create: if isAuthenticated()
@@ -237,7 +225,7 @@ service cloud.firestore {
       allow read, update, delete: if isOwner() || isStaff();
     }
 
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
+
     match /paymentRequests/{requestId} {
       // Owner/staff can do everything (including unfiltered list queries)
       allow read, create, update, delete: if isOwner() || isStaff();
@@ -267,7 +255,9 @@ service cloud.firestore {
                       // Submit payment: pending or partial_approved → submitted
                       || ((resource.data.status == 'pending' || resource.data.status == 'partial_approved')
                         && request.resource.data.status == 'submitted')
-<<<<<<< HEAD
+                      // Resubmit payment after rejection: rejected → submitted
+                      || (resource.data.status == 'rejected'
+                        && request.resource.data.status == 'submitted')
                     );
     }
 
@@ -312,12 +302,5 @@ service cloud.firestore {
       allow read: if isAuthenticated()
                   && resource.data.clientEmail == request.auth.token.email;
     }
-=======
-                      // Resubmit payment after rejection: rejected → submitted
-                      || (resource.data.status == 'rejected'
-                        && request.resource.data.status == 'submitted')
-                    );
-    }
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
   }
 }

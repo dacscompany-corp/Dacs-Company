@@ -225,8 +225,6 @@ td .exp-icon-btn { opacity: 1; }
     border: 1px solid #d1d5db;
 }
 .exp-btn-secondary:hover { background: #e5e7eb; }
-<<<<<<< HEAD
-=======
 .exp-btn-danger {
     background: #dc2626;
     color: #fff;
@@ -235,7 +233,6 @@ td .exp-icon-btn { opacity: 1; }
     background: #b91c1c;
     box-shadow: 0 2px 8px rgba(220,38,38,0.3);
 }
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
 /* ══════════════════════════════════════════════════════════
    BUDGET STAT CARDS

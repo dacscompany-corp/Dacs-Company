@@ -56,10 +56,7 @@
             _updateNavBadge();
             window.initClientSelfPay();
             if (typeof window.refreshBilledKPI === 'function') window.refreshBilledKPI();
-<<<<<<< HEAD
-=======
             _checkSOWARequestState();
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         } catch (e) {
             console.error('ClientPayment: load error', e);
             listEl.innerHTML = `<div style="color:#b91c1c;font-size:13.5px;padding:16px 0;">Could not load payment requests. ${_esc(e.message)}</div>`;
@@ -70,9 +67,6 @@
     // RENDER LIST
     // ══════════════════════════════════════════════════════
 
-<<<<<<< HEAD
-    function _renderList(listEl) {
-=======
     function _renderOutstandingAlert() {
         const alertEl = document.getElementById('outstanding-balance-alert');
         if (!alertEl) return;
@@ -106,7 +100,6 @@
 
     function _renderList(listEl) {
         _renderOutstandingAlert();
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         if (!_requests.length) {
             listEl.innerHTML = `<div style="padding:40px 24px;text-align:center;">
                 <div style="font-size:32px;margin-bottom:10px;">🧾</div>
@@ -253,11 +246,7 @@
 
         const statusMap = {
             pending:         { color:'#d97706', bg:'#fffbeb', label:'Pending'          },
-<<<<<<< HEAD
-            partial_pending: { color:'#c2410c', bg:'#ffedd5', label:'Approval Pending' },
-=======
             partial_pending: { color:'#c2410c', bg:'#ffedd5', label:'Awaiting Approval' },
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             submitted:       { color:'#1d4ed8', bg:'#eff6ff', label:'Under Review'     },
             verified:        { color:'#065f46', bg:'#d1fae5', label:'Paid'             },
             rejected:        { color:'#b91c1c', bg:'#fee2e2', label:'Rejected'         },
@@ -310,16 +299,6 @@
             noteHtml = `<div style="padding:10px 22px 10px 80px;background:#f0fdf9;border-top:1px solid #6ee7b7;font-size:12.5px;color:#065f46;">
                 Partial payment approved — please pay <strong>${_formatAmount(r.approvedPartialAmount)}</strong>.</div>`;
         } else if (r.status === 'submitted' && r.referenceNumber) {
-<<<<<<< HEAD
-            noteHtml = `<div style="padding:10px 22px 10px 80px;background:#eff6ff;border-top:1px solid #bfdbfe;font-size:12.5px;color:#1d4ed8;">
-                Ref #: <strong>${_esc(r.referenceNumber)}</strong>${r.paidAmount ? ` &nbsp;·&nbsp; Paid: <strong>${_formatAmount(r.paidAmount)}</strong>` : ''} &nbsp;·&nbsp; Awaiting admin verification.</div>`;
-        }
-
-        const dueDisplay = duMs
-            ? `<span style="color:${overdue ? '#dc2626' : '#6b7280'};font-weight:${overdue ? '600' : '400'};">${_formatDate(r.dueDate)}${overdue ? ' · Overdue' : ''}</span>`
-            : '';
-
-=======
             noteHtml = `<div style="padding:10px 22px 10px 22px;background:#eff6ff;border-top:1px solid #bfdbfe;font-size:12.5px;color:#1d4ed8;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
                 <span>Ref #: <strong>${_esc(r.referenceNumber)}</strong>${r.paidAmount ? ` &nbsp;·&nbsp; Paid: <strong>${_formatAmount(r.paidAmount)}</strong>` : ''} &nbsp;·&nbsp; Awaiting admin verification.</span>
                 <button onclick="navigator.clipboard.writeText('${_esc(r.referenceNumber)}').then(()=>{this.textContent='Copied!';setTimeout(()=>{this.innerHTML='<svg width=\\'11\\' height=\\'11\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2\\'><rect x=\\'9\\' y=\\'9\\' width=\\'13\\' height=\\'13\\' rx=\\'2\\'/><path d=\\'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\\'/></svg> Copy Ref #\\'};this.innerHTML=\\'<svg width=\\'11\\' height=\\'11\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2\\'><rect x=\\'9\\' y=\\'9\\' width=\\'13\\' height=\\'13\\' rx=\\'2\\'/><path d=\\'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\\'/></svg> Copy Ref #\\'},2000);})"
@@ -382,7 +361,7 @@
                 }).join('')}
             </div>`;
 
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
+
         return `
         <div style="border-bottom:1px solid #f3f4f6;">
             <div class="pr-client-row-inner">
@@ -393,11 +372,7 @@
                 </div>
                 <div class="pr-client-row-text">
                     <div style="font-size:14px;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(r.billingPeriod || '—')}</div>
-<<<<<<< HEAD
-                    <div style="font-size:12px;color:#9ca3af;margin-top:2px;">${_esc(r.projectName || '')}${dueDisplay ? (r.projectName ? ' &nbsp;·&nbsp; Due ' : 'Due ') + dueDisplay.replace(/<[^>]*>/g,'').trim() : ''}</div>
-=======
                     <div style="font-size:12px;color:${overdue ? '#dc2626' : '#9ca3af'};margin-top:2px;font-weight:${overdue ? '600' : '400'};">${_esc(r.projectName || '')}${dueDisplay ? (r.projectName ? ' &nbsp;·&nbsp; ' : '') + dueDisplay.replace(/<[^>]*>/g,'').trim() : ''}</div>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 </div>
                 <div class="pr-client-row-right">
                     <div style="font-size:15px;font-weight:800;color:#1f2937;white-space:nowrap;">${_formatAmount(r.amount)}</div>
@@ -405,10 +380,7 @@
                 </div>
                 ${actionHtml ? `<div class="pr-client-row-action">${actionHtml}</div>` : ''}
             </div>
-<<<<<<< HEAD
-=======
             ${timelineHtml}
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             ${noteHtml}
         </div>`;
     }
@@ -1004,13 +976,8 @@
         };
         const labels = {
             pending:         'Pending',
-<<<<<<< HEAD
-            partial_pending: 'Approval Pending',
-            submitted:       'Submitted',
-=======
             partial_pending: 'Awaiting Approval',
             submitted:       'Under Review',
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             verified:        'Paid',
             rejected:        'Rejected'
         };
@@ -1049,11 +1016,7 @@
 
             const statusMap = {
                 pending:         ['#f59e0b', 'Pending Payment'],
-<<<<<<< HEAD
-                partial_pending: ['#d97706', 'Approval Pending'],
-=======
                 partial_pending: ['#d97706', 'Awaiting Approval'],
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 submitted:       ['#2563eb', 'Under Review'],
                 verified:        ['#00a85e', 'Paid'],
                 rejected:        ['#dc2626', 'Rejected']
@@ -1329,8 +1292,6 @@ table.totals tr.grand td{font-size:15px;font-weight:800;color:#fff;background:#1
         w.document.close();
     };
 
-<<<<<<< HEAD
-=======
     // ══════════════════════════════════════════════════════
     // SOWA REQUEST (client → admin)
     // ══════════════════════════════════════════════════════
@@ -1577,5 +1538,4 @@ table.totals tr.grand td{font-size:15px;font-weight:800;color:#fff;background:#1
         setTimeout(() => w.print(), 400);
     };
 
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 })();

@@ -226,11 +226,7 @@
         _statusChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-<<<<<<< HEAD
-                labels:   ['Pending', 'Approval Pending', 'Submitted', 'Verified', 'Rejected'],
-=======
                 labels:   ['Pending', 'Awaiting Approval', 'Under Review', 'Paid', 'Rejected'],
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 datasets: [{
                     data: [c.pending, c.partial_pending, c.submitted, c.verified, c.rejected],
                     backgroundColor: ['#fbbf24', '#f97316', '#3b82f6', '#00a85e', '#ef4444'],
@@ -276,11 +272,7 @@
         const rows = Object.values(clients).sort((a, b) => a.name.localeCompare(b.name));
 
         if (!rows.length) {
-<<<<<<< HEAD
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:28px;">No payment data yet.</td></tr>';
-=======
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:28px;">No payment data yet.</td></tr>';
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
             return;
         }
 
@@ -306,16 +298,10 @@
             const overdueHtml = overdueCount > 0
                 ? `<span class="rpt-overdue-pill">${overdueCount} Overdue</span>`
                 : '<span style="color:#9ca3af;">—</span>';
-<<<<<<< HEAD
-
-            return `
-            <tr>
-=======
             const idx = rows.indexOf(c);
 
             return `
             <tr class="rpt-client-row">
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 <td>
                     <div class="rpt-client-cell">
                         <div class="rpt-avatar">${initials}</div>
@@ -331,13 +317,6 @@
                 <td class="rpt-td-amt ${outstanding > 0.01 ? 'rpt-outstanding' : 'rpt-zero'}">${_fmt(outstanding)}</td>
                 <td class="rpt-td-center">${overdueHtml}</td>
                 <td class="rpt-td-date">${lastDate}</td>
-<<<<<<< HEAD
-            </tr>`;
-        }).join('');
-    }
-
-    // ══════════════════════════════════════════════════════
-=======
                 <td class="rpt-td-center">
                     <button class="rpt-view-btn" onclick="window.rptViewClientReceipts(${idx})">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -394,7 +373,6 @@
     };
 
     // ══════════════════════════════════════════════════════
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     // CSV EXPORT
     // ══════════════════════════════════════════════════════
 

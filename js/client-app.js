@@ -422,13 +422,9 @@ function populateDashboard() {
 
     // ── Budget stats (aggregate across all folders)
     const totalBudget = currentFolders.reduce((s, f) => s + (parseFloat(f.totalBudget) || 0), 0);
-<<<<<<< HEAD
-    const totalBilled = currentProjects.reduce((s, p) => s + (parseFloat(p.monthlyBudget) || 0), 0);
-=======
     const totalBilled = (window._clientPayRequests || [])
         .filter(r => r.status === 'verified')
         .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     const billedPct   = totalBudget > 0 ? Math.round((totalBilled / totalBudget) * 100) : 0;
 
     const budgetEl = document.getElementById('stat-budget');
@@ -488,12 +484,8 @@ function populateDashboard() {
                 const docAcc   = calcTotalAcc(doc.costItems);
                 const pct      = docTotal > 0 ? Math.round((docAcc / docTotal) * 100) : statusToPct(doc.status);
                 const stClass  = 'phase-status-' + (doc.status || 'draft');
-<<<<<<< HEAD
-                const stLabel  = capitalize(doc.status || 'draft');
-=======
                 const _boqStatusLabel = { draft: 'Draft', submitted: 'For Review', approved: 'Approved' };
                 const stLabel  = _boqStatusLabel[doc.status] || capitalize(doc.status || 'draft');
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 const folder   = currentFolders.find(f => f.id === doc.folderId);
                 const folderTag = (currentFolders.length > 1 && folder)
                     ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px;">${escHtml(folder.name)}</span>`
@@ -527,12 +519,9 @@ function populateDashboard() {
 
     // ── Activity feed
     populateActivity();
-<<<<<<< HEAD
-=======
 
     // ── Project timeline
     renderProjectTimeline();
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 }
 
 function populateActivity() {
@@ -624,11 +613,7 @@ function renderReports() {
               <span style="font-size:12px;font-weight:600;color:var(--text-dark)">${accPct}%</span>
             </div>
           </td>
-<<<<<<< HEAD
-          <td><span class="badge badge-${escHtml(status)}">${capitalize(status)}</span></td>
-=======
           <td><span class="badge badge-${escHtml(status)}">${({draft:'Draft',submitted:'For Review',approved:'Approved'})[status] || capitalize(status)}</span></td>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
           <td><button class="btn-view" onclick="viewReport('${doc.id}')">View</button></td>
         </tr>`;
     }).join('');
@@ -665,11 +650,7 @@ function viewReport(docId) {
 
     const status = doc.status || 'draft';
     const badge = document.getElementById('rmd-status-badge');
-<<<<<<< HEAD
-    if (badge) { badge.className = 'badge badge-' + status; badge.textContent = capitalize(status); }
-=======
     if (badge) { badge.className = 'badge badge-' + status; badge.textContent = ({draft:'Draft',submitted:'For Review',approved:'Approved'})[status] || capitalize(status); }
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
     document.getElementById('rmd-body').innerHTML = renderBoqContent(doc) + renderBoqFooter(doc);
     document.getElementById('rmd-footer').innerHTML = '';
@@ -880,8 +861,6 @@ window.refreshBilledKPI = function () {
     const billedEl = document.getElementById('bsum-billed');
     if (billedEl) animateValue(billedEl, 0, totalBilled, 800, formatPeso);
     _setText('bsum-count', reqs.length);
-<<<<<<< HEAD
-=======
 
     // Also refresh the dashboard stat-usage if dashboard is active
     const totalBudget = currentFolders.reduce((s, f) => s + (parseFloat(f.totalBudget) || 0), 0);
@@ -900,7 +879,6 @@ window.refreshBilledKPI = function () {
     // Refresh timeline and documents now that payments are loaded
     renderProjectTimeline();
     if (document.getElementById('section-documents')?.classList.contains('active')) renderDocuments();
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 };
 
 function populateBilling() {
@@ -979,20 +957,12 @@ function subscribeToNotifications(uid) {
             _firestoreNotifs = snap.docs.map(d => {
                 const data = d.data();
                 return {
-<<<<<<< HEAD
-                    id:   d.id,
-                    type: _mapNotifType(data.type),
-                    msg:  data.message || '',
-                    time: formatTimestamp(data.createdAt),
-                    read: data.isRead || false
-=======
                     id:      d.id,
                     rawType: data.type || '',
                     type:    _mapNotifType(data.type),
                     msg:     data.message || '',
                     time:    formatTimestamp(data.createdAt),
                     read:    data.isRead || false
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                 };
             });
             populateNotifications();
@@ -1018,11 +988,8 @@ function populateNotifications() {
 
     const unread = display.filter(n => !n.read).length;
     if (dot) dot.style.display = unread ? '' : 'none';
-<<<<<<< HEAD
-=======
     const nb = document.getElementById('notif-nav-badge');
     if (nb) { nb.textContent = unread; nb.style.display = unread ? '' : 'none'; }
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
     const icons = {
         green: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`,
@@ -1030,17 +997,6 @@ function populateNotifications() {
         amber: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
     };
 
-<<<<<<< HEAD
-    list.innerHTML = display.map((n, i) => `
-        <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markOneRead(${i})">
-          <div class="notif-icon notif-icon-${n.type}">${icons[n.type] || icons.blue}</div>
-          <div class="notif-body">
-            <div class="notif-msg">${escHtml(n.msg)}</div>
-            <div class="notif-time">${n.time}</div>
-          </div>
-          ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
-        </div>`).join('');
-=======
     const _notifNavMap = {
         payment_verified: 'billing', payment_rejected: 'billing',
         partial_approved: 'billing', partial_declined: 'billing', sowa_ready: 'billing',
@@ -1059,7 +1015,6 @@ function populateNotifications() {
           ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
         </div>`;
     }).join('');
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 }
 
 function toggleNotifications() {
@@ -1263,11 +1218,7 @@ window.addEventListener('resize', () => {
 });
 
 // ── Section Navigation ───────────────────────────────────
-<<<<<<< HEAD
-const SECTION_TITLES = { dashboard:'Dashboard', accomplishment:'Accomplishment Reports', billing:'Billing Periods', soa:'Statement of Account', profile:'Profile' };
-=======
-const SECTION_TITLES = { dashboard:'Dashboard', accomplishment:'Accomplishment Reports', billing:'Billing Periods', profile:'Profile', notifications:'Notifications', documents:'Documents' };
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
+const SECTION_TITLES = { dashboard:'Dashboard', accomplishment:'Accomplishment Reports', billing:'Billing Periods', soa:'Statement of Account', profile:'Profile', notifications:'Notifications', documents:'Documents' };
 
 function showSection(id) {
     document.querySelectorAll('.sub-page').forEach(el => el.classList.remove('active'));
@@ -1280,12 +1231,7 @@ function showSection(id) {
     });
     _setText('topbar-title', SECTION_TITLES[id] || id);
     if (id === 'billing' && typeof initClientPayment === 'function') initClientPayment();
-<<<<<<< HEAD
-    if (id === 'soa'     && typeof initSOAClient     === 'function') initSOAClient();
-    if (isMobile()) closeSidebar();
-}
-
-=======
+    if (id === 'soa'           && typeof initSOAClient     === 'function') initSOAClient();
     if (id === 'notifications') renderNotifHistory();
     if (id === 'documents') renderDocuments();
     if (isMobile()) closeSidebar();
@@ -1468,7 +1414,6 @@ function renderProjectTimeline() {
         </div>`).join('');
 }
 
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 // ── Form Switchers ───────────────────────────────────────
 function switchToSignup() { document.getElementById('form-login').style.display = 'none'; document.getElementById('form-signup').style.display = 'block'; clearLoginErrors(); }
 function switchToLogin()  { document.getElementById('form-signup').style.display = 'none'; document.getElementById('form-login').style.display = 'block'; clearSignupErrors(); }

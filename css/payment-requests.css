@@ -1205,8 +1205,6 @@
     padding: 16px;
 }
 
-<<<<<<< HEAD
-=======
 /* ── SOWA Modal Styles ── */
 .sowa-header-block { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 2px solid #e5e7eb; }
 .sowa-company { font-size: 17px; font-weight: 700; color: #059669; }
@@ -1275,7 +1273,7 @@
 }
 .rpt-view-btn:hover { background: #d1fae5; border-color: #059669; }
 
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
+
 @media (max-width: 900px) {
     .rpt-charts-row { grid-template-columns: 1fr; }
 }

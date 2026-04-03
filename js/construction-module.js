@@ -10,13 +10,11 @@ let inventoryData = [];
 let notificationsData = [];
 let currentEditingRequest = null;
 
-<<<<<<< HEAD
 function _consEsc(s) {
     return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-=======
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
+
 // ═══════════════════════════════════════════════════════════════════════════
 // INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
@@ -639,20 +637,12 @@ function renderBatchHistory(batches) {
 
 function loadNotifications() {
     if (!auth.currentUser) return;
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     db.collection('notifications')
         .doc(auth.currentUser.uid)
         .collection('items')
         .orderBy('createdAt', 'desc')
-<<<<<<< HEAD
         .limit(30)
-=======
-        .limit(10)
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
         .onSnapshot(snapshot => {
             notificationsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             updateNotificationBell();
@@ -675,7 +665,6 @@ function updateNotificationBell() {
     }
 }
 
-<<<<<<< HEAD
 function toggleNotificationDropdown(e) {
     if (e) e.stopPropagation();
     const dropdown = document.getElementById('consNotificationDropdown');
@@ -744,58 +733,15 @@ function renderNotificationDropdown() {
                     <div class="cons-notif-arrow">
                         ${notif.isRead ? '' : '<span class="cons-notif-dot"></span>'}
                         <i data-lucide="chevron-right" class="cons-notif-chevron"></i>
-=======
-function toggleNotificationDropdown() {
-    const dropdown = document.getElementById('consNotificationDropdown');
-    if (!dropdown) return;
-    
-    dropdown.classList.toggle('show');
-    
-    if (dropdown.classList.contains('show')) {
-        renderNotificationDropdown();
-    }
-}
-
-function renderNotificationDropdown() {
-    const dropdown = document.getElementById('consNotificationDropdown');
-    if (!dropdown) return;
-    
-    let html = '<div class="cons-notif-header">Notifications</div>';
-    
-    if (notificationsData.length === 0) {
-        html += '<div class="cons-notif-empty">No notifications</div>';
-    } else {
-        notificationsData.forEach(notif => {
-            const createdAt = notif.createdAt?.toDate();
-            const timeAgo = createdAt ? getTimeAgo(createdAt) : 'Just now';
-            const iconMap = {
-                'new_request':       'inbox',
-                'urgent_request':    'alert-circle',
-                'payment_submitted': 'credit-card',
-                'partial_request':   'git-branch',
-            };
-            
-            html += `
-                <div class="cons-notif-item ${notif.isRead ? 'read' : 'unread'}" onclick="handleNotificationClick('${notif.id}', '${notif.requestId}')">
-                    <div class="cons-notif-icon"><i data-lucide="${iconMap[notif.type] || 'bell'}"></i></div>
-                    <div class="cons-notif-content">
-                        <p>${notif.message}</p>
-                        <span class="cons-notif-time">${timeAgo}</span>
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
                     </div>
                 </div>`;
         });
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
     dropdown.innerHTML = html;
     refreshIcons();
 }
 
-<<<<<<< HEAD
 function handleNotificationClick(event, notifId, relatedId, type) {
     if (event) event.stopPropagation();
 
@@ -868,21 +814,6 @@ function consMarkAllNotificationsRead(event) {
         );
     });
     batch.commit().catch(e => console.warn('consMarkAllNotificationsRead batch error:', e));
-=======
-function handleNotificationClick(notifId, requestId) {
-    // Mark as read
-    db.collection('notifications')
-        .doc(auth.currentUser.uid)
-        .collection('items')
-        .doc(notifId)
-        .update({ isRead: true });
-    
-    // View request details
-    viewRequestDetails(requestId);
-    
-    // Close dropdown
-    document.getElementById('consNotificationDropdown').classList.remove('show');
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 }
 
 function getTimeAgo(date) {
@@ -1201,17 +1132,10 @@ function adjustStock() {
     });
 }
 
-<<<<<<< HEAD
-function deleteInventoryItem(itemId) {
-    const item = inventoryData.find(i => i.id === itemId);
-    const name = item ? item.itemName : 'this item';
-    if (!confirm(`Delete "${name}" from inventory? This cannot be undone.`)) return;
-=======
 async function deleteInventoryItem(itemId) {
     const item = inventoryData.find(i => i.id === itemId);
     const name = item ? item.itemName : 'this item';
     if (!await showDeleteConfirm(`Delete "${name}" from inventory? This cannot be undone.`)) return;
->>>>>>> f75981c5053db8cd901b052df2a28c208b2225af
 
     db.collection('inventory').doc(itemId).delete()
         .then(() => showConsNotification('Item deleted from inventory', 'success'))
