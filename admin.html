@@ -1,0 +1,2379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | DAC's Building Design Services</title>
+    <link rel="icon" href="assets/images/DACS-TRANSPARENT.png" type="image/png">
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="css/expenses-module.css">
+    <link rel="stylesheet" href="css/expenses-mvp.css">
+    <!-- Overhead Module Styles -->
+    <link rel="stylesheet" href="css/overhead-module.css">
+    <!-- Construction Module Styles -->
+    <link rel="stylesheet" href="css/construction-module.css">
+    <link rel="stylesheet" href="css/construction-module-items.css">
+    <!-- BOQ Module Styles -->
+    <link rel="stylesheet" href="css/boq-module.css">
+    <!-- User Navigator Styles -->
+    <link rel="stylesheet" href="css/user-navigator.css">
+    <link rel="stylesheet" href="css/payment-requests.css">
+    <link rel="stylesheet" href="css/invoice-module.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ══════════ WELCOME BACK TOAST ══════════ -->
+<div id="welcomeToast" class="welcome-toast" style="display:none;">
+    <div class="welcome-toast-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+    </div>
+    <div class="welcome-toast-body">
+        <p class="welcome-toast-title" id="welcomeToastTitle">Welcome back!</p>
+        <p class="welcome-toast-sub" id="welcomeToastEmail"></p>
+    </div>
+</div>
+
+<!-- ══════════ LOGOUT CONFIRM MODAL ══════════ -->
+<div id="logoutModal" style="display:none;" class="logout-modal-overlay">
+    <div class="logout-modal-card">
+        <div class="logout-modal-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </div>
+        <h3 class="logout-modal-title">Logout</h3>
+        <p class="logout-modal-msg">Are you sure you want to log out?</p>
+        <div class="logout-modal-actions">
+            <button class="logout-btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+            <button class="logout-btn-confirm" onclick="confirmLogout()">Yes, Logout</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ LOADING OVERLAY ══════════ -->
+<div id="loadingOverlay" style="display:none;">
+    <div class="loading-card">
+        <div class="loading-ring">
+            <div></div><div></div><div></div><div></div>
+        </div>
+        <img src="assets/images/DACS-TRANSPARENT.png" alt="DAC's" class="loading-logo">
+        <p class="loading-text" id="loadingText">Signing you in...</p>
+    </div>
+</div>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-container">
+        <div class="login-header">
+            <img src="assets/images/DACS-TRANSPARENT.png" alt="DAC's" class="login-logo">
+            <h1>Admin Dashboard</h1>
+            <p>DAC's Building Design Services</p>
+        </div>
+        <form id="loginForm" class="login-form">
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" required placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" required placeholder="Enter your password">
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility()" tabindex="-1">
+                        <i data-lucide="eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
+            <div id="loginError" class="error-message"></div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════ DASHBOARD ══════════ -->
+<div id="dashboardScreen" class="dashboard-screen" style="display: none;">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="assets/images/DACS-TRANSPARENT.png" alt="DAC's" class="sidebar-logo">
+            <h2>DAC'S</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-view="dashboard">
+                <span class="nav-icon-wrap"><i data-lucide="layout-dashboard" class="nav-icon"></i></span><span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-view="appointments">
+                <span class="nav-icon-wrap"><i data-lucide="calendar-check" class="nav-icon"></i></span><span>Appointments</span>
+            </a>
+            <a href="#" class="nav-item" data-view="analytics">
+                <span class="nav-icon-wrap"><i data-lucide="bar-chart-2" class="nav-icon"></i></span><span>Analytics</span>
+            </a>
+            <a href="#" class="nav-item" data-view="feedback">
+                <span class="nav-icon-wrap"><i data-lucide="message-square" class="nav-icon"></i></span><span>Feedback</span>
+            </a>
+            <div class="nav-group-label">EXPENSES TRACKER</div>
+            <a href="#" class="nav-item" data-view="expOverview">
+                <span class="nav-icon-wrap"><i data-lucide="wallet" class="nav-icon"></i></span><span>Budget Overview</span>
+            </a>
+            <a href="#" class="nav-item" data-view="expExpenses">
+                <span class="nav-icon-wrap"><i data-lucide="receipt" class="nav-icon"></i></span><span>Expenses</span>
+            </a>
+            <a href="#" class="nav-item" data-view="expReports">
+                <span class="nav-icon-wrap"><i data-lucide="file-bar-chart" class="nav-icon"></i></span><span>Reports</span>
+            </a>
+            <a href="#" class="nav-item" data-view="expOverhead">
+                <span class="nav-icon-wrap"><i data-lucide="building-2" class="nav-icon"></i></span><span>Overhead</span>
+            </a>
+            <!-- Accomplishment Panel Section -->
+            <div class="nav-group-label">Accomplishment Panel</div>
+            <a href="#" class="nav-item" data-view="boqBuilder">
+                <span class="nav-icon-wrap"><i data-lucide="file-spreadsheet" class="nav-icon"></i></span><span>Accomplishment Report</span>
+            </a>
+            <a href="#" class="nav-item" data-view="clientAccounts">
+                <span class="nav-icon-wrap"><i data-lucide="user-circle" class="nav-icon"></i></span><span>Client Accounts</span>
+            </a>
+            <a href="#" class="nav-item" data-view="paymentRequests">
+                <span class="nav-icon-wrap"><i data-lucide="credit-card" class="nav-icon"></i></span><span>Payment Requests</span><span id="pr-admin-badge" style="display:none;" class="pr-nav-badge"></span>
+            </a>
+            <a href="#" class="nav-item" data-view="paymentReports">
+                <span class="nav-icon-wrap"><i data-lucide="bar-chart-2" class="nav-icon"></i></span><span>Payment Reports</span>
+            </a>
+            <a href="#" class="nav-item" data-view="invoices">
+                <span class="nav-icon-wrap"><i data-lucide="receipt-text" class="nav-icon"></i></span><span>Invoice Receipt</span>
+            </a>
+            <!-- Construction Management Section -->
+            <div class="nav-group-label">CONSTRUCTION</div>
+            <a href="#" class="nav-item" data-view="consBatch">
+                <span class="nav-icon-wrap"><i data-lucide="package" class="nav-icon"></i></span><span>Current Batch</span>
+            </a>
+            <a href="#" class="nav-item" data-view="consUrgent">
+                <span class="nav-icon-wrap"><i data-lucide="alert-circle" class="nav-icon"></i></span><span>Urgent Requests</span>
+            </a>
+            <a href="#" class="nav-item" data-view="consBatchHistory">
+                <span class="nav-icon-wrap"><i data-lucide="calendar" class="nav-icon"></i></span><span>Batch History</span>
+            </a>
+            <a href="#" class="nav-item" data-view="consInventory">
+                <span class="nav-icon-wrap"><i data-lucide="box" class="nav-icon"></i></span><span>Inventory</span>
+            </a>
+            <!-- User Logs Section -->
+            <div class="nav-group-label">USER LOGS</div>
+            <a href="#" class="nav-item" data-view="userNavigator">
+                <span class="nav-icon-wrap"><i data-lucide="user-round" class="nav-icon"></i></span><span>User Navigator</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="btn-logout">
+                <span class="nav-icon-wrap"><i data-lucide="log-out" class="nav-icon"></i></span><span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="dashboard-header">
+            <h1 id="pageTitle">Dashboard</h1>
+            <div class="header-right" style="display: flex; align-items: center; gap: 1rem;">
+                <!-- Construction Notification Bell -->
+                <div class="cons-notification-bell" id="consNotificationBell">
+                    <span class="cons-notif-bell-trigger" onclick="toggleNotificationDropdown(event)">
+                        <i data-lucide="bell"></i>
+                        <div class="cons-notification-badge" id="consNotificationBadge">0</div>
+                    </span>
+                    <div class="cons-notification-dropdown" id="consNotificationDropdown">
+                        <!-- Notifications loaded dynamically -->
+                    </div>
+                </div>
+                <div class="header-user"><span id="userEmail"></span></div>
+            </div>
+        </header>
+
+        <!-- ════════════ DASHBOARD ════════════ -->
+        <div id="dashboardView" class="content-view">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="calendar"></i></div>
+                    <div class="stat-info"><h3 id="totalAppointments">0</h3><p>Total Appointments</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="clock"></i></div>
+                    <div class="stat-info"><h3 id="pendingAppointments">0</h3><p>Pending</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="check-circle-2"></i></div>
+                    <div class="stat-info"><h3 id="completedAppointments">0</h3><p>Completed</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="trending-up"></i></div>
+                    <div class="stat-info"><h3 id="thisWeek">0</h3><p>This Week</p></div>
+                </div>
+            </div>
+            <div class="dashboard-compact-grid">
+                <div class="dashboard-charts-column">
+                    <div class="section-card compact-card">
+                        <div class="card-header-compact"><h3>Appointments Trend</h3></div>
+                        <div class="chart-wrapper-compact"><canvas id="servicesChart"></canvas></div>
+                    </div>
+                    <div class="dashboard-bottom-charts">
+                        <div class="section-card compact-card">
+                            <div class="card-header-compact"><h3>Service Distribution</h3></div>
+                            <div class="chart-wrapper-compact"><canvas id="dashboardServiceChart"></canvas></div>
+                        </div>
+                        <div class="section-card compact-card">
+                            <div class="card-header-compact"><h3>Status Overview</h3></div>
+                            <div class="chart-wrapper-compact"><canvas id="dashboardStatusChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-card compact-card">
+                    <div class="section-header-compact">
+                        <h3>Recent Appointments</h3>
+                        <button class="btn-secondary btn-sm" onclick="switchView('appointments')">View All</button>
+                    </div>
+                    <div id="recentAppointments" class="appointments-list-compact"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ APPOINTMENTS ════════════ -->
+        <div id="appointmentsView" class="content-view" style="display: none;">
+            <div class="filters-bar">
+                <select id="statusFilter" class="filter-select">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name or email...">
+            </div>
+            <div class="section-card">
+                <div id="appointmentsTable" class="table-container">
+                    <table class="appointments-table">
+                        <thead>
+                            <tr><th>Date</th><th>Name</th><th>Email</th><th>Contact</th><th>Service</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="appointmentsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ ANALYTICS ════════════ -->
+        <div id="analyticsView" class="content-view" style="display: none;">
+            <div class="analytics-summary">
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:linear-gradient(135deg,#667eea,#764ba2)"><i data-lucide="percent" class="metric-lucide"></i></div>
+                    <div class="metric-content">
+                        <h4>Conversion Rate</h4>
+                        <h2 id="conversionRate">0%</h2>
+                        <p class="metric-change positive" id="conversionRateChange">↑ 12% from last month</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:linear-gradient(135deg,#f093fb,#f5576c)"><i data-lucide="timer" class="metric-lucide"></i></div>
+                    <div class="metric-content">
+                        <h4>Avg. Response Time</h4>
+                        <h2 id="avgResponseTime">2.3h</h2>
+                        <p class="metric-change positive">↓ 0.5h faster</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"><i data-lucide="target" class="metric-lucide"></i></div>
+                    <div class="metric-content">
+                        <h4>Popular Service</h4>
+                        <h2 id="popularService">Design</h2>
+                        <p class="metric-change">Most requested</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background:linear-gradient(135deg,#43e97b,#38f9d7)"><i data-lucide="trending-up" class="metric-lucide"></i></div>
+                    <div class="metric-content">
+                        <h4>Growth Rate</h4>
+                        <h2 id="growthRate">+24%</h2>
+                        <p class="metric-change positive">↑ vs last period</p>
+                    </div>
+                </div>
+            </div>
+            <div class="analytics-grid">
+                <div class="section-card full-width">
+                    <div class="card-header">
+                        <div><h2>Appointments Trend</h2><p class="card-subtitle">Monthly overview of appointment bookings</p></div>
+                        <div class="chart-legend-inline">
+                            <span class="legend-item"><span class="dot" style="background:#059669"></span> Appointments</span>
+                            <span class="legend-item"><span class="dot" style="background:#E0E0E0"></span> Trend</span>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper"><canvas id="monthlyTrendChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Service Distribution</h2><p class="card-subtitle">Breakdown by service type</p></div></div>
+                    <div class="chart-wrapper" style="height:320px"><canvas id="serviceBreakdownChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Status Overview</h2><p class="card-subtitle">Current appointment states</p></div></div>
+                    <div class="chart-wrapper" style="height:320px"><canvas id="statusBreakdownChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Weekly Activity</h2><p class="card-subtitle">Appointments by day of week</p></div></div>
+                    <div class="chart-wrapper" style="height:320px"><canvas id="weeklyActivityChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ FEEDBACK ════════════ -->
+        <div id="feedbackView" class="content-view" style="display: none;">
+            <div class="filters-bar">
+                <select id="feedbackStatusFilter" class="filter-select">
+                    <option value="all">All Ratings</option>
+                    <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
+                    <option value="4">⭐⭐⭐⭐ 4 Stars</option>
+                    <option value="3">⭐⭐⭐ 3 Stars</option>
+                    <option value="2">⭐⭐ 2 Stars</option>
+                    <option value="1">⭐ 1 Star</option>
+                </select>
+                <input type="text" id="feedbackSearchInput" class="search-input" placeholder="Search by name or location...">
+            </div>
+            <div class="section-card">
+                <div id="feedbackTable" class="table-container">
+                    <table class="appointments-table">
+                        <thead>
+                            <tr><th>Date</th><th>Name</th><th>Location</th><th>Rating</th><th>Message</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="feedbackTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ BUDGET OVERVIEW ════════════ -->
+        <div id="expOverviewView" class="content-view" style="display: none;">
+
+            <!-- ── STATE 1: FOLDER GRID ── -->
+            <div id="mvpOvFolderState">
+                <div class="ov-page-header">
+                    <div class="ov-page-header__left">
+                        <h2 class="ov-page-title">Project Folders</h2>
+                        <p class="ov-page-subtitle">Manage construction and design project budgets</p>
+                    </div>
+                    <button class="ov-btn-new" onclick="openExpModal('createFolderModal')">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        New Project Folder
+                    </button>
+                </div>
+                <div id="mvpOverviewFolderGrid" class="ov-folder-grid">
+                    <div class="ov-empty-state">
+                        <div class="ov-empty-icon">
+                            <svg viewBox="0 0 80 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 12C4 9.79086 5.79086 8 8 8H30L36 16H72C74.2091 16 76 17.7909 76 20V56C76 58.2091 74.2091 60 72 60H8C5.79086 60 4 58.2091 4 56V12Z" stroke="#d1d5db" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            </svg>
+                        </div>
+                        <h3 class="ov-empty-title">No project folders yet</h3>
+                        <p class="ov-empty-sub">Create your first project folder to start tracking expenses</p>
+                        <button class="ov-btn-new ov-btn-new--center" onclick="openExpModal('createFolderModal')">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            New Project Folder
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── STATE 2: FOLDER DETAIL ── -->
+            <div id="mvpOvDetailState" style="display:none;">
+                <!-- Top nav bar -->
+                <div class="ov-detail-topbar">
+                    <button class="ov-back-btn" onclick="mvpOvNavigate('folders')">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                        Back to Projects
+                    </button>
+                    <div class="ov-detail-topbar-actions">
+                        <button class="ov-btn-print" onclick="printFullBillingSummary()">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                            Print Summary
+                        </button>
+                        <button class="ov-btn-new" onclick="openNewBillingPeriodModal()">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            New Billing Period
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Folder header info -->
+                <div class="ov-detail-header">
+                    <h2 class="ov-detail-name" id="mvpOvDetailName">Folder</h2>
+                    <p class="ov-detail-desc" id="mvpOvDetailDesc"></p>
+                    <p class="ov-detail-created" id="mvpOvDetailCreated"></p>
+                </div>
+
+                <!-- Budget Overview KPIs -->
+                <div class="ov-detail-section-hdr" id="mvpOvBudgetHdr">
+                    <span class="ov-detail-section-label">Budget Overview</span>
+                    <span class="mvp-health-badge mvp-health-healthy" id="mvpOvHealthBadge">HEALTHY</span>
+                </div>
+
+                <!-- Budget Overview KPI Grid (9-cell) -->
+                <div class="ov-kpi-grid9">
+                    <!-- R1C1: Total Contract -->
+                    <div class="ov-kpi-cell9">
+                        <div class="ov-kpi-cell9__label">Total Contract</div>
+                        <div class="ov-kpi-cell9__amt ov-kpi-cell9__amt--lg" id="mvpOvKpiContractVal">&#8369;0</div>
+                        <div class="ov-kpi-cell9__sub">Project total budget</div>
+                    </div>
+                    <!-- R1C2: Total Receivable -->
+                    <div class="ov-kpi-cell9">
+                        <div class="ov-kpi-cell9__label">Total Receivable</div>
+                        <div class="ov-kpi-cell9__pct ov-kpi-cell9__pct--teal" id="mvpOvKpiRcvPctVal">0.0%</div>
+                        <div class="ov-kpi-cell9__amt" id="mvpOvKpiRcvPctAmt">&#8369;0</div>
+                        <div class="ov-kpi-cell9__sub">Remaining to bill</div>
+                    </div>
+                    <!-- R1C3: Budget (Remaining) -->
+                    <div class="ov-kpi-cell9">
+                        <div class="ov-kpi-cell9__label">Total Remaining Budget</div>
+                        <div class="ov-kpi-cell9__pct ov-kpi-cell9__pct--green" id="mvpOvKpiRemPctVal">0.0%</div>
+                        <div class="ov-kpi-cell9__amt" id="mvpOvKpiRemPctAmt">&#8369;0</div>
+                        <div class="ov-kpi-cell9__sub">Remaining of contract</div>
+                    </div>
+                    <!-- R2C1: Total Fund Allocated -->
+                    <div class="ov-kpi-cell9">
+                        <div class="ov-kpi-cell9__label">Total Fund Allocated</div>
+                        <div class="ov-kpi-cell9__pct ov-kpi-cell9__pct--purple" id="mvpOvKpiReceivedPct">0.0%</div>
+                        <div class="ov-kpi-cell9__amt" id="mvpOvKpiReceivedVal">&#8369;0</div>
+                        <div class="ov-kpi-cell9__sub">Utilized of fund received</div>
+                    </div>
+                    <!-- R2C2: Cover Expenses -->
+                    <div class="ov-kpi-cell9">
+                        <div class="ov-kpi-cell9__label">Cover Expenses</div>
+                        <div class="ov-kpi-cell9__pct ov-kpi-cell9__pct--indigo" id="mvpOvKpiCoverPct">—</div>
+                        <div class="ov-kpi-cell9__amt" id="mvpOvKpiCoverVal">—</div>
+                        <div class="ov-kpi-cell9__sub">Of contract value</div>
+                    </div>
+                    <!-- R2C3: Total Fund Allocated Remaining -->
+                    <div class="ov-kpi-cell9">
+                        <div class="ov-kpi-cell9__label">Fund Allocated Remaining</div>
+                        <div class="ov-kpi-cell9__pct ov-kpi-cell9__pct--teal" id="mvpOvUtilizedPct">0%</div>
+                        <div class="ov-kpi-cell9__amt" id="mvpOvVarianceAmt">&#8369;0</div>
+                        <div class="ov-kpi-cell9__sub">Utilized of allocated</div>
+                    </div>
+                    <!-- R3C1: Materials & Direct Costs -->
+                    <div class="ov-kpi-cell9">
+                        <div class="ov-kpi-cell9__label">Materials &amp; Direct Costs</div>
+                        <div class="ov-kpi-cell9__pct ov-kpi-cell9__pct--blue" id="mvpOvKpiMatPct">0.0%</div>
+                        <div class="ov-kpi-cell9__amt" id="mvpOvKpiMatVal">&#8369;0</div>
+                        <div class="ov-kpi-cell9__sub" id="mvpOvKpiMatSub2">Of fund allocated</div>
+                    </div>
+                    <!-- R3C2: Labor & Payroll -->
+                    <div class="ov-kpi-cell9">
+                        <div class="ov-kpi-cell9__label">Labor &amp; Payroll</div>
+                        <div class="ov-kpi-cell9__pct ov-kpi-cell9__pct--amber" id="mvpOvKpiLabPct">0.0%</div>
+                        <div class="ov-kpi-cell9__amt" id="mvpOvKpiLabVal">&#8369;0</div>
+                        <div class="ov-kpi-cell9__sub" id="mvpOvKpiLabSub2">Of fund allocated</div>
+                    </div>
+                    <!-- R3C3: Current Fund Spent -->
+                    <div class="ov-kpi-cell9">
+                        <div class="ov-kpi-cell9__label">Current Fund Spent</div>
+                        <div class="ov-kpi-cell9__pct ov-kpi-cell9__pct--red" id="mvpOvKpiTotalPct">0.0%</div>
+                        <div class="ov-kpi-cell9__amt" id="mvpOvKpiTotalVal">&#8369;0</div>
+                        <div class="ov-kpi-cell9__sub">Of contract value</div>
+                    </div>
+                </div>
+                <!-- Staff-only KPI cards (matches Expenses module card style) -->
+                <div class="mvp-detail-kpi-grid staff-ov-kpi-wrap" id="staffOvKpiWrap">
+                    <div class="mvp-detail-kpi-card">
+                        <div class="mvp-detail-kpi-label">Current Fund Spent</div>
+                        <div class="mvp-detail-kpi-value" id="staffOvTotalVal">&#8369;0</div>
+                        <div class="mvp-detail-kpi-sub">Materials + Labor</div>
+                        <div style="margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.25);">
+                            <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:rgba(255,255,255,0.80);margin-bottom:0.2rem;">
+                                <span>Materials</span><span id="staffOvMatVal" style="font-weight:600;color:#ffffff">—</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:rgba(255,255,255,0.80);">
+                                <span>Labor</span><span id="staffOvLabVal" style="font-weight:600;color:#ffffff">—</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mvp-detail-kpi-card">
+                        <div class="mvp-detail-kpi-label">Cover Expenses</div>
+                        <div class="mvp-detail-kpi-value" id="staffOvCoverVal">&#8369;0</div>
+                        <div class="mvp-detail-kpi-sub" id="staffOvCoverSub">0 months covered</div>
+                        <div style="margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                            <span class="mvp-detail-kpi-label" style="margin:0">Budget Status</span>
+                            <span class="mvp-health-badge mvp-health-healthy" id="staffOvCoverBadge">NONE</span>
+                        </div>
+                        <div class="mvp-detail-kpi-value" id="staffOvCoverPct" style="font-size:1.4rem;margin-top:0.2rem">0.0%</div>
+                        <div class="mvp-detail-kpi-sub">of total budget received</div>
+                    </div>
+                    <div class="mvp-detail-kpi-card">
+                        <div class="mvp-detail-kpi-label">Materials &amp; Costs</div>
+                        <div class="mvp-detail-kpi-value" id="staffOvMatCardVal">&#8369;0</div>
+                        <div class="mvp-detail-kpi-sub">Direct material expenses</div>
+                        <div style="margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                            <span class="mvp-detail-kpi-label" style="margin:0">% of Budget</span>
+                            <span class="mvp-detail-kpi-value" id="staffOvMatPct" style="font-size:1.1rem;margin:0">0.0%</span>
+                        </div>
+                    </div>
+                    <div class="mvp-detail-kpi-card">
+                        <div class="mvp-detail-kpi-label">Labor &amp; Payroll</div>
+                        <div class="mvp-detail-kpi-value" id="staffOvLabCardVal">&#8369;0</div>
+                        <div class="mvp-detail-kpi-sub">Worker wages &amp; payroll</div>
+                        <div style="margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                            <span class="mvp-detail-kpi-label" style="margin:0">% of Budget</span>
+                            <span class="mvp-detail-kpi-value" id="staffOvLabPct" style="font-size:1.1rem;margin:0">0.0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden legacy elements for JS compatibility -->
+                <div style="display:none" aria-hidden="true">
+                    <span id="mvpOvKpiContractDelta1"></span>
+                    <span id="mvpOvKpiContractDelta1Badge"></span>
+                    <span id="mvpOvKpiContractDelta2"></span>
+                    <span id="mvpOvKpiContractDelta2Badge"></span>
+                    <span id="mvpOvKpiContractStatusBadge"></span>
+                    <span id="mvpOvKpiContractPct"></span>
+                    <span id="mvpOvKpiReceivedSub"></span>
+                    <span id="mvpOvKpiReceivedDelta"></span>
+                    <span id="mvpOvKpiReceivedDeltaBadge"></span>
+                    <span id="mvpOvKpiReceivedStatusBadge"></span>
+                    <span id="mvpOvKpiCoverSub"></span>
+                    <span id="mvpOvKpiCoverStatusBadge"></span>
+                    <span id="mvpOvKpiMatSub"></span>
+                    <span id="mvpOvKpiMatBar"></span>
+                    <span id="mvpOvKpiLabSub"></span>
+                    <span id="mvpOvKpiLabBar"></span>
+                    <span id="mvpOvKpiTotalSub"></span>
+                    <span id="mvpOvKpiTotalBar"></span>
+                    <span id="mvpOvKpiRcvPctSub"></span>
+                    <span id="mvpOvKpiRcvPctBar"></span>
+                    <span id="mvpOvKpiRemPctSub"></span>
+                    <span id="mvpOvKpiRemPctBar"></span>
+                    <span id="mvpOvStackMat"></span>
+                    <span id="mvpOvStackLab"></span>
+                    <span id="mvpOvStackRem"></span>
+                    <span id="mvpOvLegMat"></span>
+                    <span id="mvpOvLegLab"></span>
+                    <span id="mvpOvLegRem"></span>
+                </div>
+
+                <!-- Billing Periods -->
+                <div class="ov-detail-section-hdr" style="margin-top:1.5rem">
+                    <span class="ov-detail-section-label">Billing Periods</span>
+                    <span class="ov-period-count-badge" id="mvpOvPeriodCount">0 periods</span>
+                </div>
+                <div id="mvpOvPeriodGrid" class="ov-period-grid">
+                    <div class="ov-empty-state">
+                        <h3 class="ov-empty-title">No billing periods yet</h3>
+                        <p class="ov-empty-sub">Add a billing period to start tracking expenses.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden legacy DOM IDs for JS compatibility (dashboard stats hidden for now) -->
+            <div style="display:none;" aria-hidden="true">
+                <div id="mvpTotalFolders"></div><div id="mvpTotalMonths"></div>
+                <div id="mvpTotalBudget"></div><div id="mvpBudgetSub"></div>
+                <div id="mvpTotalSpent"></div><div id="mvpSpentSub"></div>
+                <div id="mvpHealthPct"></div><span id="mvpHealthBadge"></span>
+                <div id="mvpDashStackMat"></div><div id="mvpDashStackLab"></div><div id="mvpDashStackRem"></div>
+                <div id="mvpDashPctRem"></div><div id="mvpDashPctMat"></div><div id="mvpDashPctLab"></div><div id="mvpDashPctRemLeg"></div>
+                <div id="mvpAllProjectsTbody"></div>
+            </div>
+
+            <!-- Hidden legacy DOM IDs for JS compatibility -->
+            <div style="display:none;" aria-hidden="true">
+                <div id="expOverviewList"></div>
+                <div id="expOverviewEmptyState"></div>
+                <div id="expOverviewContent">
+                    <span id="expBadgeOverview"></span>
+                    <div id="expKpiFolderCards">
+                        <div id="expFolderBudget"></div>
+                        <span id="expContractDeltaVal"></span><span id="expContractDeltaBadge"></span>
+                        <span id="expContractVsSpentVal"></span><span id="expContractVsSpentBadge"></span>
+                        <span id="expFolderContractStatusBadge"></span>
+                        <div id="expFolderContractStatusPct"></div><div id="expFolderContractStatusSub"></div>
+                        <div id="expTotalMonthlyAllocations"></div><div id="expAllocatedMonthCount"></div>
+                        <span id="expReceivedDeltaVal"></span><span id="expReceivedDeltaBadge"></span>
+                        <span id="expFolderReceivedStatusBadge"></span>
+                        <div id="expFolderReceivedStatusPct"></div><div id="expFolderReceivedStatusSub"></div>
+                        <div id="expFolderTotalPresidentCover"></div><div id="expFolderPresidentCoverCount"></div>
+                        <span id="expFolderCoverStatusBadge"></span><div id="expFolderCoverStatusPct"></div>
+                    </div>
+                    <div id="expKpiPresidentCard"><div id="expTotalPresidentCover"></div><div id="expPresidentCoverCount"></div></div>
+                    <div id="expKpiPeriodCard"><div id="expPeriodCardLabel"></div><div id="expTotalBudget"></div><div id="expPeriodLabel"></div></div>
+                    <div id="expKpiStatusCard">
+                        <div id="expHealthIconWrap"><i id="expHealthIcon"></i></div>
+                        <div id="expHealthBadge"></div><div id="expUsedPct"></div><div id="expHealthSub"></div>
+                    </div>
+                    <div id="expTotalExpenses"></div><span id="expExpenseCount"></span><span id="expExpPct"></span><div id="expExpBar"></div>
+                    <div id="expTotalPayroll"></div><span id="expPayrollCount"></span><span id="expPayPct"></span><div id="expPayBar"></div>
+                    <div id="expTotalSpent"></div><span id="expSpentOfContract"></span><div id="expSpentBar"></div>
+                    <div id="expVarianceCard">
+                        <div id="expVariancePeriodRow"><span id="expRemaining"></span><div id="expRemBar"></div></div>
+                        <span id="expContractVariance"></span><div id="expContractVarBar"></div><div id="expVarianceMeta"></div>
+                    </div>
+                    <div id="expStackMaterials"></div><div id="expStackPayroll"></div><div id="expStackRemaining"></div>
+                    <span id="expLegMatPct"></span><span id="expLegPayPct"></span><span id="expLegRemPct"></span><span id="expRemPct"></span>
+                    <div id="expBillingSummaryCard">
+                        <div id="expBsStats"></div><div id="expBillingSummaryList"></div><div id="expBsTotalBlock"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- /end legacy hidden IDs -->
+
+        </div>
+        <!-- /expOverviewView end -->
+
+        <!-- ════════════ EXPENSES ════════════ -->
+        <div id="expExpensesView" class="content-view" style="display: none;">
+
+            <!-- STATE 1: FOLDER GRID -->
+            <div id="mvpFolderState">
+                <div class="ov-page-header">
+                    <div>
+                        <h2 class="ov-page-title">Project Folders</h2>
+                        <p class="ov-page-subtitle">Select a folder to view projects and expenses</p>
+                    </div>
+                    <button class="ov-btn-new" onclick="openExpModal('createFolderModal')">+ New Project Folder</button>
+                </div>
+                <div id="mvpFolderGrid" class="ov-folder-grid">
+                    <div class="mvp-empty-state">
+                        <div class="mvp-empty-icon">&#128193;</div>
+                        <h3>No Folders Yet</h3>
+                        <p>Create your first project folder to get started.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATE 2: PROJECT LIST -->
+            <div id="mvpProjectState" style="display:none;">
+                <nav class="mvp-breadcrumb">
+                    <button class="ov-back-btn" onclick="mvpNavigate('folders')">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                        All Folders
+                    </button>
+                    <span class="mvp-breadcrumb-sep">/</span>
+                    <span class="mvp-breadcrumb-current" id="mvpProjFolderName">Folder</span>
+                </nav>
+                <div class="mvp-page-header">
+                    <div>
+                        <h2 class="mvp-page-title" id="mvpProjStateTitle">Projects</h2>
+                        <p class="mvp-page-subtitle" id="mvpProjStateSub">Projects within this folder</p>
+                    </div>
+                    <button class="exp-btn exp-btn-primary" onclick="openExpModal('createProjectModal')">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        New Project
+                    </button>
+                </div>
+                <div id="mvpProjectGrid" class="mvp-project-grid">
+                    <div class="mvp-empty-state">
+                        <div class="mvp-empty-icon">&#128203;</div>
+                        <h3>No Projects Yet</h3>
+                        <p>Add a project to this folder to start tracking expenses.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATE 3: PROJECT DETAIL -->
+            <div id="mvpDetailState" style="display:none;">
+                <nav class="mvp-breadcrumb">
+                    <button class="ov-back-btn" onclick="mvpNavigate('folders')">&#8592; Expenses</button>
+                    <span class="mvp-breadcrumb-sep">/</span>
+                    <span class="mvp-breadcrumb-current" id="mvpDetailFolderCrumb">Folder</span>
+                </nav>
+
+                <!-- Budget KPI Cards -->
+                <div class="mvp-detail-kpi-grid">
+                    <div class="mvp-detail-kpi-card" id="mvpDetailBudgetCard">
+                        <div class="mvp-detail-kpi-label">Total Budget</div>
+                        <div class="mvp-detail-kpi-value" id="mvpDetailBudget">&#8369;0</div>
+                        <div class="mvp-detail-kpi-sub" id="mvpDetailBudgetSub">period allocation</div>
+                        <div style="margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                            <span class="mvp-detail-kpi-label" style="margin:0">Budget Status</span>
+                            <span class="mvp-health-badge mvp-health-healthy" id="mvpDetailHealthBadge">HEALTHY</span>
+                        </div>
+                        <div class="mvp-detail-kpi-value" id="mvpDetailHealthPct" style="font-size:1.4rem;margin-top:0.2rem">0%</div>
+                        <div class="mvp-detail-kpi-sub" id="mvpDetailHealthSub">remaining of budget</div>
+                    </div>
+                    <div class="mvp-detail-kpi-card">
+                        <div class="mvp-detail-kpi-label">Current Fund Spent</div>
+                        <div class="mvp-detail-kpi-value" id="mvpDetailTotalCost">&#8369;0</div>
+                        <div class="mvp-detail-kpi-sub">Materials + Labor</div>
+                        <div style="margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.25);">
+                            <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:rgba(255,255,255,0.80);margin-bottom:0.2rem;">
+                                <span>Materials</span><span id="mvpDetailTotalMat" style="font-weight:600;color:#ffffff">—</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:rgba(255,255,255,0.80);">
+                                <span>Labor</span><span id="mvpDetailTotalLab" style="font-weight:600;color:#ffffff">—</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mvp-detail-kpi-card">
+                        <div class="mvp-detail-kpi-label">Cover Expenses</div>
+                        <div class="mvp-detail-kpi-value" id="mvpDetailCoverVal">&#8369;0</div>
+                        <div class="mvp-detail-kpi-sub" id="mvpDetailCoverSub">0 months covered</div>
+                        <div style="margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                            <span class="mvp-detail-kpi-label" style="margin:0">Budget Status</span>
+                            <span class="mvp-health-badge mvp-health-healthy" id="mvpDetailCoverBadge">NONE</span>
+                        </div>
+                        <div class="mvp-detail-kpi-value" id="mvpDetailCoverPct" style="font-size:1.4rem;margin-top:0.2rem">0.0%</div>
+                        <div class="mvp-detail-kpi-sub">of total budget received</div>
+                    </div>
+                </div>
+                <!-- hidden stub so JS refs don't break -->
+                <div id="mvpDetailHealthCard" style="display:none"></div>
+
+                <!-- Budget Breakdown -->
+                <div class="section-card mvp-breakdown-card">
+                    <div class="mvp-breakdown-header">
+                        <span class="mvp-breakdown-title">Budget Breakdown</span>
+                        <span class="mvp-util-remain" id="mvpDetailRemPct">100% remaining</span>
+                    </div>
+                    <div class="mvp-stack-track">
+                        <div class="mvp-stack-seg mvp-stack-mat" id="mvpDetailStackMat" style="width:0%"></div>
+                        <div class="mvp-stack-seg mvp-stack-lab" id="mvpDetailStackLab" style="width:0%"></div>
+                        <div class="mvp-stack-seg mvp-stack-rem" id="mvpDetailStackRem" style="width:100%"></div>
+                    </div>
+                    <div class="mvp-util-legend" style="margin-bottom:1rem">
+                        <span class="mvp-leg-item"><span class="mvp-leg-dot mvp-leg-mat"></span>Materials <strong id="mvpDetailPctMat">0%</strong></span>
+                        <span class="mvp-leg-item"><span class="mvp-leg-dot mvp-leg-lab"></span>Labor <strong id="mvpDetailPctLab">0%</strong></span>
+                        <span class="mvp-leg-item"><span class="mvp-leg-dot mvp-leg-rem"></span>Remaining <strong id="mvpDetailPctRem">100%</strong></span>
+                    </div>
+                    <div class="table-container">
+                        <table class="appointments-table">
+                            <thead><tr><th>Category</th><th>Amount</th><th>% of Budget</th><th>Bar</th></tr></thead>
+                            <tbody id="mvpBreakdownTbody"><tr><td colspan="4" class="exp-empty-row">No data yet.</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="mvp-tab-nav">
+                    <button class="mvp-tab-btn mvp-tab-active" id="mvpTabBtnMaterials" onclick="mvpSwitchTab('materials')">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        Materials Expenses
+                    </button>
+                    <button class="mvp-tab-btn" id="mvpTabBtnPayroll" onclick="mvpSwitchTab('payroll')">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Labor / Payroll
+                    </button>
+                    <button class="mvp-tab-btn" id="mvpTabBtnCover" onclick="mvpSwitchTab('cover')">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        Cover Expenses
+                    </button>
+                </div>
+
+                <!-- Tab: Materials -->
+                <div id="mvpTabMaterials" class="mvp-tab-panel">
+                    <div class="mvp-tab-topbar">
+                        <div class="exp-search-bar">
+                            <div class="exp-search-input-wrap">
+                                <i data-lucide="search" class="exp-search-icon"></i>
+                                <input type="text" id="expSearchName" placeholder="Expense name&#8230;" oninput="applyExpenseSearch()" autocomplete="off">
+                            </div>
+                            <select id="expSearchCategory" onchange="applyExpenseSearch()"><option value="">All Categories</option></select>
+                            <div class="exp-search-range-wrap">
+                                <span class="exp-search-range-label">&#8369;</span>
+                                <input type="number" id="expSearchAmtMin" placeholder="Min" min="0" step="0.01" oninput="applyExpenseSearch()">
+                                <span class="exp-search-dash">&ndash;</span>
+                                <input type="number" id="expSearchAmtMax" placeholder="Max" min="0" step="0.01" oninput="applyExpenseSearch()">
+                            </div>
+                            <select id="expSearchMonth" onchange="applyExpenseSearch()" class="exp-search-month-select"><option value="">&#128197; All Months</option></select>
+                            <button class="exp-search-clear" id="expSearchClearBtn" onclick="clearExpenseSearch()" style="display:none">&#10005; Clear</button>
+                        </div>
+                        <button class="exp-btn exp-btn-primary" onclick="guardExpModal('addExpenseModal')">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                            Add Expense
+                        </button>
+                    </div>
+                    <div class="exp-filter-bar" id="expFilterBar" style="display:none">
+                        <div class="exp-filter-chips" id="expFilterChips"></div>
+                        <span class="exp-filter-count" id="expSearchCount"></span>
+                    </div>
+                    <div class="section-card">
+                        <div class="table-container">
+                            <table class="appointments-table">
+                                <thead><tr><th>Date</th><th>Expense Name</th><th>Notes / Detail</th><th>Qty</th><th>Amount</th><th>Receipt</th><th>Action</th></tr></thead>
+                                <tbody id="expensesTbody"><tr><td colspan="7" class="exp-empty-row">Select a project to view expenses.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Payroll -->
+                <div id="mvpTabPayroll" class="mvp-tab-panel" style="display:none;">
+                    <div class="mvp-tab-topbar">
+                        <div class="exp-search-bar">
+                            <div class="exp-search-input-wrap">
+                                <i data-lucide="search" class="exp-search-icon"></i>
+                                <input type="text" id="mvpPaySearchName" placeholder="Search worker name&#8230;" oninput="mvpApplyPayrollSearch()" autocomplete="off">
+                            </div>
+                            <button class="exp-search-clear" id="mvpPaySearchClearBtn" onclick="mvpClearPayrollSearch()" style="display:none">&#10005; Clear</button>
+                        </div>
+                        <button class="exp-btn exp-btn-primary" onclick="guardExpModal('addPayrollModal')">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                            Add Payroll Entry
+                        </button>
+                    </div>
+                    <div style="margin-bottom:0.5rem"><span id="mvpPaySearchCount" class="exp-search-count-badge" style="display:none"></span></div>
+                    <div class="section-card">
+                        <div class="table-container">
+                            <table class="appointments-table">
+                                <thead><tr><th>Payment Date</th><th>Worker Name</th><th>Role</th><th>Notes / Detail</th><th>Days</th><th>Daily Rate</th><th>Total Salary</th><th>Receipt</th><th>Action</th></tr></thead>
+                                <tbody id="mvpPayrollTbody"><tr><td colspan="9" class="exp-empty-row">Select a project to view payroll.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Cover Expenses -->
+                <div id="mvpTabCover" class="mvp-tab-panel" style="display:none;">
+                    <div class="mvp-tab-topbar">
+                        <div style="font-size:0.875rem;color:#6b7280;">Cover expenses flagged for this project period.</div>
+                        <button class="exp-btn exp-btn-primary" onclick="guardExpModal('addExpenseModal')">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                            Add Cover Expense
+                        </button>
+                    </div>
+                    <div class="section-card">
+                        <div class="table-container">
+                            <table class="appointments-table">
+                                <thead><tr><th>Date</th><th>Description</th><th>Notes / Detail</th><th>Amount</th><th>Action</th></tr></thead>
+                                <tbody id="mvpCoverTbody"><tr><td colspan="5" class="exp-empty-row">No cover expenses for this project.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden legacy IDs for JS compatibility -->
+                <div style="display:none;" aria-hidden="true">
+                    <div id="expExpensesList"></div>
+                    <div id="expExpensesEmptyState"></div>
+                    <div id="expExpensesContent"><span id="expBadgeExpenses"></span></div>
+                </div>
+            </div><!-- /mvpDetailState -->
+
+        </div><!-- /expExpensesView -->
+
+        <!-- ════════════ REPORTS ════════════ -->
+        <div id="expReportsView" class="content-view" style="display: none;">
+            <div id="expReportsEmptyState" class="exp-overview-empty" style="display:flex;">
+                <div class="exp-overview-empty-icon">📊</div>
+                <h3>Select a Folder</h3>
+                <p>Click a project folder on the left to generate reports.</p>
+            </div>
+            <div id="expReportsContent" style="display:none;">
+            <!-- REPORTS TOP BAR -->
+            <div class="rpt-topbar">
+                <div class="rpt-topbar-left">
+                    <div class="rpt-company-badge">
+                        <i data-lucide="building-2" class="rpt-company-ico"></i>
+                        <div class="rpt-company-info">
+                            <span class="rpt-company-name">DAC's Building Design Services</span>
+                            <span class="rpt-company-sub" id="rptCompanySub">All Projects · Company-Wide</span>
+                        </div>
+                    </div>
+                    <div class="rpt-select-wrap rpt-folder-wrap">
+                        <i data-lucide="folder" class="rpt-sel-ico"></i>
+                        <select id="rptFolderSel" onchange="onRptFolderChange()">
+                            <option value="">All Folders</option>
+                        </select>
+                    </div>
+                    <div class="rpt-select-wrap rpt-year-wrap">
+                        <i data-lucide="calendar" class="rpt-sel-ico"></i>
+                        <select id="rptYearSel" onchange="onRptYearChange()"></select>
+                    </div>
+                </div>
+                <div class="rpt-period-tabs" id="rptPeriodTabs">
+                    <button class="rpt-tab" data-period="weekly" onclick="setRptPeriod('weekly')"><i data-lucide="calendar-days" class="rpt-tab-ico"></i>Weekly</button>
+                    <button class="rpt-tab active" data-period="monthly" onclick="setRptPeriod('monthly')"><i data-lucide="calendar" class="rpt-tab-ico"></i>Monthly</button>
+                    <button class="rpt-tab" data-period="quarterly" onclick="setRptPeriod('quarterly')"><i data-lucide="layout-grid" class="rpt-tab-ico"></i>Quarterly</button>
+                    <button class="rpt-tab" data-period="semi" onclick="setRptPeriod('semi')"><i data-lucide="split" class="rpt-tab-ico"></i>Semi-Annual</button>
+                    <button class="rpt-tab" data-period="annual" onclick="setRptPeriod('annual')"><i data-lucide="trending-up" class="rpt-tab-ico"></i>Annual</button>
+                </div>
+            </div>
+            <!-- AXIS LEGEND HINT -->
+            <div class="rpt-axis-hint" id="rptAxisHint">
+                <i data-lucide="info" class="rpt-axis-hint-ico"></i>
+                <span id="rptAxisHintText">X-axis: <strong>Jan, Feb, Mar…</strong> — Each bar represents one calendar month.</span>
+            </div>
+            <!-- PERIOD KPI ROW -->
+            <div class="rpt-kpi-row" id="rptKpiRow">
+                <div class="rpt-empty-state"><i data-lucide="bar-chart-2" class="rpt-empty-ico"></i><p>Loading company-wide data…</p></div>
+            </div>
+            <!-- TREND + COMPOSITION CHARTS -->
+            <div class="rpt-charts-grid">
+                <div class="section-card rpt-chart-wide">
+                    <div class="card-header">
+                        <div><h2 id="rptTrendTitle">Spending Trend</h2><p class="card-subtitle" id="rptTrendSubtitle">Cost breakdown over time</p></div>
+                    </div>
+                    <div class="chart-wrapper" style="height:200px"><canvas id="rptTrendChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Cost Composition</h2><p class="card-subtitle">Spending by category &amp; labor</p></div></div>
+                    <div class="chart-wrapper" style="height:200px"><canvas id="rptCompositionChart"></canvas></div>
+                </div>
+            </div>
+            <!-- BUDGET vs ACTUAL + CATEGORY -->
+            <div class="rpt-charts-grid rpt-charts-grid-equal">
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Budget vs Actual</h2><p class="card-subtitle">Allocated budget vs real spend per period</p></div></div>
+                    <div class="chart-wrapper" style="height:200px"><canvas id="rptBudgetVsActualChart"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <div class="card-header"><div><h2>Category Breakdown</h2><p class="card-subtitle">Distribution including payroll</p></div></div>
+                    <div class="chart-wrapper" style="height:200px"><canvas id="expCategoryChart"></canvas></div>
+                </div>
+            </div>
+            <!-- PERIOD BREAKDOWN TABLE -->
+            <div class="section-card rpt-table-card">
+                <div class="card-header">
+                    <div><h2 id="rptTableTitle">Period Breakdown</h2><p class="card-subtitle" id="rptTableSubtitle">Detailed budget vs actual by period</p></div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <button class="btn-secondary btn-sm rpt-export-btn" onclick="exportRptTable()"><i data-lucide="download" class="btn-icon"></i> Export CSV</button>
+                        <button class="btn-secondary btn-sm rpt-export-btn" onclick="printReportsDashboard()" style="background:#f0fdf4;border-color:#a7f3d0;color:#059669;"><i data-lucide="printer" class="btn-icon"></i> Print Report</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="appointments-table rpt-summary-table">
+                        <thead>
+                            <tr><th>Period</th><th>Budget Allocated</th><th>Materials &amp; Costs</th><th>Labor &amp; Payroll</th><th>Current Fund Spent</th><th>Remaining</th><th>% Utilized</th><th>Status</th></tr>
+                        </thead>
+                        <tbody id="rptSummaryTbody"><tr><td colspan="8" class="exp-empty-row">Select a project folder to see reports.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- EXPENSE DETAIL TABLE -->
+            <div class="section-card rpt-table-card" id="rptExpDetailCard" style="display:none">
+                <div class="card-header">
+                    <div><h2>Expense Detail</h2><p class="card-subtitle" id="rptExpDetailSub">All transactions for selected folder</p></div>
+                </div>
+                <div class="table-container">
+                    <table class="appointments-table">
+                        <thead><tr><th>Date</th><th>Project Period</th><th>Expense Name</th><th>Category</th><th>Notes</th><th>Qty</th><th>Amount</th></tr></thead>
+                        <tbody id="rptExpDetailTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- PAYROLL DETAIL TABLE -->
+            <div class="section-card rpt-table-card" id="rptPayDetailCard" style="display:none">
+                <div class="card-header">
+                    <div><h2>Payroll Detail</h2><p class="card-subtitle" id="rptPayDetailSub">All payroll entries for selected folder</p></div>
+                </div>
+                <div class="table-container">
+                    <table class="appointments-table">
+                        <thead><tr><th>Date</th><th>Project Period</th><th>Worker Name</th><th>Role</th><th>Days</th><th>Daily Rate</th><th>Total Salary</th></tr></thead>
+                        <tbody id="rptPayDetailTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- hidden canvases for legacy compatibility -->
+            <canvas id="expBudgetChart" style="display:none"></canvas>
+            <table style="display:none"><tbody id="expSummaryTbody"></tbody></table>
+            </div><!-- /expReportsContent -->
+        </div>
+
+        <!-- ════════════ OVERHEAD EXPENSES VIEW ════════════ -->
+        <div id="expOverheadView" class="content-view" style="display: none;">
+
+            <!-- Topbar -->
+            <div class="ovhd-topbar">
+                <div class="ovhd-filter-bar">
+                    <label for="ovhdMonthPicker">Month:</label>
+                    <input type="month" id="ovhdMonthPicker" class="ovhd-month-picker"
+                           onchange="onOverheadMonthChange(this.value)">
+                </div>
+                <button class="exp-btn exp-btn-primary" onclick="openOverheadModal()">
+                    <i data-lucide="plus" style="width:15px;height:15px;stroke:#fff;flex-shrink:0;"></i> Add Expense
+                </button>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="ovhd-kpi-row">
+                <div class="ovhd-kpi-card ovhd-kpi-total">
+                    <div class="ovhd-kpi-top">
+                        <div class="ovhd-kpi-icon-wrap">
+                            <i data-lucide="wallet" class="ovhd-kpi-ico"></i>
+                        </div>
+                        <span class="ovhd-kpi-label">Total Overhead</span>
+                    </div>
+                    <div class="ovhd-kpi-value" id="ovhdTotalAmount">₱0.00</div>
+                    <div id="ovhdTotalTrend"></div>
+                </div>
+                <div class="ovhd-kpi-card ovhd-kpi-count">
+                    <div class="ovhd-kpi-top">
+                        <div class="ovhd-kpi-icon-wrap">
+                            <i data-lucide="receipt" class="ovhd-kpi-ico"></i>
+                        </div>
+                        <span class="ovhd-kpi-label">Total Entries</span>
+                    </div>
+                    <div class="ovhd-kpi-value" id="ovhdTotalCount">0</div>
+                </div>
+                <div class="ovhd-kpi-card ovhd-kpi-avg">
+                    <div class="ovhd-kpi-top">
+                        <div class="ovhd-kpi-icon-wrap">
+                            <i data-lucide="trending-up" class="ovhd-kpi-ico"></i>
+                        </div>
+                        <span class="ovhd-kpi-label">Average per Entry</span>
+                    </div>
+                    <div class="ovhd-kpi-value" id="ovhdAvgAmount">₱0.00</div>
+                </div>
+            </div>
+
+            <!-- Category Breakdown Cards -->
+            <div class="ovhd-panel" style="margin-bottom:1rem;">
+                <div class="ovhd-panel-header">By Category</div>
+                <div class="ovhd-breakdown-body" id="ovhdBreakdownList">
+                    <p class="ovhd-empty-row">No expenses for this month.</p>
+                </div>
+            </div>
+
+            <!-- Expenses Table (full width) -->
+            <div class="ovhd-panel">
+                <div class="ovhd-panel-header">Expense Records</div>
+                <div class="ovhd-table-wrap">
+                    <table class="ovhd-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="ovhdTableBody">
+                            <tr><td colspan="5" class="ovhd-table-empty">No overhead expenses found for this month.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- /expOverheadView -->
+
+        <!-- ════════���═══ CONSTRUCTION VIEWS ════════════ -->
+        <div id="consBatchView" class="content-view cons-view" style="display: none;">
+            <div id="currentBatchContainer"></div>
+        </div>
+        <div id="consUrgentView" class="content-view cons-view" style="display: none;">
+            <div id="urgentRequestsContainer"></div>
+        </div>
+        <div id="consBatchHistoryView" class="content-view cons-view" style="display: none;">
+            <div id="batchHistoryContainer"></div>
+        </div>
+        <div id="consInventoryView" class="content-view cons-view" style="display: none;">
+            <div id="inventoryContainer"></div>
+        </div>
+
+        <!-- ════════════ BOQ BUILDER ════════════ -->
+        <div id="boqBuilderView" class="content-view" style="display: none;">
+            <!-- Rendered dynamically by boq-module.js -->
+        </div>
+
+        <!-- ════════════ USER NAVIGATOR ════════════ -->
+        <div id="userNavigatorView" class="content-view" style="display: none;">
+
+            <!-- Stats Row -->
+            <div class="un-stats-row">
+                <div class="un-stat-card">
+                    <div class="un-stat-icon un-icon-total"><i data-lucide="users"></i></div>
+                    <div class="un-stat-info"><h3 id="unTotalCount">0</h3><p>Total Users</p></div>
+                </div>
+                <div class="un-stat-card">
+                    <div class="un-stat-icon un-icon-active"><i data-lucide="user-check"></i></div>
+                    <div class="un-stat-info"><h3 id="unActiveCount">0</h3><p>Active Users</p></div>
+                </div>
+                <div class="un-stat-card">
+                    <div class="un-stat-icon un-icon-inactive"><i data-lucide="user-x"></i></div>
+                    <div class="un-stat-info"><h3 id="unInactiveCount">0</h3><p>Inactive Users</p></div>
+                </div>
+            </div>
+
+            <!-- Toolbar: Search + Filters -->
+            <div class="un-toolbar">
+                <div class="un-search-wrap">
+                    <i data-lucide="search" class="un-search-icon"></i>
+                    <input type="text" id="unSearchInput" class="un-search-input" placeholder="Search by name or email…" oninput="unFilterUsers()">
+                </div>
+                <select id="unTypeFilter" class="un-filter-select" onchange="unFilterUsers()">
+                    <option value="">All Users</option>
+                    <option value="admin">Admin Users</option>
+                    <option value="client">Client Users</option>
+                </select>
+                <select id="unRoleFilter" class="un-filter-select" onchange="unFilterUsers()">
+                    <option value="">All Roles</option>
+                    <option value="owner">Owner</option>
+                    <option value="staff">Staff</option>
+                    <option value="worker">Worker</option>
+                    <option value="teamLeader">Team Leader</option>
+                    <option value="engineer">Engineer</option>
+                    <option value="client">Client</option>
+                </select>
+                <select id="unStatusFilter" class="un-filter-select" onchange="unFilterUsers()">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+            <!-- Table -->
+            <div class="un-table-wrap">
+                <div id="unLoadingState" class="un-loading-state">
+                    <div class="un-loading-spinner"></div>
+                    <span>Loading users…</span>
+                </div>
+                <div id="unEmptyState" class="un-empty-state" style="display:none;">
+                    <i data-lucide="users" style="width:48px;height:48px;opacity:.3;"></i>
+                    <p>No users found.</p>
+                </div>
+                <table class="un-table" id="unTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Type</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="unTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+    <!-- ══════════ CLIENT ACCOUNTS VIEW ══════════ -->
+        <div id="clientAccountsView" class="content-view" style="display: none;">
+
+            <!-- Stats Row -->
+            <div class="un-stats-row">
+                <div class="un-stat-card">
+                    <div class="un-stat-icon un-icon-total"><i data-lucide="users"></i></div>
+                    <div class="un-stat-info"><h3 id="caTotalCount">0</h3><p>Total Clients</p></div>
+                </div>
+                <div class="un-stat-card">
+                    <div class="un-stat-icon un-icon-active"><i data-lucide="user-check"></i></div>
+                    <div class="un-stat-info"><h3 id="caActiveCount">0</h3><p>Active</p></div>
+                </div>
+                <div class="un-stat-card">
+                    <div class="un-stat-icon un-icon-inactive"><i data-lucide="user-x"></i></div>
+                    <div class="un-stat-info"><h3 id="caInactiveCount">0</h3><p>Inactive</p></div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="un-toolbar">
+                <div class="un-search-wrap">
+                    <i data-lucide="search" class="un-search-icon"></i>
+                    <input type="text" id="caSearchInput" class="un-search-input" placeholder="Search by name or email…" oninput="caFilterClients()">
+                </div>
+                <select id="caStatusFilter" class="un-filter-select" onchange="caFilterClients()">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+            <!-- Table -->
+            <div class="un-table-wrap">
+                <div id="caLoadingState" class="un-loading-state">
+                    <div class="un-loading-spinner"></div>
+                    <span>Loading clients…</span>
+                </div>
+                <div id="caEmptyState" class="un-empty-state" style="display:none;">
+                    <i data-lucide="users" style="width:48px;height:48px;opacity:.3;"></i>
+                    <p>No client accounts found.</p>
+                </div>
+                <table class="un-table" id="caTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Project</th>
+                            <th>Registered</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="caTableBody"></tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <!-- PAYMENT REQUESTS VIEW -->
+        <div id="paymentRequestsView" class="content-view" style="display: none;">
+
+            <!-- Stats Row -->
+            <div class="pr-stats-row">
+                <div class="pr-stat-card">
+                    <div class="pr-stat-icon pr-icon-pending"><i data-lucide="clock" style="width:22px;height:22px;"></i></div>
+                    <div class="pr-stat-info">
+                        <h3 id="prPendingCount">0</h3>
+                        <p>Pending</p>
+                    </div>
+                </div>
+                <div class="pr-stat-card">
+                    <div class="pr-stat-icon pr-icon-partial"><i data-lucide="help-circle" style="width:22px;height:22px;"></i></div>
+                    <div class="pr-stat-info">
+                        <h3 id="prPartialCount">0</h3>
+                        <p>Approval Pending</p>
+                    </div>
+                </div>
+                <div class="pr-stat-card">
+                    <div class="pr-stat-icon pr-icon-submitted"><i data-lucide="upload" style="width:22px;height:22px;"></i></div>
+                    <div class="pr-stat-info">
+                        <h3 id="prSubmittedCount">0</h3>
+                        <p>Submitted</p>
+                    </div>
+                </div>
+                <div class="pr-stat-card">
+                    <div class="pr-stat-icon pr-icon-verified"><i data-lucide="check-circle" style="width:22px;height:22px;"></i></div>
+                    <div class="pr-stat-info">
+                        <h3 id="prVerifiedCount">0</h3>
+                        <p>Verified / Paid</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="pr-toolbar">
+                <div class="pr-search-wrap">
+                    <i data-lucide="search" class="pr-search-icon"></i>
+                    <input id="prSearchInput" class="pr-search-input" type="text" placeholder="Search client, project, period…" oninput="prFilterRequests()">
+                </div>
+                <select id="prStatusFilter" class="pr-filter-select" onchange="prFilterRequests()">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="submitted">Submitted</option>
+                    <option value="verified">Verified</option>
+                    <option value="partial_pending">Approval Pending</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <button class="pr-btn-qrsettings" onclick="prPrintAllRequests()" title="Print all payment requests">
+                    <i data-lucide="printer" style="width:16px;height:16px;"></i> Print
+                </button>
+                <button class="pr-btn-qrsettings" onclick="prOpenQRSettings()" title="Manage global QR codes">
+                    <i data-lucide="qr-code" style="width:16px;height:16px;"></i> QR Settings
+                </button><button class="pr-btn-create" onclick="prOpenCreateModal()">
+                    <i data-lucide="plus" style="width:16px;height:16px;"></i> New Payment Request
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="prLoadingState" class="un-loading-state" style="display:flex;">
+                <div class="un-loading-spinner"></div><span>Loading payment requests…</span>
+            </div>
+
+            <!-- Table -->
+            <div id="prTableWrap" class="pr-table-wrap" style="display:none;">
+                <table class="pr-table" id="prTable">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Billing Period</th>
+                            <th>Project</th>
+                            <th>Amount</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="prEmptyState" class="un-empty-state" style="display:none;">
+                <i data-lucide="credit-card" style="width:40px;height:40px;color:#d1d5db;"></i>
+                <p>No payment requests found.</p>
+                <button class="pr-btn-create" onclick="prOpenCreateModal()">
+                    <i data-lucide="plus" style="width:16px;height:16px;"></i> Create First Request
+                </button>
+            </div>
+
+        </div>
+
+
+<!-- Payment Reports View -->
+<div id="paymentReportsView" class="content-view" style="display:none;">
+    <div id="rptLoading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:80px 0;">
+        <div class="un-loading-spinner" style="width:36px;height:36px;"></div>
+        <div style="font-size:14px;color:#6b7280;font-weight:500;">Loading payment data…</div>
+        <div style="font-size:12px;color:#9ca3af;">Fetching all payment requests</div>
+    </div>
+    <div id="rptContent" style="display:none;">
+
+        <!-- Page Header -->
+        <div class="rpt-page-header">
+            <div>
+                <div class="rpt-page-title">Payment Reports</div>
+                <div class="rpt-page-sub">Collection summary, trends &amp; per-client breakdown</div>
+            </div>
+            <div class="rpt-header-actions">
+                <button class="rpt-btn-refresh" onclick="prRefreshReports()">
+                    <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh
+                </button>
+                <button class="rpt-btn-export" onclick="prExportReportCSV()">
+                    <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="rpt-kpi-grid5">
+            <div class="rpt-kpi-cell">
+                <div class="rpt-kpi-cell__label">Total Billed</div>
+                <div class="rpt-kpi-cell__amt" id="rptTotalBilled">₱ 0.00</div>
+                <div class="rpt-kpi-cell__sub">All payment requests</div>
+            </div>
+            <div class="rpt-kpi-cell">
+                <div class="rpt-kpi-cell__label">Total Collected</div>
+                <div class="rpt-kpi-cell__amt" id="rptTotalCollected">₱ 0.00</div>
+                <div class="rpt-kpi-cell__sub">Verified payments</div>
+            </div>
+            <div class="rpt-kpi-cell">
+                <div class="rpt-kpi-cell__label">Outstanding</div>
+                <div class="rpt-kpi-cell__amt" id="rptOutstanding">₱ 0.00</div>
+                <div class="rpt-kpi-cell__sub">Pending collection</div>
+            </div>
+            <div class="rpt-kpi-cell" id="rptOverdueCard">
+                <div class="rpt-kpi-cell__label">Overdue</div>
+                <div class="rpt-kpi-cell__amt" id="rptOverdue">₱ 0.00</div>
+                <div class="rpt-kpi-cell__sub">Past due date</div>
+            </div>
+            <div class="rpt-kpi-cell">
+                <div class="rpt-kpi-cell__label">Collection Rate</div>
+                <div class="rpt-kpi-cell__amt" id="rptCollectionRate">0.0%</div>
+                <div class="rpt-kpi-cell__sub">Collected / Billed</div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="rpt-charts-row">
+            <div class="rpt-chart-card">
+                <div class="rpt-chart-title">Monthly Collection Trend</div>
+                <div class="rpt-chart-wrap"><canvas id="prTrendChart" height="240"></canvas></div>
+            </div>
+            <div class="rpt-chart-card">
+                <div class="rpt-chart-title">Payment Status Breakdown</div>
+                <div class="rpt-chart-wrap"><canvas id="rptStatusChart" height="240"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Per-Client Summary Table -->
+        <div class="rpt-table-card">
+            <div class="rpt-table-header">
+                <div>
+                    <div class="rpt-table-title">Client Payment Summary</div>
+                    <div class="rpt-table-sub">Aggregated totals per client across all payment requests</div>
+                </div>
+            </div>
+            <div class="rpt-table-wrap">
+                <table class="rpt-table">
+                    <thead><tr>
+                        <th>Client</th>
+                        <th style="text-align:center;"># Requests</th>
+                        <th>Total Billed</th>
+                        <th>Total Collected</th>
+                        <th>Outstanding</th>
+                        <th style="text-align:center;">Overdue</th>
+                        <th>Last Activity</th>
+                    </tr></thead>
+                    <tbody id="rptClientTbody">
+                        <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:28px;">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- Invoice Receipt Generator View -->
+<div id="invoicesView" class="content-view" style="display:none;">
+    <div id="invLoading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:80px 0;">
+        <div class="un-loading-spinner" style="width:36px;height:36px;"></div>
+        <div style="font-size:14px;color:#6b7280;font-weight:500;">Loading invoices…</div>
+    </div>
+    <div id="invContent"></div>
+</div>
+
+
+    </main>
+
+    <!-- ════ USER NAVIGATOR: Profile Modal ════ -->
+    <div id="unProfileModal" class="un-modal-overlay" style="display:none;" onclick="if(event.target===this)unCloseProfile()">
+        <div class="un-modal-card">
+            <div class="un-modal-header">
+                <div class="un-modal-avatar" id="unModalAvatar">U</div>
+                <div class="un-modal-title-block">
+                    <h3 id="unModalName">User Profile</h3>
+                    <span id="unModalRoleBadge" class="un-role-badge">—</span>
+                </div>
+                <button class="un-modal-close" onclick="unCloseProfile()"><i data-lucide="x"></i></button>
+            </div>
+            <div id="unProfileBody" class="un-modal-body"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ════ CLIENT ACCOUNTS: Profile Modal ════ -->
+<div id="caProfileModal" class="un-modal-overlay" style="display:none;" onclick="if(event.target===this)caCloseProfile()">
+    <div class="un-modal-card">
+        <div class="un-modal-header">
+            <div class="un-modal-avatar un-avatar-client" id="caModalAvatar">C</div>
+            <div class="un-modal-title-block">
+                <h3 id="caModalName">Client Profile</h3>
+                <span class="un-role-badge un-role-client">Client</span>
+            </div>
+            <button class="un-modal-close" onclick="caCloseProfile()"><i data-lucide="x"></i></button>
+        </div>
+        <div id="caProfileBody" class="un-modal-body"></div>
+    </div>
+</div>
+
+<!-- PAYMENT REQUESTS: Create Modal -->
+<div id="prCreateModal" class="pr-modal-overlay" style="display:none;" onclick="if(event.target===this)prCloseCreateModal()">
+    <div class="pr-modal-card pr-modal-card-wide">
+        <div class="pr-modal-header">
+            <div class="pr-modal-header-icon"><i data-lucide="credit-card" style="width:20px;height:20px;"></i></div>
+            <h3>New Payment Request</h3>
+            <button class="pr-modal-close" onclick="prCloseCreateModal()"><i data-lucide="x"></i></button>
+        </div>
+        <div class="pr-modal-body">
+            <form id="prCreateForm" onsubmit="return false;">
+                <div class="pr-form-group">
+                    <label class="pr-form-label" for="prClientSelect">Client <span class="req">*</span></label>
+                    <select id="prClientSelect" class="pr-form-select"><option value="">Loading...</option></select>
+                </div>
+                <div class="pr-form-row">
+                    <div class="pr-form-group">
+                        <label class="pr-form-label" for="prBillingPeriod">Billing Period <span class="req">*</span></label>
+                        <input id="prBillingPeriod" class="pr-form-input" type="text" placeholder="e.g. January 2026">
+                    </div>
+                    <div class="pr-form-group">
+                        <label class="pr-form-label" for="prProjectName">Project Name <span class="req">*</span></label>
+                        <input id="prProjectName" class="pr-form-input" type="text" placeholder="Project name">
+                    </div>
+                </div>
+                <div class="pr-form-row">
+                    <div class="pr-form-group">
+                        <label class="pr-form-label" for="prAmount">Amount (PHP) <span class="req">*</span></label>
+                        <input id="prAmount" class="pr-form-input" type="text" inputmode="numeric" placeholder="0.00" oninput="this.value=this.value.replace(/[^0-9.]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,',')">
+                    </div>
+                    <div class="pr-form-group">
+                        <label class="pr-form-label" for="prDueDate">Due Date <span class="req">*</span></label>
+                        <input id="prDueDate" class="pr-form-input" type="date">
+                    </div>
+                </div>
+
+                <div class="pr-form-group">
+                    <label class="pr-form-label" for="prNotes">Notes (optional)</label>
+                    <textarea id="prNotes" class="pr-form-textarea" placeholder="Instructions for the client..."></textarea>
+                </div>
+                <div id="prCreateError" class="pr-error-msg"></div>
+            </form>
+        </div>
+        <div class="pr-modal-footer">
+            <button class="un-modal-btn-close" onclick="prCloseCreateModal()">Cancel</button>
+            <button id="prCreateSubmitBtn" class="pr-btn-create" onclick="prSubmitCreate()"><i data-lucide="plus" style="width:16px;height:16px;"></i> Create Request</button>
+        </div>
+    </div>
+</div>
+
+<!-- PAYMENT REQUESTS: Detail Modal -->
+<div id="prDetailModal" class="pr-modal-overlay" style="display:none;" onclick="if(event.target===this)prCloseDetailModal()">
+    <div class="pr-modal-card pr-modal-card-wide">
+        <div class="pr-modal-header">
+            <div class="pr-modal-header-icon"><i data-lucide="file-text" style="width:20px;height:20px;"></i></div>
+            <h3>Payment Request Detail</h3>
+            <button class="pr-modal-close" onclick="prCloseDetailModal()"><i data-lucide="x"></i></button>
+        </div>
+        <div id="prDetailBody" class="pr-modal-body"></div>
+        <div class="pr-modal-footer">
+            <button class="un-modal-btn-close" onclick="prCloseDetailModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- PAYMENT REQUESTS: Receipt Viewer -->
+<div id="prReceiptViewer" class="pr-receipt-viewer" style="display:none;" onclick="if(event.target===this)prCloseReceiptViewer()">
+    <div class="pr-receipt-viewer-inner">
+        <button class="pr-receipt-viewer-close" onclick="prCloseReceiptViewer()">&#x2715;</button>
+        <img id="prReceiptViewerImg" src="" alt="Receipt">
+    </div>
+</div>
+
+
+<!-- ══════════ QR Settings Modal ══════════ -->
+<div id="prQRSettingsModal" class="pr-modal-overlay" style="display:none;" onclick="if(event.target===this)prCloseQRSettings()">
+    <div class="pr-modal-card" style="max-width:520px;">
+        <div class="pr-modal-header">
+            <h3 class="pr-modal-title">Payment QR Code Settings</h3>
+            <button class="pr-modal-close" onclick="prCloseQRSettings()">&#x2715;</button>
+        </div>
+        <div class="pr-modal-body">
+            <p style="font-size:13.5px;color:#6b7280;margin-bottom:20px;">These QR codes are shown to all clients when they submit payment. Upload once — updates apply to all payment requests instantly.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div>
+                    <div class="pr-form-label" style="margin-bottom:8px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;">GCash QR</div>
+                    <div style="text-align:center;margin-bottom:10px;">
+                        <img id="prQSGcashCurrent" src="" alt="" style="display:none;width:120px;height:120px;object-fit:contain;border-radius:8px;border:1px solid #e5e7eb;">
+                        <div id="prQSGcashNone" style="display:none;font-size:12px;color:#9ca3af;">None set</div>
+                    </div>
+                    <div style="font-size:11.5px;color:#9ca3af;margin-bottom:6px;">Upload new:</div>
+                    <input type="file" id="prQSGcashFile" accept="image/*" style="font-size:12.5px;width:100%;" onchange="prPreviewQRNew(this,'prQSGcashNewPreview')">
+                    <img id="prQSGcashNewPreview" src="" alt="" style="display:none;margin-top:8px;width:100%;max-width:120px;border-radius:8px;border:1px solid #d1d5db;">
+                </div>
+                <div>
+                    <div class="pr-form-label" style="margin-bottom:8px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;">Bank Transfer QR</div>
+                    <div style="text-align:center;margin-bottom:10px;">
+                        <img id="prQSBankCurrent" src="" alt="" style="display:none;width:120px;height:120px;object-fit:contain;border-radius:8px;border:1px solid #e5e7eb;">
+                        <div id="prQSBankNone" style="display:none;font-size:12px;color:#9ca3af;">None set</div>
+                    </div>
+                    <div style="font-size:11.5px;color:#9ca3af;margin-bottom:6px;">Upload new:</div>
+                    <input type="file" id="prQSBankFile" accept="image/*" style="font-size:12.5px;width:100%;" onchange="prPreviewQRNew(this,'prQSBankNewPreview')">
+                    <img id="prQSBankNewPreview" src="" alt="" style="display:none;margin-top:8px;width:100%;max-width:120px;border-radius:8px;border:1px solid #d1d5db;">
+                </div>
+            </div>
+            <div id="prQSError" style="display:none;color:#b91c1c;font-size:13px;margin-top:14px;"></div>
+        </div>
+        <div class="pr-modal-footer">
+            <button class="pr-btn-cancel" onclick="prCloseQRSettings()">Cancel</button>
+            <button id="prQSSaveBtn" class="pr-btn-submit" onclick="prSaveQRSettings()">Save QR Codes</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ ORIGINAL: Appointment Modal ══════════ -->
+<div id="appointmentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Appointment Details</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="appointmentDetails"></div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeModal()">Close</button>
+            <button class="btn-danger" onclick="deleteAppointment()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ EXPENSES MODALS ══════════ -->
+
+<!-- Create Project -->
+<div id="createProjectModal" class="exp-modal">
+    <div class="exp-modal-box" style="max-width:420px">
+        <div class="exp-modal-header"><h2>📅 Add Month</h2><button class="exp-modal-close" onclick="closeExpModal('createProjectModal')">&times;</button></div>
+        <form id="createProjectForm" onsubmit="handleCreateProject(event)">
+            <div class="exp-form-group"><div id="createProjectFolderLabel" style="font-size:0.85rem;font-weight:700;color:#059669;margin-bottom:0.25rem;min-height:1.2rem;"></div></div>
+            <!-- Payment Request selector -->
+            <div class="exp-form-group" id="pmPrSelectWrap" style="display:none;">
+                <label style="font-weight:600;">Fill from Payment Request <span style="font-weight:400;color:#9ca3af;">(optional)</span></label>
+                <select id="pmPrSelect" onchange="onFillFromPaymentRequest()" style="width:100%;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                    <option value="">— Select a payment request —</option>
+                </select>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Month</label>
+                    <select id="projMonth" required>
+                        <option value="">Select month…</option>
+                        <option>January</option><option>February</option><option>March</option>
+                        <option>April</option><option>May</option><option>June</option>
+                        <option>July</option><option>August</option><option>September</option>
+                        <option>October</option><option>November</option><option>December</option>
+                    </select>
+                </div>
+                <div class="exp-form-group"><label>Year</label><input type="number" id="projYear" required min="2020" max="2099" placeholder="e.g. 2026"></div>
+            </div>
+            <!-- Funding Source -->
+            <div class="exp-form-group">
+                <label>Funding Source</label>
+                <div class="exp-funding-options exp-funding-options-grid">
+                    <label class="exp-funding-option">
+                        <input type="radio" name="fundingType" id="fundingMobilization" value="mobilization" checked onchange="onFundingTypeChange()">
+                        <span class="exp-funding-icon">🚧</span>
+                        <span>Mobilization</span>
+                    </label>
+                    <label class="exp-funding-option">
+                        <input type="radio" name="fundingType" id="fundingDownpayment" value="downpayment" onchange="onFundingTypeChange()">
+                        <span class="exp-funding-icon">💰</span>
+                        <span>Downpayment</span>
+                    </label>
+                    <label class="exp-funding-option">
+                        <input type="radio" name="fundingType" id="fundingProgress" value="progress" onchange="onFundingTypeChange()">
+                        <span class="exp-funding-icon">📋</span>
+                        <span>Progress Billing</span>
+                    </label>
+                    <label class="exp-funding-option">
+                        <input type="radio" name="fundingType" id="fundingFinal" value="final" onchange="onFundingTypeChange()">
+                        <span class="exp-funding-icon">🏁</span>
+                        <span>Final Payment</span>
+                    </label>
+                    <label class="exp-funding-option" id="fundingPresidentLabel">
+                        <input type="radio" name="fundingType" id="fundingPresident" value="president" onchange="onFundingTypeChange()">
+                        <span class="exp-funding-icon">🏦</span>
+                        <span>Cover Expenses</span>
+                    </label>
+                </div>
+                <div id="progressBillingHint" class="exp-progress-hint" style="display:none"></div>
+            </div>
+            <div class="exp-form-group" id="projBudgetGroup">
+                <label id="projBudgetLabel">Downpayment Amount (₱)</label>
+                <input type="text" inputmode="decimal" id="projBudget" placeholder="e.g. 200000" oninput="fmtBudgetInput(this)">
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('createProjectModal')">Cancel</button>
+                <button type="submit" id="createProjectBtn" class="exp-btn exp-btn-primary" data-label="Add Month">Add Month</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Project -->
+<div id="editProjectModal" class="exp-modal">
+    <div class="exp-modal-box">
+        <div class="exp-modal-header"><h2><i data-lucide="pencil" class="modal-icon"></i> Edit Project</h2><button class="exp-modal-close" onclick="closeExpModal('editProjectModal')">&times;</button></div>
+        <form id="editProjectForm" onsubmit="handleEditProject(event)">
+            <input type="hidden" id="editProjectId">
+            <div class="exp-form-row">
+                <div class="exp-form-group">
+                    <label>Month</label>
+                    <select id="editProjMonth" required>
+                        <option value="">Select month…</option>
+                        <option>January</option><option>February</option><option>March</option>
+                        <option>April</option><option>May</option><option>June</option>
+                        <option>July</option><option>August</option><option>September</option>
+                        <option>October</option><option>November</option><option>December</option>
+                    </select>
+                </div>
+                <div class="exp-form-group"><label>Year</label><input type="number" id="editProjYear" required min="2020" max="2099" placeholder="e.g. 2026"></div>
+            </div>
+            <div class="exp-form-group">
+                <label>Funding Source</label>
+                <div class="exp-funding-options exp-funding-options-grid">
+                    <label class="exp-funding-option">
+                        <input type="radio" name="editFundingType" id="editFundingMobilization" value="mobilization" checked onchange="onEditFundingTypeChange()">
+                        <span class="exp-funding-icon">🚧</span><span>Mobilization</span>
+                    </label>
+                    <label class="exp-funding-option">
+                        <input type="radio" name="editFundingType" id="editFundingDownpayment" value="downpayment" onchange="onEditFundingTypeChange()">
+                        <span class="exp-funding-icon">💰</span><span>Downpayment</span>
+                    </label>
+                    <label class="exp-funding-option">
+                        <input type="radio" name="editFundingType" id="editFundingProgress" value="progress" onchange="onEditFundingTypeChange()">
+                        <span class="exp-funding-icon">📋</span><span>Progress Billing</span>
+                    </label>
+                    <label class="exp-funding-option">
+                        <input type="radio" name="editFundingType" id="editFundingFinal" value="final" onchange="onEditFundingTypeChange()">
+                        <span class="exp-funding-icon">🏁</span><span>Final Payment</span>
+                    </label>
+                    <label class="exp-funding-option">
+                        <input type="radio" name="editFundingType" id="editFundingPresident" value="president" onchange="onEditFundingTypeChange()">
+                        <span class="exp-funding-icon">🏦</span><span>Cover Expenses</span>
+                    </label>
+                </div>
+            </div>
+            <div class="exp-form-group" id="editProjBudgetGroup">
+                <label id="editProjBudgetLabel">Total Monthly Budget (₱)</label>
+                <input type="text" inputmode="decimal" id="editProjBudget" placeholder="e.g. 500000" oninput="fmtBudgetInput(this)">
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('editProjectModal')">Cancel</button>
+                <button type="submit" id="editProjectBtn" class="exp-btn exp-btn-primary" data-label="Save Changes"><i data-lucide="check" class="btn-icon"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Billing Period Detail Modal -->
+<div id="mvpPeriodDetailModal" class="pd-overlay" onclick="mvpClosePeriodDetail(event)" style="display:none">
+    <div class="pd-modal" onclick="event.stopPropagation()">
+        <!-- Header -->
+        <div class="pd-header" id="pdHeader">
+            <div class="pd-header-inner">
+                <div>
+                    <div class="pd-title" id="pdTitle">—</div>
+                    <div class="pd-budget-label">Monthly Budget: <span id="pdBudgetAmt">—</span></div>
+                </div>
+                <button class="pd-close-btn" onclick="mvpClosePeriodDetail()">&times;</button>
+            </div>
+        </div>
+        <!-- Body -->
+        <div class="pd-body">
+            <!-- KPI Badges -->
+            <div class="pd-kpi-row" id="pdKpiRow"></div>
+            <!-- Utilization Bar -->
+            <div class="pd-util-section">
+                <div class="pd-util-label">Budget Utilization <span id="pdUtilPct" class="pd-util-pct"></span></div>
+                <div class="pd-util-bar"><div class="pd-util-fill" id="pdUtilFill"></div></div>
+            </div>
+            <!-- Charts -->
+            <div class="pd-charts-row">
+                <div class="pd-chart-box">
+                    <div class="pd-chart-title">Category Breakdown</div>
+                    <div class="pd-donut-wrap"><canvas id="pdDonutChart"></canvas></div>
+                    <div id="pdDonutLegend" class="pd-donut-legend"></div>
+                </div>
+                <div class="pd-chart-box">
+                    <div class="pd-chart-title">Budget vs Actual</div>
+                    <canvas id="pdBarChart" style="max-height:200px"></canvas>
+                </div>
+            </div>
+            <!-- Expenses Table -->
+            <div class="pd-section-header">Expenses</div>
+            <div id="pdExpensesSection"></div>
+            <!-- Payroll Table -->
+            <div class="pd-section-header">Payroll</div>
+            <div id="pdPayrollSection"></div>
+        </div>
+        <!-- Footer -->
+        <div class="pd-footer">
+            <button class="pd-footer-close-btn" onclick="mvpClosePeriodDetail()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Create Folder -->
+<div id="createFolderModal" class="exp-modal">
+    <div class="exp-modal-box" style="max-width:460px">
+        <div class="exp-modal-header"><h2>📁 New Project Folder</h2><button class="exp-modal-close" onclick="closeExpModal('createFolderModal')">&times;</button></div>
+        <form id="createFolderForm" onsubmit="handleCreateFolder(event)">
+            <div class="exp-form-group"><label>Project Name</label><input type="text" id="folderName" required placeholder="e.g. Santos Residence, Office Renovation"></div>
+            <div class="exp-form-group"><label>Description / Address <small style="font-weight:400;color:#888">(optional)</small></label><input type="text" id="folderDesc" placeholder="e.g. 123 Rizal St., Quezon City"></div>
+            <div class="exp-form-group"><label>Total Project Budget (₱)</label><input type="text" id="folderBudget" required inputmode="numeric" placeholder="e.g. 5,000,000" oninput="fmtBudgetInput(this)"></div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('createFolderModal')">Cancel</button>
+                <button type="submit" id="createFolderBtn" class="exp-btn exp-btn-primary" data-label="Create Folder">Create Folder</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Folder -->
+<div id="editFolderModal" class="exp-modal">
+    <div class="exp-modal-box" style="max-width:460px">
+        <div class="exp-modal-header"><h2>✏️ Edit Project Folder</h2><button class="exp-modal-close" onclick="closeExpModal('editFolderModal')">&times;</button></div>
+        <form id="editFolderForm" onsubmit="handleEditFolder(event)">
+            <div class="exp-form-group"><label>Project Name</label><input type="text" id="editFolderName" required placeholder="Project name"></div>
+            <div class="exp-form-group"><label>Description / Address <small style="font-weight:400;color:#888">(optional)</small></label><input type="text" id="editFolderDesc" placeholder="e.g. 123 Rizal St."></div>
+            <div class="exp-form-group"><label>Total Project Budget (₱)</label><input type="text" id="editFolderBudget" required inputmode="numeric" placeholder="e.g. 5,000,000" oninput="fmtBudgetInput(this)"></div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('editFolderModal')">Cancel</button>
+                <button type="submit" id="editFolderBtn" class="exp-btn exp-btn-primary" data-label="Save Changes">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Expense -->
+<div id="addExpenseModal" class="exp-modal">
+    <div class="exp-modal-box">
+        <div class="exp-modal-header"><h2><i data-lucide="receipt" class="modal-icon"></i> Add Expense</h2><button class="exp-modal-close" onclick="closeExpModal('addExpenseModal')">&times;</button></div>
+        <form id="addExpenseForm">
+            <div id="expBudgetBanner" style="display:none;"></div>
+            <div id="expFundingSourceWrap" style="display:none;margin-bottom:0.75rem;">
+                <label style="font-size:0.85rem;font-weight:600;color:#374151;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem;">
+                    Funding Source
+                    <small style="font-weight:400;color:#6b7280;font-size:0.75rem;">— check multiple to split</small>
+                </label>
+                <div id="expFundingCheckList" class="exp-funding-check-list"></div>
+                <!-- hidden select kept for single-source fallback in save logic -->
+                <select id="expFundingSourceSelect" style="display:none;"></select>
+            </div>
+            <div id="expSplitPreview" style="display:none;margin-bottom:0.75rem;"></div>
+            <div class="exp-form-row">
+                <div class="exp-form-group"><label>Expense Name</label><input type="text" id="expName" required placeholder="e.g. Tiles, Cement"></div>
+                <div class="exp-form-group">
+                    <label>Category <button type="button" onclick="toggleCatManager()" class="exp-cat-mgr-toggle">⚙ Manage</button></label>
+                    <select id="expCategory" required><option value="">Select category…</option></select>
+                    <div id="catManagerPanel" style="display:none;margin-top:0.6rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:0.75rem;">
+                        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.6rem;">
+                            <input type="text" id="catNameInput" placeholder="Category name…" style="flex:1;padding:0.4rem 0.6rem;border:1px solid #d1d5db;border-radius:7px;font-size:0.85rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCategory();}">
+                            <input type="color" id="catColorInput" value="#059669" title="Pick color" style="width:34px;height:34px;border:none;border-radius:7px;cursor:pointer;padding:2px;background:#fff;border:1px solid #d1d5db;">
+                            <button type="button" onclick="addCategory()" class="exp-btn exp-btn-primary" style="padding:0.4rem 0.8rem;font-size:0.82rem;white-space:nowrap;">+ Add</button>
+                        </div>
+                        <div id="expCategoryList" style="display:flex;flex-wrap:wrap;gap:6px;min-height:24px;"><span style="color:#aaa;font-size:0.8rem;">No categories yet. Add one above.</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group"><label>Quantity</label><input type="number" id="expQty" value="1" min="0.01" step="any" required></div>
+                <div class="exp-form-group"><label>Unit Cost (₱)</label><input type="text" inputmode="decimal" id="expUnitCost" placeholder="0.00" oninput="fmtBudgetInput(this)"></div>
+            </div>
+            <div class="exp-form-group"><label>Total Amount (₱) <small style="font-weight:400;color:#888">(auto-computed)</small></label><input type="text" inputmode="decimal" id="expAmount" required placeholder="0.00"></div>
+            <div class="exp-form-group">
+                <label>Date <small style="font-weight:400;color:#888">&amp; Time <span style="color:#aaa">(optional)</span></small></label>
+                <div style="display:flex;gap:0.5rem">
+                    <input type="date" id="expDate" required style="flex:1">
+                    <input type="time" id="expTime" style="flex:1" placeholder="(optional)">
+                </div>
+            </div>
+            <div class="exp-form-group">
+                <label>Upload Receipts <small style="font-weight:400;color:#888">(JPG/PNG, optional — select multiple)</small></label>
+                <label for="expReceipt" style="display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.9rem;background:#f0fdf4;border:2px dashed #059669;border-radius:8px;cursor:pointer;font-size:0.88rem;color:#15803d;font-weight:600;">📎 Choose Images <span style="font-weight:400;color:#888;font-size:0.8rem;">(tap to add more anytime)</span></label>
+                <input type="file" id="expReceipt" accept="image/jpeg,image/png,image/jpg" multiple style="display:none;">
+                <div id="expReceiptGrid"></div>
+            </div>
+            <div class="exp-form-group"><label>Notes (optional)</label><textarea id="expNotes" rows="2" placeholder="Additional details…"></textarea></div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('addExpenseModal')">Cancel</button>
+                <button type="submit" id="addExpenseBtn" class="exp-btn exp-btn-primary" data-label="Save Expense">Save Expense</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Payroll -->
+<div id="addPayrollModal" class="exp-modal">
+    <div class="exp-modal-box">
+        <div class="exp-modal-header"><h2>👷 Add Payroll Entry</h2><button class="exp-modal-close" onclick="closeExpModal('addPayrollModal')">&times;</button></div>
+        <form id="addPayrollForm">
+            <div id="payFundingSourceWrap" style="display:none;margin-bottom:0.75rem;">
+                <label style="font-size:0.85rem;font-weight:600;color:#374151;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem;">
+                    Funding Source
+                    <small style="font-weight:400;color:#6b7280;font-size:0.75rem;">— check multiple to split</small>
+                </label>
+                <div id="payFundingCheckList" class="exp-funding-check-list"></div>
+                <select id="payFundingSourceSelect" style="display:none;"></select>
+            </div>
+            <div id="paySplitPreview" style="display:none;margin-bottom:0.75rem;"></div>
+            <div class="exp-form-row">
+                <div class="exp-form-group"><label>Worker Name</label><input type="text" id="payWorkerName" required placeholder="Full name"></div>
+                <div class="exp-form-group"><label>Role / Position</label><input type="text" id="payRole" placeholder="e.g. Mason, Carpenter"></div>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group"><label>Days Worked</label><input type="number" id="payDays" required min="0.5" step="0.5" placeholder="0"></div>
+                <div class="exp-form-group"><label>Daily Rate (₱)</label><input type="text" inputmode="decimal" id="payDailyRate" required placeholder="0.00" oninput="fmtBudgetInput(this)"></div>
+            </div>
+            <div class="exp-form-group"><label>Total Salary (₱) <small style="font-weight:400;color:#888">(auto-computed)</small></label><input type="text" inputmode="decimal" id="payTotal" readonly placeholder="0.00"></div>
+            <div class="exp-form-group"><label>Payment Date</label><input type="datetime-local" id="payDate" required></div>
+            <div class="exp-form-group">
+                <label>Upload Receipts <small style="font-weight:400;color:#888">(JPG/PNG, optional)</small></label>
+                <label for="payReceipt" style="display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.9rem;background:#f0fdf4;border:2px dashed #059669;border-radius:8px;cursor:pointer;font-size:0.88rem;color:#15803d;font-weight:600;">📎 Choose Images <span style="font-weight:400;color:#888;font-size:0.8rem;">(tap to add more)</span></label>
+                <input type="file" id="payReceipt" accept="image/jpeg,image/png,image/jpg" multiple style="display:none;">
+                <div id="payReceiptGrid" class="exp-receipt-grid" style="display:none;margin-top:0.5rem;"></div>
+            </div>
+            <div class="exp-form-group"><label>Notes (optional)</label><textarea id="payNotes" rows="2" placeholder="Additional details…"></textarea></div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('addPayrollModal')">Cancel</button>
+                <button type="submit" id="addPayrollBtn" class="exp-btn exp-btn-primary" data-label="Save Entry">Save Entry</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Project Detail Modal -->
+<div id="projectDetailModal" class="exp-modal">
+    <div class="exp-modal-box pm-modal-box">
+        <div class="exp-modal-header pm-header">
+            <div class="pm-header-left">
+                <i data-lucide="folder-open" class="pm-header-lucide"></i>
+                <div><h2 id="pmTitle">Project</h2><span class="pm-budget-label">Monthly Budget: <strong id="pmBudget">₱0.00</strong></span></div>
+            </div>
+            <button class="exp-modal-close" onclick="closeProjectModal()">&times;</button>
+        </div>
+        <div class="pm-body">
+            <div class="pm-stat-row">
+                <div class="pm-stat pm-stat-green"><div class="pm-stat-label">Expenses</div><div class="pm-stat-val" id="pmTotalExp">₱0.00</div></div>
+                <div class="pm-stat pm-stat-orange"><div class="pm-stat-label">Payroll</div><div class="pm-stat-val" id="pmTotalPay">₱0.00</div></div>
+                <div class="pm-stat pm-stat-red"><div class="pm-stat-label">Current Fund Spent</div><div class="pm-stat-val" id="pmTotalSpent">₱0.00</div></div>
+                <div class="pm-stat pm-stat-teal"><div class="pm-stat-label">Remaining</div><div class="pm-stat-val" id="pmRemaining">₱0.00</div></div>
+                <div class="pm-stat pm-stat-purple"><div class="pm-stat-label">Used %</div><div class="pm-stat-val" id="pmUsedPct">0%</div></div>
+            </div>
+            <div class="pm-progress-wrap">
+                <div class="pm-progress-labels"><span>Budget Utilization</span><span id="pmRemPct">100% remaining</span></div>
+                <div class="exp-progress-track"><div id="pmProgressBar" class="exp-progress-fill" style="width:0%"></div></div>
+            </div>
+            <div class="pm-charts-row">
+                <div class="pm-chart-box"><div class="pm-section-title">Category Breakdown</div><div style="height:180px;position:relative"><canvas id="pmCategoryChart"></canvas></div></div>
+                <div class="pm-chart-box"><div class="pm-section-title">Budget vs Actual</div><div style="height:180px;position:relative"><canvas id="pmBudgetChart"></canvas></div></div>
+            </div>
+            <div class="pm-section-title" style="margin-top:1.25rem"><i data-lucide="receipt" class="inline-icon"></i> Expenses</div>
+            <div class="table-container pm-table-wrap">
+                <table class="appointments-table"><thead><tr><th>Date</th><th>Expense Name</th><th>Notes / Detail</th><th>Qty</th><th>Amount</th><th>Receipt</th></tr></thead><tbody id="pmExpTbody"><tr><td colspan="6" class="exp-empty-row">Loading…</td></tr></tbody></table>
+            </div>
+            <div class="pm-section-title" style="margin-top:1.25rem">👷 Payroll</div>
+            <div class="table-container pm-table-wrap" style="margin-bottom:0">
+                <table class="appointments-table"><thead><tr><th>Date</th><th>Worker</th><th>Role</th><th>Notes / Detail</th><th>Days × Rate</th><th>Total Salary</th><th>Receipt</th></tr></thead><tbody id="pmPayTbody"><tr><td colspan="7" class="exp-empty-row">Loading…</td></tr></tbody></table>
+            </div>
+        </div>
+        <div class="exp-modal-footer"><button class="exp-btn exp-btn-secondary" onclick="closeProjectModal()">Close</button></div>
+    </div>
+</div>
+
+<!-- Edit Expense Modal -->
+<div id="editExpenseModal" class="exp-modal">
+    <div class="exp-modal-box">
+        <div class="exp-modal-header"><h2><i data-lucide="pencil" class="modal-icon"></i> Edit Expense</h2><button class="exp-modal-close" onclick="closeExpModal('editExpenseModal')">&times;</button></div>
+        <form id="editExpenseForm">
+            <div class="exp-form-group">
+                <label>Funding Source (Billing Period)</label>
+                <select id="editExpFundingSource" style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.9rem;background:#fff;color:#111827;"></select>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group"><label>Expense Name</label><input type="text" id="editExpName" required placeholder="e.g. Tiles, Cement"></div>
+                <div class="exp-form-group"><label>Category</label><select id="editExpCategory" required><option value="">Select category…</option></select></div>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group"><label>Quantity</label><input type="number" id="editExpQty" min="0.01" step="any" required></div>
+                <div class="exp-form-group"><label>Unit Cost (₱)</label><input type="text" inputmode="decimal" id="editExpUnitCost" placeholder="0.00" oninput="fmtBudgetInput(this)"></div>
+            </div>
+            <div class="exp-form-group"><label>Total Amount (₱) <small style="font-weight:400;color:#888">(auto-computed)</small></label><input type="text" inputmode="decimal" id="editExpAmount" required></div>
+            <div class="exp-form-group">
+                <label>Date <small style="font-weight:400;color:#888">&amp; Time <span style="color:#aaa">(optional)</span></small></label>
+                <div style="display:flex;gap:0.5rem">
+                    <input type="date" id="editExpDate" required style="flex:1">
+                    <input type="time" id="editExpTime" style="flex:1" placeholder="(optional)">
+                </div>
+            </div>
+            <div class="exp-form-group">
+                <label>Receipts <small style="font-weight:400;color:#888">— remove or add images</small></label>
+                <div id="editExpReceiptGrid" class="exp-receipt-grid" style="display:none;margin-bottom:0.5rem;"></div>
+                <label for="editExpReceiptInput" style="display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.9rem;background:#f0fdf4;border:2px dashed #059669;border-radius:8px;cursor:pointer;font-size:0.88rem;color:#15803d;font-weight:600;">📎 Add More Images</label>
+                <input type="file" id="editExpReceiptInput" accept="image/jpeg,image/png,image/jpg" multiple style="display:none;">
+            </div>
+            <div class="exp-form-group"><label>Notes (optional)</label><textarea id="editExpNotes" rows="2" placeholder="Additional details…"></textarea></div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('editExpenseModal')">Cancel</button>
+                <button type="submit" id="editExpenseBtn" class="exp-btn exp-btn-primary" data-label="Save Changes"><i data-lucide="check" class="btn-icon"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Payroll Modal -->
+<div id="editPayrollModal" class="exp-modal">
+    <div class="exp-modal-box">
+        <div class="exp-modal-header"><h2><i data-lucide="pencil" class="modal-icon"></i> Edit Payroll Entry</h2><button class="exp-modal-close" onclick="closeExpModal('editPayrollModal')">&times;</button></div>
+        <form id="editPayrollForm">
+            <div class="exp-form-row">
+                <div class="exp-form-group"><label>Worker Name</label><input type="text" id="editPayWorkerName" required placeholder="Full name"></div>
+                <div class="exp-form-group"><label>Role / Position</label><input type="text" id="editPayRole" placeholder="e.g. Mason, Carpenter"></div>
+            </div>
+            <div class="exp-form-row">
+                <div class="exp-form-group"><label>Days Worked</label><input type="number" id="editPayDays" required min="0.5" step="0.5" placeholder="0"></div>
+                <div class="exp-form-group"><label>Daily Rate (₱)</label><input type="text" inputmode="decimal" id="editPayDailyRate" required placeholder="0.00" oninput="fmtBudgetInput(this)"></div>
+            </div>
+            <div class="exp-form-group"><label>Total Salary (₱) <small style="font-weight:400;color:#888">(auto-computed)</small></label><input type="text" inputmode="decimal" id="editPayTotal" readonly placeholder="0.00"></div>
+            <div class="exp-form-group"><label>Payment Date</label><input type="datetime-local" id="editPayDate" required></div>
+            <div class="exp-form-group">
+                <label>Receipts <small style="font-weight:400;color:#888">— remove or add images</small></label>
+                <div id="editPayReceiptGrid" class="exp-receipt-grid" style="display:none;margin-bottom:0.5rem;"></div>
+                <label for="editPayReceiptInput" style="display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.9rem;background:#f0fdf4;border:2px dashed #059669;border-radius:8px;cursor:pointer;font-size:0.88rem;color:#15803d;font-weight:600;">📎 Add More Images</label>
+                <input type="file" id="editPayReceiptInput" accept="image/jpeg,image/png,image/jpg" multiple style="display:none;">
+            </div>
+            <div class="exp-form-group"><label>Notes (optional)</label><textarea id="editPayNotes" rows="2" placeholder="Additional details…"></textarea></div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('editPayrollModal')">Cancel</button>
+                <button type="submit" id="editPayrollBtn" class="exp-btn exp-btn-primary" data-label="Save Changes"><i data-lucide="check" class="btn-icon"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Move To Folder Modal -->
+<div id="moveToFolderModal" class="exp-modal">
+    <div class="exp-modal-box" style="max-width:400px">
+        <div class="exp-modal-header"><h2>📂 Move to Folder</h2><button class="exp-modal-close" onclick="closeExpModal('moveToFolderModal')">&times;</button></div>
+        <form id="moveToFolderForm" onsubmit="handleMoveToFolder(event)">
+            <div class="exp-form-group"><label>Moving: <strong id="moveProjectLabel"></strong></label></div>
+            <div class="exp-form-group">
+                <label>Select Project Folder</label>
+                <select id="moveFolderSelect" required style="width:100%;padding:0.6rem 0.75rem;border:1.5px solid #e5e7eb;border-radius:8px;font-size:0.9rem;"><option value="">— Select folder —</option></select>
+            </div>
+            <div class="exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeExpModal('moveToFolderModal')">Cancel</button>
+                <button type="submit" class="exp-btn exp-btn-primary">Move</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════ CONSTRUCTION MODALS ══════════ -->
+
+<!-- Request Detail Modal -->
+<div id="consRequestDetailModal" class="cons-modal">
+    <div class="cons-modal-content">
+        <div class="cons-modal-header">
+            <h3>Request Details</h3>
+            <button class="cons-modal-close" onclick="closeConsModal('consRequestDetailModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="cons-modal-body" id="consRequestDetailContent"></div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="consImageModal" class="cons-modal">
+    <div class="cons-modal-content" style="max-width: 800px;">
+        <div class="cons-modal-header">
+            <h3 id="consImageModalTitle">Image</h3>
+            <button class="cons-modal-close" onclick="closeConsModal('consImageModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="cons-modal-body">
+            <img id="consModalImage" src="" alt="Item" style="width: 100%; border-radius: 8px;">
+        </div>
+    </div>
+</div>
+
+<!-- Create Batch Modal -->
+<div id="consCreateBatchModal" class="cons-modal">
+    <div class="cons-modal-content">
+        <div class="cons-modal-header">
+            <h3>Create New Batch</h3>
+            <button class="cons-modal-close" onclick="closeConsModal('consCreateBatchModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="cons-modal-body">
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;font-size:0.9rem;">Delivery Date <span style="color:#EF4444">*</span></label>
+                <input type="date" id="batchDeliveryDate" style="width:100%;padding:0.625rem;border:1px solid #E5E7EB;border-radius:8px;font-size:0.9375rem;">
+            </div>
+            <div>
+                <label style="display:block;font-weight:600;margin-bottom:0.4rem;font-size:0.9rem;">Cutoff Date (optional)</label>
+                <input type="date" id="batchCutoffDate" style="width:100%;padding:0.625rem;border:1px solid #E5E7EB;border-radius:8px;font-size:0.9375rem;">
+            </div>
+        </div>
+        <div class="cons-modal-footer" style="padding:1rem 1.5rem;border-top:1px solid #E5E7EB;display:flex;gap:0.75rem;justify-content:flex-end;">
+            <button class="cons-btn cons-btn-secondary" onclick="closeConsModal('consCreateBatchModal')">Cancel</button>
+            <button class="cons-btn cons-btn-primary" onclick="createBatch()"><i data-lucide="plus"></i> Create Batch</button>
+        </div>
+    </div>
+</div>
+
+<!-- Close Batch Modal -->
+<div id="consCloseBatchModal" class="cons-modal">
+    <div class="cons-modal-content">
+        <div class="cons-modal-header">
+            <h3>Close Current Batch</h3>
+            <button class="cons-modal-close" onclick="closeConsModal('consCloseBatchModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="cons-modal-body">
+            <p style="color:#6B7280;margin:0;">Are you sure you want to close this batch? No new requests can be added after closing.</p>
+        </div>
+        <div class="cons-modal-footer" style="padding:1rem 1.5rem;border-top:1px solid #E5E7EB;display:flex;gap:0.75rem;justify-content:flex-end;">
+            <button class="cons-btn cons-btn-secondary" onclick="closeConsModal('consCloseBatchModal')">Cancel</button>
+            <button class="cons-btn cons-btn-primary" style="background:#EF4444;" onclick="closeBatch()"><i data-lucide="lock"></i> Close Batch</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Inventory Item Modal -->
+<div id="consAddInventoryModal" class="cons-modal" onclick="if(event.target===this)closeConsModal('consAddInventoryModal')">
+    <div class="cons-modal-content">
+        <div class="cons-modal-header">
+            <h3>Add Inventory Item</h3>
+            <button class="cons-modal-close" onclick="closeConsModal('consAddInventoryModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="cons-modal-body">
+            <div class="cons-form-group">
+                <label>Item Name *</label>
+                <input type="text" id="invItemName" class="cons-input" placeholder="e.g. Cement, Steel Bars, GI Wire...">
+            </div>
+            <div class="cons-form-row">
+                <div class="cons-form-group" style="margin-bottom:0;">
+                    <label>Initial Stock *</label>
+                    <input type="number" id="invInitialStock" class="cons-input" placeholder="0" min="0" step="any">
+                </div>
+                <div class="cons-form-group" style="margin-bottom:0;">
+                    <label>Unit *</label>
+                    <select id="invUnit" class="cons-input">
+                        <option value="">Select unit</option>
+                        <option value="pcs">pcs</option>
+                        <option value="bags">bags</option>
+                        <option value="kg">kg</option>
+                        <option value="meters">meters</option>
+                        <option value="liters">liters</option>
+                        <option value="rolls">rolls</option>
+                        <option value="sheets">sheets</option>
+                        <option value="boxes">boxes</option>
+                        <option value="sets">sets</option>
+                        <option value="length">length</option>
+                    </select>
+                </div>
+            </div>
+            <div class="cons-form-group">
+                <label>Minimum Stock Alert <span style="color:#9CA3AF;font-weight:400;">(optional)</span></label>
+                <input type="number" id="invMinStock" class="cons-input" placeholder="0 = no alert" min="0" step="any">
+            </div>
+            <div class="cons-form-group">
+                <label>Notes <span style="color:#9CA3AF;font-weight:400;">(optional)</span></label>
+                <textarea id="invNotes" class="cons-input" rows="2" placeholder="Brand, supplier, specifications..."></textarea>
+            </div>
+        </div>
+        <div class="cons-modal-footer">
+            <button class="cons-btn cons-btn-secondary" onclick="closeConsModal('consAddInventoryModal')">Cancel</button>
+            <button class="cons-btn cons-btn-primary" onclick="saveInventoryItem()"><i data-lucide="plus"></i> Add Item</button>
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Stock Modal -->
+<div id="consAdjustStockModal" class="cons-modal" onclick="if(event.target===this)closeConsModal('consAdjustStockModal')">
+    <div class="cons-modal-content">
+        <div class="cons-modal-header">
+            <h3>Adjust Stock</h3>
+            <button class="cons-modal-close" onclick="closeConsModal('consAdjustStockModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="cons-modal-body">
+            <div id="adjItemInfo" class="cons-adj-item-info"></div>
+            <div class="cons-form-group">
+                <label>Adjustment Type</label>
+                <div class="cons-adj-type">
+                    <button id="adjTypeAdd" class="cons-adj-btn active add" onclick="setAdjType('add')">+ Add Stock</button>
+                    <button id="adjTypeDeduct" class="cons-adj-btn deduct" onclick="setAdjType('deduct')">− Deduct Stock</button>
+                </div>
+            </div>
+            <div class="cons-form-group">
+                <label>Amount *</label>
+                <input type="number" id="adjAmount" class="cons-input" placeholder="Enter amount" min="0.01" step="any">
+            </div>
+            <div class="cons-form-group">
+                <label>Reason <span style="color:#9CA3AF;font-weight:400;">(optional)</span></label>
+                <input type="text" id="adjReason" class="cons-input" placeholder="e.g. Manual correction, Used in project...">
+            </div>
+        </div>
+        <div class="cons-modal-footer">
+            <button class="cons-btn cons-btn-secondary" onclick="closeConsModal('consAdjustStockModal')">Cancel</button>
+            <button class="cons-btn cons-btn-primary" onclick="adjustStock()"><i data-lucide="check"></i> Save Adjustment</button>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Details Modal -->
+<div id="consBatchDetailsModal" class="cons-modal" onclick="if(event.target===this)closeConsModal('consBatchDetailsModal')">
+    <div class="cons-modal-content" style="max-width:680px;">
+        <div class="cons-modal-header">
+            <h3>Batch Details</h3>
+            <button class="cons-modal-close" onclick="closeConsModal('consBatchDetailsModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="cons-modal-body" id="batchDetailsContent" style="max-height:60vh;overflow-y:auto;">
+        </div>
+        <div class="cons-modal-footer">
+            <button class="cons-btn cons-btn-secondary" onclick="closeConsModal('consBatchDetailsModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notifications -->
+<div id="expNotification" class="exp-notification"></div>
+<div id="consNotification" class="cons-notification"></div>
+
+<!-- ══════════ OVERHEAD CATEGORY DETAIL MODAL ══════════ -->
+<div id="ovhdCatDetailModal" class="exp-modal" onclick="if(event.target===this)closeCategoryDetail()">
+    <div class="ovhd-modal-box exp-modal-box" style="max-width:560px;">
+        <div class="ovhd-modal-header exp-modal-header">
+            <h2 id="ovhdCatDetailTitle" style="padding-left:10px;"></h2>
+            <button class="ovhd-modal-close exp-modal-close" onclick="closeCategoryDetail()">&#x2715;</button>
+        </div>
+        <div style="padding:1.2rem 1.5rem 0;">
+            <!-- All-time summary strip -->
+            <div id="ovhdCatDetailSummary" class="ovhd-detail-summary"></div>
+            <!-- Monthly breakdown table -->
+            <div class="ovhd-table-wrap ovhd-detail-table-wrap">
+                <table class="ovhd-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Trend vs Prev Month</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ovhdCatDetailTbody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="ovhd-modal-footer exp-modal-footer">
+            <button class="exp-btn exp-btn-secondary" onclick="closeCategoryDetail()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ OVERHEAD ADD MODAL ══════════ -->
+<div id="overheadAddModal" class="exp-modal" onclick="if(event.target===this)closeOverheadModal()">
+    <div class="ovhd-modal-box exp-modal-box">
+        <div class="ovhd-modal-header exp-modal-header">
+            <h2>Add Overhead Expense</h2>
+            <button class="ovhd-modal-close exp-modal-close" onclick="closeOverheadModal()">&#x2715;</button>
+        </div>
+        <form id="overheadExpenseForm" onsubmit="handleAddOverheadExpense(event)">
+            <div class="ovhd-modal-body">
+                <div class="exp-form-group">
+                    <label for="ovhdExpCategory">Category</label>
+                    <select id="ovhdExpCategory" required>
+                        <option value="">Select category…</option>
+                        <option value="Office Rent">Office Rent</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Internet & Telecoms">Internet &amp; Telecoms</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="Staff Salaries">Staff Salaries</option>
+                        <option value="Software & Subscriptions">Software &amp; Subscriptions</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Professional Fees">Professional Fees</option>
+                        <option value="Miscellaneous">Miscellaneous</option>
+                    </select>
+                </div>
+                <div class="exp-form-row">
+                    <div class="exp-form-group">
+                        <label for="ovhdExpAmount">Amount (₱)</label>
+                        <input type="text" id="ovhdExpAmount" placeholder="0.00"
+                               oninput="fmtBudgetInput(this)" required>
+                    </div>
+                    <div class="exp-form-group">
+                        <label for="ovhdExpDate">Date</label>
+                        <input type="date" id="ovhdExpDate" required>
+                    </div>
+                </div>
+                <div class="exp-form-group">
+                    <label for="ovhdExpDescription">Description <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+                    <textarea id="ovhdExpDescription" placeholder="Brief description…"></textarea>
+                </div>
+            </div>
+            <div class="ovhd-modal-footer exp-modal-footer">
+                <button type="button" class="exp-btn exp-btn-secondary" onclick="closeOverheadModal()">Cancel</button>
+                <button type="submit" class="exp-btn exp-btn-primary" id="ovhdSaveBtn">Save Expense</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════ SCRIPTS ══════════ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/expenses-module.js"></script>
+<script src="js/overhead-module.js"></script>
+<script src="js/construction-module.js"></script>
+<script src="js/boq-module.js"></script>
+<script src="js/user-navigator.js"></script>
+<script src="js/client-accounts.js"></script>
+<script src="js/payment-requests.js"></script>
+<script src="js/payment-reports.js"></script>
+<script src="js/invoice-module.js"></script>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// Patch switchView to handle all views
+// ════════════════════════════════════════════════════════════
+(function() {
+    const EXP_VIEWS  = ['expOverview','expExpenses','expReports'];
+    const CONS_VIEWS = ['consBatch','consUrgent','consBatchHistory','consInventory'];
+    const BOQ_VIEWS  = ['boqBuilder'];
+    const UN_VIEWS   = ['userNavigator','clientAccounts'];
+    const TITLES = {
+        dashboard: 'Dashboard', appointments: 'Appointments',
+        analytics: 'Analytics', feedback: 'Feedback',
+        expOverview: 'Budget Overview', expExpenses: 'Expenses',
+        expReports: 'Reports', expOverhead: 'Overhead Expenses',
+        consBatch: 'Current Batch', consUrgent: 'Urgent Requests',
+        consBatchHistory: 'Batch History', consInventory: 'Inventory',
+        boqBuilder: 'Accomplishment Report',
+        userNavigator: '🎯 User Navigator',
+        paymentRequests: '💳 Payment Requests',
+        invoices:        '🧾 Invoice Receipt Generator'
+    };
+
+    window.switchView = function(view) {
+        // Role guard
+        if (typeof currentUserRole !== 'undefined' && currentUserRole !== null) {
+            if (currentUserRole === 'staff') {
+                const blocked = ['expOverhead'];
+                if (blocked.includes(view)) view = 'dashboard';
+            } else if (currentUserRole === 'worker' || currentUserRole === 'teamLeader') {
+                const allowed = ['consBatch','consUrgent','consBatchHistory','consInventory'];
+                if (!allowed.includes(view)) view = 'consBatch';
+            }
+        }
+        if (typeof currentView !== 'undefined') currentView = view;
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.view === view) item.classList.add('active');
+        });
+        document.getElementById('pageTitle').textContent = TITLES[view] || view;
+        document.querySelectorAll('.content-view').forEach(v => v.style.display = 'none');
+        const el = document.getElementById(view + 'View');
+        if (el) el.style.display = 'block';
+
+        // Staff Budget Overview: only show Current Fund Spent & Cover Expenses KPIs
+        const ovEl = document.getElementById('expOverviewView');
+        if (ovEl) {
+            if (typeof currentUserRole !== 'undefined' && currentUserRole === 'staff') {
+                ovEl.classList.add('staff-budget-view');
+            } else {
+                ovEl.classList.remove('staff-budget-view');
+            }
+        }
+
+        if (view === 'appointments' && typeof displayAllAppointments === 'function') displayAllAppointments();
+        if (view === 'analytics'    && typeof refreshAnalytics       === 'function') refreshAnalytics();
+        if (view === 'feedback'     && typeof loadFeedback            === 'function') loadFeedback();
+
+        if (EXP_VIEWS.includes(view)) {
+            if (typeof _syncAllEmptyStates === 'function') _syncAllEmptyStates();
+            if (typeof initExpenseModule === 'function') initExpenseModule(view);
+        }
+        if (view === 'expReports'   && typeof initReportsDashboard  === 'function') initReportsDashboard();
+        if (view === 'expOverhead'  && typeof initOverheadModule     === 'function') initOverheadModule();
+        if (CONS_VIEWS.includes(view) && typeof initConstructionModule === 'function') initConstructionModule(view);
+        if (BOQ_VIEWS.includes(view)  && typeof initBOQModule          === 'function') initBOQModule();
+        if (view === 'userNavigator'  && typeof initUserNavigator      === 'function') initUserNavigator();
+        if (view === 'clientAccounts' && typeof initClientAccounts     === 'function') initClientAccounts();
+        if (view === 'paymentRequests' && typeof initPaymentRequests === 'function') initPaymentRequests();
+        if (view === 'paymentRequests' && typeof initSOAModule      === 'function') initSOAModule();
+        if (view === 'paymentReports'  && typeof initPaymentReports === 'function') initPaymentReports();
+        if (view === 'invoices'        && typeof initInvoiceModule  === 'function') initInvoiceModule();
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+})();
+</script>
+
+<!-- Receipt Lightbox -->
+<div id="receiptLightbox" class="lb-overlay" onclick="if(event.target===this)closeLightbox()">
+    <div class="lb-box">
+        <div class="lb-header">
+            <span id="lbTitle">Receipt</span>
+            <span id="lbCounter" class="lb-counter"></span>
+            <span id="lbZoomPct" class="lb-zoom-pct" style="display:none"></span>
+            <button class="lb-zoom-btn" id="lbZoomBtn" onclick="lbZoomToggle()" title="Toggle zoom">🔍</button>
+            <button class="lb-zoom-btn" onclick="lbZoomIn()" title="Zoom in">＋</button>
+            <button class="lb-zoom-btn" onclick="lbZoomOut()" title="Zoom out">－</button>
+            <button class="lb-close" onclick="closeLightbox()">✕</button>
+        </div>
+        <div class="lb-img-wrap" id="lbImgWrap">
+            <button id="lbPrev" class="lb-nav lb-nav-prev" onclick="lbPrev()">&#8249;</button>
+            <img id="lbMainImg" src="" alt="Receipt" class="lb-main-img">
+            <button id="lbNext" class="lb-nav lb-nav-next" onclick="lbNext()">&#8250;</button>
+        </div>
+        <div id="lbThumbs" class="lb-thumbs"></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.lucide) lucide.createIcons();
+    });
+    function refreshIcons() {
+        if (window.lucide) lucide.createIcons();
+    }
+    function togglePasswordVisibility() {
+        const input = document.getElementById('loginPassword');
+        const icon  = document.getElementById('eyeIcon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.setAttribute('data-lucide', 'eye-off');
+        } else {
+            input.type = 'password';
+            icon.setAttribute('data-lucide', 'eye');
+        }
+        lucide.createIcons();
+    }
+</script>
+</body>
+</html>
