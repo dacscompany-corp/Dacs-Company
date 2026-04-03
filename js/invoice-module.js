@@ -202,7 +202,7 @@
         <div class="inv-header">
             <div>
                 <h2 class="inv-page-title">
-                    <span class="inv-title-icon">🧾</span> Invoice Receipt Generator
+                    <span class="inv-title-icon">🧾</span> Invoice Generator
                 </h2>
                 <p class="inv-page-subtitle">Create, manage and print sales invoices</p>
             </div>
@@ -241,17 +241,17 @@
 
         <div class="inv-table-card">
             <div class="inv-table-header">
-                <div class="inv-table-title">Receipt Listing</div>
-                <div class="inv-total-badge">Total No. of Receipts: <strong>${_invoices.length}</strong></div>
+                <div class="inv-table-title">Invoice Listing</div>
+                <div class="inv-total-badge">Total Invoices: <strong>${_invoices.length}</strong></div>
             </div>
             <div class="inv-table-wrap">
                 <table class="inv-table">
                     <thead>
                         <tr>
-                            <th>Receipt No.</th>
-                            <th>Billing Date</th>
+                            <th>Invoice No.</th>
+                            <th>Invoice Date</th>
                             <th>Total Amount</th>
-                            <th>Customer Name</th>
+                            <th>Client Name</th>
                             <th>TIN No.</th>
                             <th>Business Address</th>
                             <th>Status</th>
@@ -349,7 +349,7 @@
             <div class="inv-section-title" style="margin-top:20px;">Bill To</div>
             <div class="inv-form-grid inv-form-grid--3">
                 <div class="inv-field">
-                    <label>Customer Name</label>
+                    <label>Client Name</label>
                     <input type="text" id="invClientName" class="inv-input"
                            placeholder="Full name"
                            value="${_esc(d.clientName || '')}">
@@ -797,7 +797,7 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff;
     <div class="inv-title-block">
       <h2>SALES INVOICE</h2>
       <div class="inv-meta">
-        Receipt No: <strong>${_pEsc(inv.invoiceNo || '—')}</strong><br>
+        Invoice No: <strong>${_pEsc(inv.invoiceNo || '—')}</strong><br>
         Date: <strong>${inv.date ? _fmtDate(inv.date) : '—'}</strong>
       </div>
     </div>

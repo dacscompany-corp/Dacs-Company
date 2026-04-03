@@ -214,6 +214,17 @@ service cloud.firestore {
                     && request.resource.data.userId == request.auth.uid;
     }
 
+    match /sowaRequests/{requestId} {
+      // Clients can create their own SOWA request
+      allow create: if isAuthenticated()
+                    && request.auth.uid == request.resource.data.clientUid;
+      // Clients can read their own requests (to check pending state)
+      allow read: if isAuthenticated()
+                  && request.auth.uid == resource.data.clientUid;
+      // Owner/staff can read, update (viewed/shared), and delete
+      allow read, update, delete: if isOwner() || isStaff();
+    }
+
     match /paymentRequests/{requestId} {
       // Owner/staff can do everything (including unfiltered list queries)
       allow read, create, update, delete: if isOwner() || isStaff();

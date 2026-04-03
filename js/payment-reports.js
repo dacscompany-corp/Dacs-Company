@@ -226,7 +226,7 @@
         _statusChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels:   ['Pending', 'Approval Pending', 'Submitted', 'Verified', 'Rejected'],
+                labels:   ['Pending', 'Awaiting Approval', 'Under Review', 'Paid', 'Rejected'],
                 datasets: [{
                     data: [c.pending, c.partial_pending, c.submitted, c.verified, c.rejected],
                     backgroundColor: ['#fbbf24', '#f97316', '#3b82f6', '#00a85e', '#ef4444'],
@@ -344,7 +344,7 @@
         document.getElementById('clientReceiptsTitle').textContent = c.name;
         document.getElementById('clientReceiptsEmail').textContent = c.email;
 
-        const statusLabel = { pending: 'Pending', partial_pending: 'Approval Pending', partial_approved: 'Partial Approved', submitted: 'Submitted', verified: 'Verified', rejected: 'Rejected' };
+        const statusLabel = { pending: 'Pending', partial_pending: 'Awaiting Approval', partial_approved: 'Partial Approved', submitted: 'Under Review', verified: 'Paid', rejected: 'Rejected' };
         const statusColor = { pending: '#f59e0b', partial_pending: '#f97316', partial_approved: '#3b82f6', submitted: '#3b82f6', verified: '#059669', rejected: '#dc2626' };
 
         const sorted = [...c.requests].sort((a, b) => _tsToMs(b.createdAt) - _tsToMs(a.createdAt));

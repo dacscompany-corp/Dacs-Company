@@ -875,7 +875,7 @@
     function boqStatusBadgeHtml(status) {
         const cfg = {
             draft:     { cls: 'boq-status-draft',     label: 'Draft' },
-            submitted: { cls: 'boq-status-submitted',  label: 'Submitted' },
+            submitted: { cls: 'boq-status-submitted',  label: 'For Review' },
             approved:  { cls: 'boq-status-approved',   label: 'Approved' },
         };
         const s = cfg[status] || cfg.draft;
@@ -891,7 +891,8 @@
     window.boqSetStatus = async function (status) {
         boq.status = status;
         markDirty();
-        boqToast(`Status set to ${status}.`, 'success');
+        const statusDisplay = { draft: 'Draft', submitted: 'For Review', approved: 'Approved' };
+        boqToast(`Status set to ${statusDisplay[status] || status}.`, 'success');
         // Re-render toolbar fully to be safe
         renderBuilderArea();
     };
@@ -1235,7 +1236,7 @@
                         const reportName = boq.header.subject || 'Accomplishment Report';
                         const notifMap = {
                             approved:  { type: 'report_approved',  message: `Your report "${reportName}" has been approved.` },
-                            submitted: { type: 'report_submitted', message: `Your report "${reportName}" has been submitted for review.` },
+                            submitted: { type: 'report_submitted', message: `Your report "${reportName}" has been submitted and is now awaiting approval.` },
                             draft:     { type: 'report_updated',   message: `Your report "${reportName}" has been updated.` },
                         };
                         const n = notifMap[boq.status] || notifMap.draft;
