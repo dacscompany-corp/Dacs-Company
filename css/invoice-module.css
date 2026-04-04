@@ -45,10 +45,10 @@
     white-space: nowrap;
 }
 .inv-btn-primary {
-    background: #00a85e;
+    background: #4AC84A;
     color: #fff;
 }
-.inv-btn-primary:hover { background: #008a4d; }
+.inv-btn-primary:hover { background: #3db53d; }
 
 .inv-btn-secondary {
     background: #3b82f6;
@@ -82,7 +82,7 @@
     .inv-stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 .inv-stat-card {
-    background: #00a85e;
+    background: #4AC84A;
     border-radius: 12px;
     padding: 18px 20px;
     color: #fff;

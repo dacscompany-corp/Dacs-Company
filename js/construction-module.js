@@ -423,6 +423,7 @@ function loadUrgentRequests() {
         .onSnapshot(snapshot => {
             urgentRequestsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderUrgentRequests();
+            _syncUrgentBadge(urgentRequestsData.filter(r => r.status !== 'delivered').length);
         });
 }
 
@@ -1235,5 +1236,25 @@ function viewBatchDetails(batchId) {
         content.innerHTML = '<p style="color:#DC2626;">Failed to load batch details. Please try again.</p>';
     });
 }
+
+function _syncUrgentBadge(count) {
+    const child = document.getElementById('urgent-child-badge');
+    const group = document.getElementById('cons-group-badge');
+    [child, group].forEach(el => {
+        if (!el) return;
+        if (count > 0) { el.textContent = count; el.style.display = 'inline-flex'; }
+        else { el.style.display = 'none'; }
+    });
+}
+
+window.syncUrgentBadgeEager = function () {
+    db.collection('requests')
+        .where('isUrgent', '==', true)
+        .get()
+        .then(snap => {
+            const count = snap.docs.filter(d => d.data().status !== 'delivered').length;
+            _syncUrgentBadge(count);
+        }).catch(() => {});
+};
 
 console.log('🏗️ Construction Module Loaded (Multi-Item Version)');

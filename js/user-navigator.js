@@ -85,6 +85,8 @@
         );
         _renderStats(_allUsers);
         _renderTable(_allUsers);
+        // Clear new-user badge — admin has now seen all users
+        _clearNewUserBadge();
 
         // Warn in the UI if one collection was blocked (but still show the other)
         if (adminErr)  _showPartialWarning('Admin users could not be loaded — check Firestore rules for the <b>users</b> collection.');
@@ -385,4 +387,34 @@ match /clientUsers/{uid} {
         return new Date(ms).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
     }
 
-})();
+    // ── New-user badge ────────────────────────────────────────
+    const _SEEN_KEY = 'dacs_users_last_seen';
+
+    function _syncUsersBadgeUI(count) {
+        const child = document.getElementById('users-child-badge');
+        const group = document.getElementById('users-group-badge');
+        [child, group].forEach(el => {
+            if (!el) return;
+            if (count > 0) { el.textContent = count; el.style.display = 'inline-flex'; }
+            else { el.style.display = 'none'; }
+        });
+    }
+
+    function _clearNewUserBadge() {
+        localStorage.setItem(_SEEN_KEY, Date.now().toString());
+        _syncUsersBadgeUI(0);
+    }
+
+    window.syncNewUsersBadgeEager = function () {
+        const lastSeen = parseInt(localStorage.getItem(_SEEN_KEY) || '0', 10);
+        Promise.all([
+            db.collection('users').get(),
+            db.collection('clientUsers').get()
+        ]).then(([adminSnap, clientSnap]) => {
+            const allDocs = [...adminSnap.docs, ...clientSnap.docs];
+            const count = allDocs.filter(d => _tsToMs(d.data().createdAt) > lastSeen).length;
+            _syncUsersBadgeUI(count);
+        }).catch(() => {});
+    };
+
+})();

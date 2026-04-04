@@ -199,21 +199,16 @@
         }
 
         _setContent(`
-        <div class="inv-header">
-            <div>
-                <h2 class="inv-page-title">
-                    <span class="inv-title-icon">🧾</span> Invoice Generator
-                </h2>
-                <p class="inv-page-subtitle">Create, manage and print sales invoices</p>
-            </div>
-            <div class="inv-header-actions">
-                <button class="inv-btn inv-btn-outline" onclick="window.invExportCSV()">
-                    <i data-lucide="download" style="width:15px;height:15px;"></i> Export CSV
-                </button>
-                <button class="inv-btn inv-btn-primary" onclick="window.invShowForm(null)">
-                    <i data-lucide="plus" style="width:15px;height:15px;"></i> New Invoice
-                </button>
-            </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;gap:8px;">
+            <button class="inv-btn inv-btn-outline" onclick="window.invExportCSV()">
+                <i data-lucide="download" style="width:15px;height:15px;"></i> Export CSV
+            </button>
+            <button class="inv-btn inv-btn-ghost" onclick="window.invOpenSettings()">
+                <i data-lucide="settings" style="width:15px;height:15px;"></i> Business Settings
+            </button>
+            <button class="inv-btn inv-btn-primary" onclick="window.invShowForm(null)">
+                <i data-lucide="plus" style="width:15px;height:15px;"></i> New Invoice
+            </button>
         </div>
 
         <div class="inv-stats-grid">
@@ -267,8 +262,166 @@
     }
 
     // ══════════════════════════════════════════════════════
+    // BUSINESS SETTINGS MODAL
+    // ══════════════════════════════════════════════════════
+
+    window.invOpenSettings = function () {
+        const d = _defaults;
+        const pm = (d.paymentDetails && d.paymentDetails.method) || 'bank';
+        const pd = d.paymentDetails || {};
+
+        const PH_BANKS = ['BDO Unibank','Bank of the Philippine Islands (BPI)','Metrobank','PNB (Philippine National Bank)',
+            'Landbank of the Philippines','DBP (Development Bank of the Philippines)','UnionBank','Chinabank',
+            'Robinsons Bank','EastWest Bank','Security Bank','RCBC','UCPB','Asia United Bank (AUB)',
+            'Philippine Savings Bank (PSBank)','Maybank Philippines','Sterling Bank of Asia','CTBC Bank Philippines',
+            'Bank of Commerce','PBB (Philippine Business Bank)'];
+        const bankOptions = PH_BANKS.map(b => `<option value="${_esc(b)}" ${pd.bank === b ? 'selected' : ''}>${_esc(b)}</option>`).join('');
+
+        const modal = document.createElement('div');
+        modal.id = 'invSettingsModal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+        modal.innerHTML = `
+        <div style="background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.18);">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f3f4f6;">
+                <div>
+                    <div style="font-size:15px;font-weight:700;color:#1a1a2e;">Business Settings</div>
+                    <div style="font-size:12px;color:#6b7280;margin-top:2px;">These details appear on all printed invoices</div>
+                </div>
+                <button onclick="document.getElementById('invSettingsModal').remove()"
+                    style="background:none;border:none;cursor:pointer;color:#6b7280;padding:4px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px;">
+
+                <div class="inv-section-title">Company Information</div>
+                <div class="inv-form-grid inv-form-grid--2">
+                    <div class="inv-field inv-field--wide">
+                        <label>Business Name</label>
+                        <input class="inv-input" id="isBizName" value="${_esc(d.businessName || '')}">
+                    </div>
+                    <div class="inv-field">
+                        <label>TIN No. <span style="font-weight:400;color:#9ca3af;">(optional)</span></label>
+                        <input class="inv-input" id="isBizTin" value="${_esc(d.businessTin || '')}">
+                    </div>
+                    <div class="inv-field inv-field--wide">
+                        <label>Business Address</label>
+                        <input class="inv-input" id="isBizAddr" value="${_esc(d.businessAddress || '')}">
+                    </div>
+                </div>
+
+                <div class="inv-section-title" style="margin-top:4px;">Payment Receiving Details</div>
+                <div style="display:flex;gap:10px;margin-bottom:4px;">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                        <input type="radio" name="isPayMethod" value="bank" ${pm === 'bank' ? 'checked' : ''} onchange="window._isTogglePay(this.value)"> Bank Transfer
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                        <input type="radio" name="isPayMethod" value="gcash" ${pm === 'gcash' ? 'checked' : ''} onchange="window._isTogglePay(this.value)"> GCash
+                    </label>
+                </div>
+
+                <div id="isPayBank" style="display:${pm === 'bank' ? 'grid' : 'none'};grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="inv-field inv-field--wide">
+                        <label>Bank Name</label>
+                        <select class="inv-input" id="isBankName"><option value="">— Select Bank —</option>${bankOptions}</select>
+                    </div>
+                    <div class="inv-field">
+                        <label>Account No.</label>
+                        <input class="inv-input" id="isBankAccNo" value="${_esc(pd.accountNo || '')}">
+                    </div>
+                    <div class="inv-field">
+                        <label>Account Name</label>
+                        <input class="inv-input" id="isBankAccName" value="${_esc(pd.accountName || '')}">
+                    </div>
+                    <div class="inv-field">
+                        <label>Branch</label>
+                        <input class="inv-input" id="isBankBranch" value="${_esc(pd.branch || '')}">
+                    </div>
+                </div>
+
+                <div id="isPayGcash" style="display:${pm === 'gcash' ? 'grid' : 'none'};grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="inv-field">
+                        <label>GCash Number</label>
+                        <input class="inv-input" id="isGcashNum" placeholder="09XXXXXXXXX" value="${_esc(pd.gcashNumber || '')}">
+                    </div>
+                    <div class="inv-field">
+                        <label>Account Name</label>
+                        <input class="inv-input" id="isGcashName" value="${_esc(pd.gcashName || '')}">
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+                    <button class="inv-btn inv-btn-outline" onclick="document.getElementById('invSettingsModal').remove()">Cancel</button>
+                    <button class="inv-btn inv-btn-primary" onclick="window.invSaveSettings()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>`;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    };
+
+    window._isTogglePay = function (method) {
+        const bank  = document.getElementById('isPayBank');
+        const gcash = document.getElementById('isPayGcash');
+        if (!bank || !gcash) return;
+        bank.style.display  = method === 'bank'  ? 'grid' : 'none';
+        gcash.style.display = method === 'gcash' ? 'grid' : 'none';
+    };
+
+    window.invSaveSettings = async function () {
+        const method = document.querySelector('input[name="isPayMethod"]:checked')?.value || 'bank';
+        let pd;
+        if (method === 'gcash') {
+            pd = {
+                method: 'gcash',
+                gcashNumber: document.getElementById('isGcashNum')?.value.trim() || '',
+                gcashName:   document.getElementById('isGcashName')?.value.trim() || ''
+            };
+        } else {
+            pd = {
+                method: 'bank',
+                bank:        document.getElementById('isBankName')?.value || '',
+                accountNo:   document.getElementById('isBankAccNo')?.value.trim() || '',
+                accountName: document.getElementById('isBankAccName')?.value.trim() || '',
+                branch:      document.getElementById('isBankBranch')?.value.trim() || ''
+            };
+        }
+        const newDefaults = {
+            businessName:    document.getElementById('isBizName')?.value.trim() || '',
+            businessTin:     document.getElementById('isBizTin')?.value.trim()  || '',
+            businessAddress: document.getElementById('isBizAddr')?.value.trim() || '',
+            paymentDetails:  pd
+        };
+        try {
+            await db.collection('settings').doc('invoiceDefaults').set(newDefaults, { merge: true });
+            _defaults = newDefaults;
+            document.getElementById('invSettingsModal')?.remove();
+            _showToast('Business settings saved successfully.');
+        } catch (e) {
+            alert('Failed to save settings: ' + e.message);
+        }
+    };
+
+    function _showToast(msg) {
+        const t = document.createElement('div');
+        t.textContent = msg;
+        t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+
+    // ══════════════════════════════════════════════════════
     // FORM VIEW — New / Edit
     // ══════════════════════════════════════════════════════
+
+    window.invTogglePayMethod = function () {
+        const method = document.querySelector('input[name="invPayMethod"]:checked')?.value || 'bank';
+        document.getElementById('invBankFields').style.display  = method === 'bank'  ? '' : 'none';
+        document.getElementById('invGcashFields').style.display = method === 'gcash' ? '' : 'none';
+    };
 
     window.invShowForm = function (id) {
         _editId = id;
@@ -400,11 +553,31 @@
             </div>
 
             <div class="inv-section-title" style="margin-top:24px;">Payment Details</div>
-            <div class="inv-form-grid inv-form-grid--2">
+
+            <!-- Payment Method Toggle -->
+            <div style="display:flex;gap:10px;margin-bottom:16px;">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;font-weight:500;color:#374151;">
+                    <input type="radio" name="invPayMethod" value="bank" id="invPayMethodBank"
+                        ${(!pd.method || pd.method === 'bank') ? 'checked' : ''}
+                        onchange="invTogglePayMethod()"> Bank Transfer
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;font-weight:500;color:#374151;">
+                    <input type="radio" name="invPayMethod" value="gcash" id="invPayMethodGcash"
+                        ${pd.method === 'gcash' ? 'checked' : ''}
+                        onchange="invTogglePayMethod()"> GCash
+                </label>
+            </div>
+
+            <!-- Bank Fields -->
+            <div id="invBankFields" class="inv-form-grid inv-form-grid--2" style="${pd.method === 'gcash' ? 'display:none;' : ''}">
                 <div class="inv-field">
-                    <label>Bank</label>
-                    <input type="text" id="invBank" class="inv-input"
-                           placeholder="Bank name" value="${_esc(pd.bank || '')}">
+                    <label>Bank Name</label>
+                    <select id="invBank" class="inv-input">
+                        <option value="">— Select Bank —</option>
+                        ${['BDO','BPI','Metrobank','PNB','UnionBank','Landbank','DBP','Chinabank','Security Bank','RCBC','EastWest Bank','PBCom','Asia United Bank','Robinsons Bank','Sterling Bank','CTBC Bank','Maybank','HSBC','Citibank','Other'].map(b =>
+                            `<option value="${b}" ${pd.bank === b ? 'selected' : ''}>${b}</option>`
+                        ).join('')}
+                    </select>
                 </div>
                 <div class="inv-field">
                     <label>Account No.</label>
@@ -419,7 +592,21 @@
                 <div class="inv-field">
                     <label>Branch</label>
                     <input type="text" id="invBranch" class="inv-input"
-                           placeholder="Branch" value="${_esc(pd.branch || '')}">
+                           placeholder="Branch (optional)" value="${_esc(pd.branch || '')}">
+                </div>
+            </div>
+
+            <!-- GCash Fields -->
+            <div id="invGcashFields" class="inv-form-grid inv-form-grid--2" style="${pd.method !== 'gcash' ? 'display:none;' : ''}">
+                <div class="inv-field">
+                    <label>GCash Number</label>
+                    <input type="text" id="invGcashNumber" class="inv-input"
+                           placeholder="09XX XXX XXXX" value="${_esc(pd.gcashNumber || '')}">
+                </div>
+                <div class="inv-field">
+                    <label>Account Name</label>
+                    <input type="text" id="invGcashName" class="inv-input"
+                           placeholder="GCash account name" value="${_esc(pd.gcashName || '')}">
                 </div>
             </div>
 
@@ -539,12 +726,23 @@
             items,
             subtotal,
             totalAmount: subtotal,
-            paymentDetails: {
-                bank:        (document.getElementById('invBank')?.value        || '').trim(),
-                accountNo:   (document.getElementById('invAccountNo')?.value   || '').trim(),
-                accountName: (document.getElementById('invAccountName')?.value || '').trim(),
-                branch:      (document.getElementById('invBranch')?.value      || '').trim()
-            },
+            paymentDetails: (function() {
+                const method = document.querySelector('input[name="invPayMethod"]:checked')?.value || 'bank';
+                if (method === 'gcash') {
+                    return {
+                        method:      'gcash',
+                        gcashNumber: (document.getElementById('invGcashNumber')?.value || '').trim(),
+                        gcashName:   (document.getElementById('invGcashName')?.value   || '').trim(),
+                    };
+                }
+                return {
+                    method:      'bank',
+                    bank:        (document.getElementById('invBank')?.value        || '').trim(),
+                    accountNo:   (document.getElementById('invAccountNo')?.value   || '').trim(),
+                    accountName: (document.getElementById('invAccountName')?.value || '').trim(),
+                    branch:      (document.getElementById('invBranch')?.value      || '').trim(),
+                };
+            })(),
             notes:  (document.getElementById('invNotes')?.value || '').trim(),
             status: status || 'draft'
         };
@@ -634,7 +832,7 @@
                 items: [{ description: desc || 'Payment', qty: 1, unitPrice: amount, discount: 0, amount }],
                 subtotal:        amount,
                 totalAmount:     amount,
-                paymentDetails:  { bank: pd.bank || '', accountNo: pd.accountNo || '', accountName: pd.accountName || '', branch: pd.branch || '' },
+                paymentDetails:  { ...pd },
                 notes:           req.referenceNumber ? 'Ref. No.: ' + req.referenceNumber : '',
                 status:          'issued',
                 paymentRequestId: req.id   || '',
@@ -696,8 +894,12 @@
     };
 
     function _doPrint(inv) {
-        const pd       = inv.paymentDetails || {};
-        const vatLabel = (inv.vatRate != null ? inv.vatRate : 12) + '%';
+        // Fall back to saved defaults for fields the invoice may not have
+        const pd       = Object.assign({}, _defaults.paymentDetails || {}, inv.paymentDetails || {});
+        const bizName  = inv.businessName    || _defaults.businessName    || 'Business Name';
+        const bizTin   = inv.businessTin     || _defaults.businessTin     || '—';
+        const bizAddr  = inv.businessAddress || _defaults.businessAddress || '—';
+        const vatLabel = (inv.vatRate != null ? inv.vatRate : (_defaults.vatRate != null ? _defaults.vatRate : 12)) + '%';
 
         const itemRows = (inv.items || []).map((item, idx) => `
             <tr>
@@ -791,8 +993,8 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff;
   <!-- Header -->
   <div class="inv-header">
     <div class="inv-biz">
-      <h1>${_pEsc(inv.businessName || 'Business Name')}</h1>
-      <p>Business Tax Id: ${_pEsc(inv.businessTin || '—')}<br>${_pEsc(inv.businessAddress || '—')}</p>
+      <h1>${_pEsc(bizName)}</h1>
+      <p>Business Tax Id: ${_pEsc(bizTin)}<br>${_pEsc(bizAddr)}</p>
     </div>
     <div class="inv-title-block">
       <h2>SALES INVOICE</h2>
@@ -840,10 +1042,16 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff;
   <div class="pay-box">
     <h4>Payment Details</h4>
     <div class="pay-grid">
-      <div><span class="lbl">Bank: </span><span class="val">${_pEsc(pd.bank || '—')}</span></div>
-      <div><span class="lbl">Account No.: </span><span class="val">${_pEsc(pd.accountNo || '—')}</span></div>
-      <div><span class="lbl">Account Name: </span><span class="val">${_pEsc(pd.accountName || '—')}</span></div>
-      <div><span class="lbl">Branch: </span><span class="val">${_pEsc(pd.branch || '—')}</span></div>
+      ${pd.method === 'gcash'
+        ? `<div><span class="lbl">Payment Via: </span><span class="val">GCash</span></div>
+           <div><span class="lbl">GCash No.: </span><span class="val">${_pEsc(pd.gcashNumber || '—')}</span></div>
+           <div><span class="lbl">Account Name: </span><span class="val">${_pEsc(pd.gcashName || '—')}</span></div>`
+        : `<div><span class="lbl">Payment Via: </span><span class="val">Bank Transfer</span></div>
+           <div><span class="lbl">Bank: </span><span class="val">${_pEsc(pd.bank || '—')}</span></div>
+           <div><span class="lbl">Account No.: </span><span class="val">${_pEsc(pd.accountNo || '—')}</span></div>
+           <div><span class="lbl">Account Name: </span><span class="val">${_pEsc(pd.accountName || '—')}</span></div>
+           <div><span class="lbl">Branch: </span><span class="val">${_pEsc(pd.branch || '—')}</span></div>`
+      }
     </div>
   </div>
 

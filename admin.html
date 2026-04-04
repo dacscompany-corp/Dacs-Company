@@ -105,8 +105,9 @@
             <!-- APPOINTMENTS -->
             <div class="nav-group" id="navGroup-appointments">
                 <button class="nav-group-toggle" data-group="appointments" aria-expanded="true">
-                    <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="calendar-check" class="nav-icon"></i></span>
+                    <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="calendar" class="nav-icon"></i></span>
                     <span class="nav-group-title">Appointments</span>
+                    <span id="appt-group-badge" style="display:none;margin-right:4px;" class="pr-nav-badge"></span>
                     <i data-lucide="chevron-right" class="nav-group-chevron"></i>
                 </button>
                 <div class="nav-group-children">
@@ -114,22 +115,22 @@
                         <span class="nav-icon-wrap"><i data-lucide="layout-dashboard" class="nav-icon"></i></span><span>Dashboard</span>
                     </a>
                     <a href="#" class="nav-item nav-child" data-view="appointments">
-                        <span class="nav-icon-wrap"><i data-lucide="calendar-check" class="nav-icon"></i></span><span>Appointments</span>
+                        <span class="nav-icon-wrap"><i data-lucide="calendar-check" class="nav-icon"></i></span><span>Appointments</span><span id="appt-child-badge" style="display:none;" class="pr-nav-badge"></span>
                     </a>
                     <a href="#" class="nav-item nav-child" data-view="analytics">
                         <span class="nav-icon-wrap"><i data-lucide="bar-chart-2" class="nav-icon"></i></span><span>Analytics</span>
                     </a>
                     <a href="#" class="nav-item nav-child" data-view="feedback">
-                        <span class="nav-icon-wrap"><i data-lucide="message-square" class="nav-icon"></i></span><span>Feedback</span>
+                        <span class="nav-icon-wrap"><i data-lucide="message-square" class="nav-icon"></i></span><span>Feedback</span><span id="feedback-child-badge" style="display:none;" class="pr-nav-badge"></span>
                     </a>
                 </div>
             </div>
 
-            <!-- EXPENSES TRACKER -->
+            <!-- EXPENSES -->
             <div class="nav-group" id="navGroup-expenses">
                 <button class="nav-group-toggle" data-group="expenses" aria-expanded="false">
-                    <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="wallet" class="nav-icon"></i></span>
-                    <span class="nav-group-title">Expenses Tracker</span>
+                    <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="trending-up" class="nav-icon"></i></span>
+                    <span class="nav-group-title">Expenses</span>
                     <i data-lucide="chevron-right" class="nav-group-chevron"></i>
                 </button>
                 <div class="nav-group-children">
@@ -148,11 +149,12 @@
                 </div>
             </div>
 
-            <!-- ACCOMPLISHMENT PANEL -->
+            <!-- BILLING & REPORTS -->
             <div class="nav-group" id="navGroup-accomplishment">
                 <button class="nav-group-toggle" data-group="accomplishment" aria-expanded="false">
                     <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="clipboard-list" class="nav-icon"></i></span>
-                    <span class="nav-group-title">Accomplishment</span>
+                    <span class="nav-group-title">Billing & Reports</span>
+                    <span id="pr-group-badge" style="display:none;margin-right:4px;" class="pr-nav-badge"></span>
                     <i data-lucide="chevron-right" class="nav-group-chevron"></i>
                 </button>
                 <div class="nav-group-children">
@@ -160,7 +162,7 @@
                         <span class="nav-icon-wrap"><i data-lucide="file-spreadsheet" class="nav-icon"></i></span><span>Accomplishment Report</span>
                     </a>
                     <a href="#" class="nav-item nav-child" data-view="clientAccounts">
-                        <span class="nav-icon-wrap"><i data-lucide="user-circle" class="nav-icon"></i></span><span>Client Accounts</span>
+                        <span class="nav-icon-wrap"><i data-lucide="user-circle" class="nav-icon"></i></span><span>Client Accounts</span><span id="clients-child-badge" style="display:none;" class="pr-nav-badge"></span>
                     </a>
                     <a href="#" class="nav-item nav-child" data-view="paymentRequests">
                         <span class="nav-icon-wrap"><i data-lucide="credit-card" class="nav-icon"></i></span><span>Payment Requests</span><span id="pr-admin-badge" style="display:none;" class="pr-nav-badge"></span>
@@ -179,6 +181,7 @@
                 <button class="nav-group-toggle" data-group="construction" aria-expanded="false">
                     <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="hard-hat" class="nav-icon"></i></span>
                     <span class="nav-group-title">Construction</span>
+                    <span id="cons-group-badge" style="display:none;margin-right:4px;" class="pr-nav-badge"></span>
                     <i data-lucide="chevron-right" class="nav-group-chevron"></i>
                 </button>
                 <div class="nav-group-children">
@@ -186,7 +189,7 @@
                         <span class="nav-icon-wrap"><i data-lucide="package" class="nav-icon"></i></span><span>Current Batch</span>
                     </a>
                     <a href="#" class="nav-item nav-child" data-view="consUrgent">
-                        <span class="nav-icon-wrap"><i data-lucide="alert-circle" class="nav-icon"></i></span><span>Urgent Requests</span>
+                        <span class="nav-icon-wrap"><i data-lucide="alert-circle" class="nav-icon"></i></span><span>Urgent Requests</span><span id="urgent-child-badge" style="display:none;" class="pr-nav-badge"></span>
                     </a>
                     <a href="#" class="nav-item nav-child" data-view="consBatchHistory">
                         <span class="nav-icon-wrap"><i data-lucide="calendar" class="nav-icon"></i></span><span>Batch History</span>
@@ -197,16 +200,17 @@
                 </div>
             </div>
 
-            <!-- USER LOGS -->
+            <!-- USERS -->
             <div class="nav-group" id="navGroup-userlogs">
                 <button class="nav-group-toggle" data-group="userlogs" aria-expanded="false">
                     <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="users" class="nav-icon"></i></span>
-                    <span class="nav-group-title">User Logs</span>
+                    <span class="nav-group-title">Users</span>
+                    <span id="users-group-badge" style="display:none;margin-right:4px;" class="pr-nav-badge"></span>
                     <i data-lucide="chevron-right" class="nav-group-chevron"></i>
                 </button>
                 <div class="nav-group-children">
                     <a href="#" class="nav-item nav-child" data-view="userNavigator">
-                        <span class="nav-icon-wrap"><i data-lucide="user-round" class="nav-icon"></i></span><span>User Navigator</span>
+                        <span class="nav-icon-wrap"><i data-lucide="user-round" class="nav-icon"></i></span><span>Navigator</span><span id="users-child-badge" style="display:none;" class="pr-nav-badge"></span>
                     </a>
                 </div>
             </div>
@@ -2397,17 +2401,24 @@
     const BOQ_VIEWS  = ['boqBuilder'];
     const UN_VIEWS   = ['userNavigator','clientAccounts'];
     const TITLES = {
-        dashboard: 'Dashboard', appointments: 'Appointments',
-        analytics: 'Analytics', feedback: 'Feedback',
-        expOverview: 'Budget Overview', expExpenses: 'Expenses',
-        expReports: 'Reports', expOverhead: 'Overhead Expenses',
-        consBatch: 'Current Batch', consUrgent: 'Urgent Requests',
-        consBatchHistory: 'Batch History', consInventory: 'Inventory',
-        boqBuilder: 'Accomplishment Report',
-        userNavigator: '🎯 User Navigator',
-        paymentRequests: '💳 Payment Requests',
-        paymentReports:  '📊 Payment Reports',
-        invoices:        '🧾 Invoice Receipt Generator'
+        dashboard:        'Dashboard',
+        appointments:     'Appointments',
+        analytics:        'Analytics',
+        feedback:         'Feedback',
+        expOverview:      'Budget Overview',
+        expExpenses:      'Expenses',
+        expReports:       'Reports',
+        expOverhead:      'Overhead Expenses',
+        consBatch:        'Current Batch',
+        consUrgent:       'Urgent Requests',
+        consBatchHistory: 'Batch History',
+        consInventory:    'Inventory',
+        boqBuilder:       'Accomplishment Report',
+        clientAccounts:   'Client Accounts',
+        userNavigator:    'User Navigator',
+        paymentRequests:  'Payment Requests',
+        paymentReports:   'Payment Reports',
+        invoices:         'Invoice Receipt',
     };
 
     window.switchView = function(view) {

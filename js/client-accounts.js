@@ -60,6 +60,8 @@
             _showLoading(false);
             _renderStats(_allClients);
             _renderTable(_allClients);
+            // Clear new-client badge — admin has now seen all clients
+            _clearNewClientBadge();
         } catch (e) {
             _loading = false;
             _showLoading(false);
@@ -311,5 +313,34 @@
         if (!ms) return '\u2014';
         return new Date(ms).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
+
+    // ── New-client badge ──────────────────────────────────────
+    const _SEEN_KEY = 'dacs_clients_last_seen';
+
+    function _clearNewClientBadge() {
+        localStorage.setItem(_SEEN_KEY, Date.now().toString());
+        if (typeof window._newClientsCount !== 'undefined') window._newClientsCount = 0;
+        const child = document.getElementById('clients-child-badge');
+        if (child) child.style.display = 'none';
+        if (typeof window.syncBillingGroupBadge === 'function') window.syncBillingGroupBadge();
+    }
+
+    // Called on page load — counts new clients without navigating to the view
+    window.syncNewClientsBadgeEager = function () {
+        db.collection('clientUsers').get().then(snap => {
+            const lastSeen = parseInt(localStorage.getItem(_SEEN_KEY) || '0', 10);
+            const count = snap.docs.filter(d => {
+                const ts = d.data().createdAt;
+                return _tsToMs(ts) > lastSeen;
+            }).length;
+            if (typeof window._newClientsCount !== 'undefined') window._newClientsCount = count;
+            const child = document.getElementById('clients-child-badge');
+            if (child) {
+                if (count > 0) { child.textContent = count; child.style.display = 'inline-flex'; }
+                else { child.style.display = 'none'; }
+            }
+            if (typeof window.syncBillingGroupBadge === 'function') window.syncBillingGroupBadge();
+        }).catch(() => {});
+    };
 
 })();

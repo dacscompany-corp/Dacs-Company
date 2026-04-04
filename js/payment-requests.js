@@ -195,18 +195,21 @@
         _setText('prPartialCount',   partial);
         _setText('prSubmittedCount', submitted);
         _setText('prVerifiedCount',  verified);
-        _updateAdminBadge(submitted + partial);
+        const actionable = requests.filter(r =>
+            r.status === 'submitted' || r.status === 'partial_pending'
+        ).length;
+        _updateAdminBadge(actionable);
     }
 
     function _updateAdminBadge(urgentCount) {
         const badge = document.getElementById('pr-admin-badge');
-        if (!badge) return;
-        if (urgentCount > 0) {
-            badge.textContent = urgentCount;
-            badge.style.display = 'inline-flex';
-        } else {
-            badge.style.display = 'none';
+        if (badge) {
+            if (urgentCount > 0) { badge.textContent = urgentCount; badge.style.display = 'inline-flex'; }
+            else { badge.style.display = 'none'; }
         }
+        // Update shared billing group badge via admin.js controller
+        if (typeof window._pendingPaymentCount !== 'undefined') window._pendingPaymentCount = urgentCount;
+        if (typeof window.syncBillingGroupBadge === 'function') window.syncBillingGroupBadge();
     }
 
     // ══════════════════════════════════════════════════════
@@ -266,8 +269,11 @@
             <td>${statusBadge}</td>
             <td>
                 <div class="un-actions">
-                    <button class="un-btn-view" onclick="prViewRequest('${r.id}')">
+                    <button class="un-btn-view" onclick="prViewRequest('${r.id}')" style="position:relative;">
                         <i data-lucide="eye" style="width:13px;height:13px;"></i> View
+                        ${(r.status === 'submitted' || r.status === 'partial_pending')
+                            ? '<span style="position:absolute;top:-5px;right:-5px;width:10px;height:10px;border-radius:50%;background:#ef4444;border:2px solid #fff;"></span>'
+                            : ''}
                     </button>
                     <button class="un-btn-sowa" onclick="prOpenSOWA('${_esc(r.clientEmail)}','${_esc(r.clientName || _nameFromEmail(r.clientEmail))}','${_esc(r.projectName || '')}')">
                         <i data-lucide="file-text" style="width:13px;height:13px;"></i> SOWA
@@ -442,9 +448,16 @@
     // DELETE REQUEST
     // ══════════════════════════════════════════════════════
 
+    // Remove red dot from a row's View button
+    function _clearRequestBadge(id) {
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row) { const dot = row.querySelector('.un-btn-view span'); if (dot) dot.remove(); }
+    }
+
     window.prDeleteRequest = async function (id) {
         if (!await window.showDeleteConfirm('Are you sure you want to delete this payment request? This cannot be undone.')) return;
         try {
+            _clearRequestBadge(id);
             await db.collection('paymentRequests').doc(id).delete();
             _allRequests = _allRequests.filter(r => r.id !== id);
             _renderStats(_allRequests);
@@ -462,6 +475,8 @@
     window.prViewRequest = function (id) {
         const r = _allRequests.find(x => x.id === id);
         if (!r) return;
+
+        // (badge clears only on action: verify, reject, or delete)
 
         _currentId = id;
 
@@ -911,6 +926,7 @@
         const btn = document.querySelector('#prVerifyConfirm .pr-btn-verify');
         if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
         try {
+            _clearRequestBadge(id);
             const verifiedBy = auth.currentUser ? auth.currentUser.email : '';
             await db.collection('paymentRequests').doc(id).update({
                 status:     'verified',
@@ -975,6 +991,7 @@
         const btn = document.querySelector('#prRejectForm .pr-btn-reject');
         if (btn) { btn.disabled = true; btn.textContent = 'Rejecting…'; }
         try {
+            _clearRequestBadge(id);
             await db.collection('paymentRequests').doc(id).update({
                 status:         'rejected',
                 rejectedReason: reason,

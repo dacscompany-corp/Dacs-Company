@@ -5,6 +5,9 @@ let currentUserRole = null;   // 'owner' | 'staff' | 'worker' | 'teamLeader'
 let currentView     = 'dashboard';
 let appointments = [];
 let currentAppointment = null;
+let _pendingFeedbackCount       = 0;
+window._pendingPaymentCount     = 0;
+window._newClientsCount         = 0;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -156,6 +159,15 @@ function showDashboard() {
     if (typeof initExpensesModule === 'function') initExpensesModule();
     if (typeof loadProjects === 'function') loadProjects();
 
+    // Eagerly update payment requests + feedback + new clients badges on load
+    _syncPaymentBadge();
+    _syncFeedbackBadgeEager();
+    setTimeout(() => {
+        if (typeof window.syncNewClientsBadgeEager === 'function') window.syncNewClientsBadgeEager();
+        if (typeof window.syncNewUsersBadgeEager === 'function') window.syncNewUsersBadgeEager();
+        if (typeof window.syncUrgentBadgeEager === 'function') window.syncUrgentBadgeEager();
+    }, 500);
+
     // Start real-time appointments listener only after auth is confirmed
     if (_appointmentsUnsub) _appointmentsUnsub(); // tear down any previous listener
     _appointmentsUnsub = db.collection('appointments')
@@ -170,6 +182,70 @@ function showDashboard() {
             if (currentView === 'analytics') displayAnalytics();
             if (currentView === 'feedback') displayAllFeedback();
         });
+}
+
+// Update Billing & Reports group badge = payment requests + new clients
+function _syncBillingGroupBadge() {
+    const total = (window._pendingPaymentCount || 0) + (window._newClientsCount || 0);
+    const groupBadge = document.getElementById('pr-group-badge');
+    if (!groupBadge) return;
+    if (total > 0) { groupBadge.textContent = total; groupBadge.style.display = 'inline-flex'; }
+    else { groupBadge.style.display = 'none'; }
+}
+window.syncBillingGroupBadge = _syncBillingGroupBadge;
+
+// Update the Appointments group badge = pending appointments + pending feedback
+function _syncApptGroupBadge(pendingAppts) {
+    const total = (pendingAppts || 0) + _pendingFeedbackCount;
+    const groupBadge = document.getElementById('appt-group-badge');
+    if (!groupBadge) return;
+    if (total > 0) { groupBadge.textContent = total; groupBadge.style.display = 'inline-flex'; }
+    else { groupBadge.style.display = 'none'; }
+}
+
+// Sync feedback child badge and roll into group badge
+function _syncFeedbackBadge(count) {
+    _pendingFeedbackCount = count || 0;
+    const child = document.getElementById('feedback-child-badge');
+    if (child) {
+        if (_pendingFeedbackCount > 0) { child.textContent = _pendingFeedbackCount; child.style.display = 'inline-flex'; }
+        else { child.style.display = 'none'; }
+    }
+    // Re-sync group badge with latest appointment count
+    const pendingAppts = appointments.filter(a => a.status === 'pending').length;
+    _syncApptGroupBadge(pendingAppts);
+}
+
+// Eagerly fetch feedback pending count on load
+function _syncFeedbackBadgeEager() {
+    db.collection('testimonials').get().then(snap => {
+        const count = snap.docs.filter(d => (d.data().status || 'pending') === 'pending').length;
+        _syncFeedbackBadge(count);
+    }).catch(() => {});
+}
+
+// Eagerly fetch payment request pending count and update nav badges
+function _syncPaymentBadge() {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+    db.collection('users').doc(user.uid).get().then(doc => {
+        const ownerUid = (doc.exists && doc.data().role === 'staff' && doc.data().ownerUid)
+            ? doc.data().ownerUid : user.uid;
+        return db.collection('paymentRequests')
+            .where('ownerUid', '==', ownerUid)
+            .get();
+    }).then(snap => {
+        window._pendingPaymentCount = snap.docs.filter(d => {
+            const s = d.data().status;
+            return s === 'submitted' || s === 'partial_pending';
+        }).length;
+        const badge = document.getElementById('pr-admin-badge');
+        if (badge) {
+            if (_pendingPaymentCount > 0) { badge.textContent = _pendingPaymentCount; badge.style.display = 'inline-flex'; }
+            else { badge.style.display = 'none'; }
+        }
+        _syncBillingGroupBadge();
+    }).catch(() => {});
 }
 
 // Setup event listeners
@@ -324,10 +400,24 @@ function switchView(view) {
     
     // Update page title
     const titles = {
-        dashboard: 'Dashboard', appointments: 'Appointments', analytics: 'Analytics',
-        feedback: 'Feedback',
-        expOverview: 'Budget Overview', expExpenses: 'Expenses',
-        expReports: 'Reports'
+        dashboard:        'Dashboard',
+        appointments:     'Appointments',
+        analytics:        'Analytics',
+        feedback:         'Feedback',
+        expOverview:      'Budget Overview',
+        expExpenses:      'Expenses',
+        expReports:       'Reports',
+        expOverhead:      'Overhead Expenses',
+        boqBuilder:       'Accomplishment Report',
+        clientAccounts:   'Client Accounts',
+        paymentRequests:  'Payment Requests',
+        paymentReports:   'Payment Reports',
+        invoices:         'Invoice Receipt',
+        consBatch:        'Current Batch',
+        consUrgent:       'Urgent Requests',
+        consBatchHistory: 'Batch History',
+        consInventory:    'Inventory',
+        userNavigator:    'User Navigator',
     };
     document.getElementById('pageTitle').textContent = titles[view] || view;
     
@@ -413,6 +503,15 @@ function updateDashboardStats() {
     document.getElementById('pendingAppointments').textContent = pending;
     document.getElementById('completedAppointments').textContent = completed;
     document.getElementById('thisWeek').textContent = thisWeek;
+
+    // Sync appointment child badge
+    const apptChild = document.getElementById('appt-child-badge');
+    if (apptChild) {
+        if (pending > 0) { apptChild.textContent = pending; apptChild.style.display = 'inline-flex'; }
+        else { apptChild.style.display = 'none'; }
+    }
+    // Sync group badge = pending appointments + pending feedback
+    _syncApptGroupBadge(pending);
 }
 
 // Display recent appointments
@@ -454,6 +553,7 @@ function displayAllAppointments() {
         const date = appointment.createdAt?.toDate();
         const dateStr = date ? date.toLocaleDateString() : 'N/A';
         
+        const isPending = appointment.status === 'pending';
         return `
             <tr onclick="showAppointmentDetails('${appointment.id}')">
                 <td>${dateStr}</td>
@@ -462,10 +562,11 @@ function displayAllAppointments() {
                 <td>${appointment.contact}</td>
                 <td>${formatService(appointment.service)}</td>
                 <td><span class="status-badge status-${appointment.status}">${appointment.status}</span></td>
-                <td>
+                <td style="position:relative;">
+                    ${isPending ? '<span style="position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#ef4444;pointer-events:none;"></span>' : ''}
                     <select onchange="updateStatus('${appointment.id}', this.value)" onclick="event.stopPropagation()">
                         <option value="">Update Status</option>
-                        <option value="pending" ${appointment.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="pending" ${isPending ? 'selected' : ''}>Pending</option>
                         <option value="confirmed" ${appointment.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
                         <option value="completed" ${appointment.status === 'completed' ? 'selected' : ''}>Completed</option>
                         <option value="cancelled" ${appointment.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
@@ -501,6 +602,7 @@ function filterAppointments() {
         const date = appointment.createdAt?.toDate();
         const dateStr = date ? date.toLocaleDateString() : 'N/A';
         
+        const isPending = appointment.status === 'pending';
         return `
             <tr onclick="showAppointmentDetails('${appointment.id}')">
                 <td>${dateStr}</td>
@@ -509,10 +611,11 @@ function filterAppointments() {
                 <td>${appointment.contact}</td>
                 <td>${formatService(appointment.service)}</td>
                 <td><span class="status-badge status-${appointment.status}">${appointment.status}</span></td>
-                <td>
+                <td style="position:relative;">
+                    ${isPending ? '<span style="position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#ef4444;pointer-events:none;"></span>' : ''}
                     <select onchange="updateStatus('${appointment.id}', this.value)" onclick="event.stopPropagation()">
                         <option value="">Update Status</option>
-                        <option value="pending" ${appointment.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="pending" ${isPending ? 'selected' : ''}>Pending</option>
                         <option value="confirmed" ${appointment.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
                         <option value="completed" ${appointment.status === 'completed' ? 'selected' : ''}>Completed</option>
                         <option value="cancelled" ${appointment.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
@@ -526,29 +629,67 @@ function filterAppointments() {
 // Update appointment status
 async function updateStatus(appointmentId, newStatus) {
     if (!newStatus) return;
-    
+
+    const appointment = appointments.find(a => a.id === appointmentId);
+    const clientName  = appointment?.fullname || 'this appointment';
+
+    const statusColors = { confirmed: '#00a85e', completed: '#3b82f6', cancelled: '#ef4444', pending: '#f59e0b' };
+    const statusColor  = statusColors[newStatus] || '#1e3a5f';
+
+    const confirmed = await _showStatusConfirm(clientName, newStatus, statusColor);
+    if (!confirmed) {
+        // Revert dropdown to current status
+        displayAllAppointments();
+        return;
+    }
+
     try {
         await db.collection('appointments').doc(appointmentId).update({
             status: newStatus,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
-        // Update local array
-        const appointment = appointments.find(a => a.id === appointmentId);
-        if (appointment) {
-            appointment.status = newStatus;
-        }
-        
-        // Refresh displays
+        if (appointment) appointment.status = newStatus;
         updateDashboardStats();
         displayRecentAppointments();
         displayAllAppointments();
-        
-        alert('Status updated successfully!');
+        _showAdminToast('Appointment status updated successfully.');
     } catch (error) {
         console.error('Error updating status:', error);
-        alert('Error updating status. Please try again.');
+        _showAdminToast('Error updating status. Please try again.', true);
     }
+}
+
+function _showStatusConfirm(clientName, newStatus, color) {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(2px);';
+        overlay.innerHTML = `
+        <div style="background:#fff;border-radius:16px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;">
+            <div style="background:#1e3a5f;padding:18px 22px;">
+                <div style="font-size:15px;font-weight:700;color:#fff;">Update Appointment Status</div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px;">${clientName}</div>
+            </div>
+            <div style="padding:22px;">
+                <p style="font-size:13.5px;color:#374151;margin:0 0 16px;">Change status to <span style="font-weight:700;color:${color};text-transform:capitalize;">${newStatus}</span>?</p>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button id="_scCancel" style="padding:9px 20px;border-radius:8px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+                    <button id="_scConfirm" style="padding:9px 20px;border-radius:8px;border:none;background:${color};color:#fff;font-size:13px;font-weight:600;cursor:pointer;text-transform:capitalize;">Set ${newStatus}</button>
+                </div>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#_scConfirm').onclick = () => { overlay.remove(); resolve(true); };
+        overlay.querySelector('#_scCancel').onclick  = () => { overlay.remove(); resolve(false); };
+        overlay.onclick = e => { if (e.target === overlay) { overlay.remove(); resolve(false); } };
+    });
+}
+
+function _showAdminToast(msg, isError = false) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = `position:fixed;bottom:24px;right:24px;background:${isError ? '#b91c1c' : '#1e3a5f'};color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s;`;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
 }
 
 // Show appointment details
@@ -623,10 +764,10 @@ async function deleteAppointment() {
         displayAllAppointments();
         
         closeModal();
-        alert('Appointment deleted successfully!');
+        _showAdminToast('Appointment deleted successfully.');
     } catch (error) {
         console.error('Error deleting appointment:', error);
-        alert('Error deleting appointment. Please try again.');
+        _showAdminToast('Error deleting appointment. Please try again.', true);
     }
 }
 
@@ -1528,6 +1669,8 @@ async function loadFeedback() {
         const snapshot = await db.collection('testimonials').get();
         allFeedback = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         displayAllFeedback();
+        const pendingCount = allFeedback.filter(f => (f.status || 'pending') === 'pending').length;
+        _syncFeedbackBadge(pendingCount);
     } catch (error) { console.error('Error loading feedback:', error); }
 }
 
@@ -1647,10 +1790,10 @@ async function updateFeedbackStatus(feedbackId, newStatus) {
         if (cached) cached.status = newStatus;
 
         renderFeedbackTable();
-        alert('Feedback status updated successfully!');
+        _showAdminToast('Feedback status updated successfully.');
     } catch (error) {
         console.error('Error updating feedback status:', error);
-        alert('Error updating status. Please try again.');
+        _showAdminToast('Error updating status. Please try again.', true);
     }
 }
 
@@ -1662,10 +1805,10 @@ async function deleteFeedback(feedbackId) {
         feedbackList = feedbackList.filter(t => t.id !== feedbackId);
         allFeedback = allFeedback.filter(t => t.id !== feedbackId);
         renderFeedbackTable();
-        alert('Feedback deleted successfully!');
+        _showAdminToast('Feedback deleted successfully.');
     } catch (error) {
         console.error('Error deleting feedback:', error);
-        alert('Error deleting feedback. Please try again.');
+        _showAdminToast('Error deleting feedback. Please try again.', true);
     }
 }
 
