@@ -1727,12 +1727,13 @@
                 <td class="c-amt">₱ ${fmt(calcCostItemSubtotal(ci))}</td>
                 <td></td>
                 <td class="c-amt">₱ ${fmt(calcCostItemAccomplishment(ci))}</td>
-            </tr>`;
+            </tr>
+            <tr class="pr-spacer"><td colspan="9"></td></tr>`;
         });
 
         // ── Terms ────────────────────────────────────────────
-        const payLines = (boq.terms.payments || '').split('\n').map(l => `<div class="pr-terms-line">${escHtml(l)}</div>`).join('');
-        const exclLines = (boq.terms.exclusions || '').split('\n').map((l, i) => `<div class="pr-terms-line">${String.fromCharCode(97+i)}. ${escHtml(l)}</div>`).join('');
+        const payLines = (boq.terms.payments || '').split('\n').map(l => `<div class="pr-term-ln">${escHtml(l)}</div>`).join('');
+        const exclLines = (boq.terms.exclusions || '').split('\n').map((l, i) => `<div class="pr-term-ln">${String.fromCharCode(97+i)}. ${escHtml(l)}</div>`).join('');
 
         const html = `<!DOCTYPE html>
 <html lang="en">
@@ -1764,10 +1765,10 @@
   .pr-co-tagline{font-size:7.5pt;color:#555;margin-top:2px;letter-spacing:.03em;}
 
   /* ── Info box ── */
-  .pr-info{width:100%;border-collapse:collapse;margin-bottom:9px;}
-  .pr-info td{padding:3.5px 7px;border:1px solid #bbb;font-size:8pt;vertical-align:middle;}
-  .pr-lbl{background:#d9d9d9;font-weight:800;white-space:nowrap;width:1%;text-transform:uppercase;color:#333;}
-  .pr-val{font-weight:700;color:#111;}
+  .pr-info{width:50%;border-collapse:collapse;margin-bottom:9px;border:2px solid #111;}
+  .pr-info td{padding:3px 7px;border:1px solid #111;font-size:8pt;vertical-align:middle;}
+  .pr-lbl{background:#111;color:#fff;font-weight:800;white-space:nowrap;width:90px;text-transform:uppercase;}
+  .pr-val{font-weight:700;color:#111;background:#fff;}
 
   /* ── Table ── */
   .pr-tbl{width:100%;border-collapse:collapse;font-size:7pt;margin-bottom:5px;table-layout:fixed;}
@@ -1778,28 +1779,35 @@
              -webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .pr-th-sub{background:#fbbf24;color:#000;font-weight:700;text-align:center;font-size:6.5pt;
              -webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  /* section header — amber #fbbf24 */
-  .pr-l1 td{background:#fbbf24;color:#000;font-weight:800;font-size:7.5pt;text-transform:uppercase;
+  /* section header — red #c81e1e */
+  .pr-l1 td{background:#c81e1e;color:#fff;font-weight:800;font-size:7.5pt;text-transform:uppercase;border-color:#991b1b;
             -webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  /* sub-item — light grey #f2f2f2 */
-  .pr-l2 td{background:#f2f2f2;color:#000;font-weight:700;font-size:7pt;
+  /* sub-item — white background, bold black */
+  .pr-l2 td{background:#fff;color:#000;font-weight:700;font-size:7pt;
             -webkit-print-color-adjust:exact;print-color-adjust:exact;}
   /* line item — white */
   .pr-l3 td{background:#fff;font-size:7pt;}
   .pr-l3.pr-opt td{color:#6b7280;font-style:italic;}
-  /* subtotal — same amber as section header */
+  /* subtotal — full amber #fbbf24 */
   .pr-sub td{background:#fbbf24;color:#000;font-weight:800;font-size:7.5pt;text-transform:uppercase;
              -webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  /* grand total rows — deeper gold #ffc000 */
-  .pr-grand td{background:#ffc000;color:#000;font-weight:800;font-size:7.5pt;text-transform:uppercase;
+  /* grand total — amber (TOTAL PROJECT COST) */
+  .pr-grand td{background:#fbbf24;color:#000;font-weight:800;font-size:7.5pt;text-transform:uppercase;
                -webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  /* discounted total — slightly richer */
-  .pr-grand-final td{background:#ffc000;color:#000;font-weight:900;font-size:8pt;text-transform:uppercase;
-                     border-top:2px solid #d97706;
+  /* discount — teal/cyan */
+  .pr-discount td{background:#17a2b8;color:#000;font-weight:800;font-size:7.5pt;text-transform:uppercase;
+                  -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  /* discounted/grand total — green */
+  .pr-grand-final td{background:#70ad47;color:#000;font-weight:900;font-size:8pt;text-transform:uppercase;
                      -webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  /* total accomplishment — dark navy like PDF "grandFinal" emphasis */
+  /* total accomplishment — dark navy */
   .pr-acc td{background:#1a1a2e;color:#fff;font-weight:900;font-size:8pt;text-transform:uppercase;
              -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+  /* spacer row after each subtotal */
+  .pr-spacer td{height:5px;background:#fff;border:none;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  /* transparent cell — no bg, no border */
+  .pr-transparent{background:transparent!important;border:none!important;}
 
   /* ── Col widths ── */
   .c-no  {width:28px;text-align:center;white-space:nowrap;}
@@ -1807,7 +1815,7 @@
   .c-qty {width:30px;text-align:center;}
   .c-unit{width:32px;text-align:center;}
   .c-rate{width:66px;text-align:right;white-space:nowrap;}
-  .c-amt {width:72px;text-align:right;white-space:nowrap;}
+  .c-amt {width:90px;text-align:right;white-space:nowrap;}
   .c-pct {width:36px;text-align:center;}
 
   /* ── Terms ── */
@@ -1827,6 +1835,7 @@
            font-style:italic;border-top:1px solid #ddd;padding-top:6px;line-height:1.6;}
 
   /* ── Print overrides ── */
+  @page{size:A4 portrait;margin:0;}
   @media print{
     body{background:#fff;}
     .page{width:100%;margin:0;padding:8mm 10mm 10mm;box-shadow:none;min-height:auto;}
@@ -1844,28 +1853,12 @@
 
   <!-- Document info box -->
   <table class="pr-info">
-    <colgroup>
-      <col style="width:80px"><col><col style="width:80px"><col>
-      <col style="width:50px"><col style="width:80px">
-    </colgroup>
-    <tr>
-      <td class="pr-lbl">Name:</td>
-      <td class="pr-val" colspan="3">${escHtml(h.ownerName || '')}</td>
-      <td class="pr-lbl">Date:</td>
-      <td class="pr-val">${fmtDate}</td>
-    </tr>
-    <tr>
-      <td class="pr-lbl">Address:</td>
-      <td class="pr-val" colspan="5">${escHtml(h.location || '')}</td>
-    </tr>
-    <tr>
-      <td class="pr-lbl">Project:</td>
-      <td class="pr-val">${escHtml(h.projectName || '')}</td>
-      <td class="pr-lbl">Area:</td>
-      <td class="pr-val">${escHtml(h.area ? h.area + ' sqm' : '')}</td>
-      <td class="pr-lbl">Subject:</td>
-      <td class="pr-val">${escHtml(h.subject || 'Accomplishment Report')}</td>
-    </tr>
+    <tr><td class="pr-lbl">Date:</td><td class="pr-val">${fmtDate}</td></tr>
+    <tr><td class="pr-lbl">Project:</td><td class="pr-val">${escHtml(h.projectName || '')}</td></tr>
+    <tr><td class="pr-lbl">Area:</td><td class="pr-val">${escHtml(h.area ? h.area + ' sqm' : '')}</td></tr>
+    <tr><td class="pr-lbl">Owner:</td><td class="pr-val">${escHtml(h.ownerName || '')}</td></tr>
+    <tr><td class="pr-lbl">Location:</td><td class="pr-val">${escHtml(h.location || '')}</td></tr>
+    <tr><td class="pr-lbl">Subject:</td><td class="pr-val">${escHtml(h.subject || 'Accomplishment Report')}</td></tr>
   </table>
 
   <!-- BOQ Table -->
@@ -1896,27 +1889,35 @@
     <tbody>
       ${tableRows}
       <tr class="pr-grand">
-        <td class="c-no"></td>
-        <td colspan="5" style="text-align:right;font-weight:800">TOTAL PROJECT COST (VAT EXCLUSIVE)</td>
+        <td class="pr-transparent"></td>
+        <td class="pr-transparent"></td>
+        <td class="pr-transparent"></td>
+        <td colspan="3" style="text-align:right;font-weight:800">TOTAL PROJECT COST (VAT EXCLUSIVE)</td>
         <td class="c-amt">₱ ${fmt(grand)}</td>
-        <td></td>
+        <td class="c-pct"></td>
         <td class="c-amt">₱ ${fmt(totalAcc)}</td>
       </tr>
-      <tr class="pr-grand">
-        <td class="c-no"></td>
-        <td colspan="5" style="text-align:right;font-weight:800">DISCOUNT</td>
+      <tr class="pr-discount">
+        <td class="pr-transparent"></td>
+        <td class="pr-transparent"></td>
+        <td class="pr-transparent"></td>
+        <td colspan="3" style="text-align:right;font-weight:800">DISCOUNT</td>
         <td class="c-amt">₱ ${fmt(disc)}</td>
-        <td></td><td></td>
+        <td colspan="2"></td>
       </tr>
       <tr class="pr-grand-final">
-        <td class="c-no"></td>
-        <td colspan="5" style="text-align:right;font-weight:900">DISCOUNTED TOTAL PROJECT COST (VAT EXCLUSIVE)</td>
+        <td class="pr-transparent"></td>
+        <td class="pr-transparent"></td>
+        <td class="pr-transparent"></td>
+        <td colspan="3" style="text-align:right;font-weight:900">DISCOUNTED TOTAL PROJECT COST (VAT EXCLUSIVE)</td>
         <td class="c-amt">₱ ${fmt(discounted)}</td>
-        <td></td><td></td>
+        <td colspan="2"></td>
       </tr>
       <tr class="pr-acc">
-        <td class="c-no"></td>
-        <td colspan="7" style="text-align:right;font-weight:900">TOTAL ACCOMPLISHMENT TO DATE</td>
+        <td class="pr-transparent"></td>
+        <td class="pr-transparent"></td>
+        <td class="pr-transparent"></td>
+        <td colspan="5" style="text-align:right;font-weight:900">TOTAL ACCOMPLISHMENT TO DATE</td>
         <td class="c-amt">₱ ${fmt(totalAcc)}</td>
       </tr>
     </tbody>
