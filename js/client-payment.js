@@ -515,21 +515,41 @@
         if (!input || !reasonWrap || !btn) return;
         const entered   = parseFloat((input.value || '').replace(/,/g, ''));
         const requested = parseFloat(input.dataset.requested || 0);
-        const isPartial = !isNaN(entered) && requested > 0 && !isNaN(requested) && Math.abs(entered - requested) > 0.01;
+        const isPartial    = !isNaN(entered) && requested > 0 && !isNaN(requested) && entered < requested - 0.01;
+        const isOverpay    = !isNaN(entered) && requested > 0 && !isNaN(requested) && entered > requested + 0.01;
+
+        // Partial reason
         reasonWrap.style.display = isPartial ? 'block' : 'none';
         if (!isPartial && reasonTA) reasonTA.value = '';
-        // In partial-request mode: hide QR and proof fields (not paying yet, just requesting approval)
+
+        // Overpayment notice
+        let overpayWrap = document.getElementById('prOverpayNotice');
+        if (!overpayWrap) {
+            overpayWrap = document.createElement('div');
+            overpayWrap.id = 'prOverpayNotice';
+            overpayWrap.style.cssText = 'margin-top:10px;padding:10px 14px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:8px;font-size:12.5px;color:#92400e;display:none;';
+            input.closest('div')?.after(overpayWrap);
+        }
+        if (isOverpay) {
+            const excess = entered - requested;
+            overpayWrap.style.display = 'block';
+            overpayWrap.innerHTML = `<strong>⚠ Overpayment Notice</strong><br>You are paying <strong>${_formatAmount(excess)}</strong> more than requested (₱${requested.toLocaleString('en-PH')} requested). The admin will be notified and will handle the excess accordingly.`;
+        } else {
+            overpayWrap.style.display = 'none';
+        }
+
+        // In partial-request mode: hide QR and proof fields
         if (qrSection)    qrSection.style.display    = isPartial ? 'none' : '';
         if (proofSection) proofSection.style.display  = isPartial ? 'none' : '';
         if (tabsWrap) {
             tabsWrap.style.display = isPartial ? 'none' : (tabsWrap.dataset.hasQr === 'true' ? 'block' : 'none');
         }
         if (isPartial) {
-            btn.textContent    = 'Request Partial Approval';
-            btn.dataset.mode   = 'partial';
+            btn.textContent  = 'Request Partial Approval';
+            btn.dataset.mode = 'partial';
         } else {
-            btn.textContent    = 'Submit Payment';
-            btn.dataset.mode   = 'submit';
+            btn.textContent  = 'Submit Payment';
+            btn.dataset.mode = 'submit';
         }
     };
 
