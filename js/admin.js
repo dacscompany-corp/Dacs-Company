@@ -81,14 +81,15 @@ function showLoginError(message) {
 
 // Apply nav and view restrictions based on role
 function applyRoleBasedUI() {
-    // ── Reset: restore all nav items and cards before applying role restrictions ──
+    // ── Reset: restore all nav items and groups before applying role restrictions ──
     document.querySelectorAll('.nav-item').forEach(el => el.style.display = '');
-    document.querySelectorAll('.nav-group-label').forEach(el => el.style.display = '');
+    document.querySelectorAll('.nav-group').forEach(el => el.style.display = '');
+    document.querySelectorAll('.nav-group-toggle').forEach(el => el.style.display = '');
     const _resetCards = ['mvpDetailBudgetCard'];
     _resetCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
 
     if (currentUserRole === 'staff') {
-        // Staff cannot access: Overhead only (Budget Overview now visible with KPI-only mode)
+        // Staff cannot access Overhead
         const hiddenViews = ['expOverhead'];
         hiddenViews.forEach(view => {
             const navItem = document.querySelector(`.nav-item[data-view="${view}"]`);
@@ -106,25 +107,30 @@ function applyRoleBasedUI() {
         setTimeout(() => switchView('dashboard'), 100);
 
     } else if (currentUserRole === 'worker' || currentUserRole === 'teamLeader') {
-        // Workers only see Construction module
-        const hiddenViews = ['dashboard', 'appointments', 'analytics', 'feedback',
-                             'expOverview', 'expExpenses', 'expReports', 'expOverhead',
-                             'boqBuilder', 'userNavigator'];
-        hiddenViews.forEach(view => {
-            const navItem = document.querySelector(`.nav-item[data-view="${view}"]`);
-            if (navItem) navItem.style.display = 'none';
+        // Workers only see Construction — hide all other groups entirely
+        ['navGroup-appointments', 'navGroup-expenses', 'navGroup-accomplishment', 'navGroup-userlogs'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
         });
 
-        // Hide EXPENSES TRACKER and BOQ nav group labels
-        document.querySelectorAll('.nav-group-label').forEach(label => {
-            const t = label.textContent.trim();
-            if (t === 'EXPENSES TRACKER' || t === 'Accomplishment Panel') label.style.display = 'none';
-        });
+        // Also hide userNavigator inside userlogs (already covered above, but be explicit)
+        const uvItem = document.querySelector('.nav-item[data-view="userNavigator"]');
+        if (uvItem) uvItem.style.display = 'none';
+
+        // Open construction group by default for workers
+        const consGroup = document.getElementById('navGroup-construction');
+        if (consGroup) consGroup.classList.add('open');
 
         // Default landing view for workers
         setTimeout(() => switchView('consBatch'), 100);
     }
     // 'owner' sees everything — no restrictions
+
+    // Auto-hide any group toggle whose all children are hidden
+    document.querySelectorAll('.nav-group').forEach(group => {
+        const visibleChildren = [...group.querySelectorAll('.nav-item')].filter(el => el.style.display !== 'none');
+        if (visibleChildren.length === 0) group.style.display = 'none';
+    });
 }
 
 // Refresh analytics - can be called manually
@@ -184,6 +190,33 @@ function setupEventListeners() {
             switchView(view);
         });
     });
+
+    // Collapsible nav group toggles
+    document.querySelectorAll('.nav-group-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const group = btn.closest('.nav-group');
+            const isOpen = group.classList.contains('open');
+            // Close all groups and reset aria-expanded
+            document.querySelectorAll('.nav-group').forEach(g => {
+                g.classList.remove('open');
+                const t = g.querySelector('.nav-group-toggle');
+                if (t) t.setAttribute('aria-expanded', 'false');
+            });
+            // Toggle clicked group
+            if (!isOpen) {
+                group.classList.add('open');
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
+
+    // Open the Appointments group by default (contains Dashboard)
+    const defaultGroup = document.getElementById('navGroup-appointments');
+    if (defaultGroup) {
+        defaultGroup.classList.add('open');
+        const defaultToggle = defaultGroup.querySelector('.nav-group-toggle');
+        if (defaultToggle) defaultToggle.setAttribute('aria-expanded', 'true');
+    }
     
     // Filters
     document.getElementById('statusFilter')?.addEventListener('change', filterAppointments);
@@ -274,6 +307,18 @@ function switchView(view) {
         item.classList.remove('active');
         if (item.dataset.view === view) {
             item.classList.add('active');
+            // Auto-open parent group if this item is inside one
+            const parentGroup = item.closest('.nav-group');
+            if (parentGroup) {
+                document.querySelectorAll('.nav-group').forEach(g => {
+                    g.classList.remove('open');
+                    const t = g.querySelector('.nav-group-toggle');
+                    if (t) t.setAttribute('aria-expanded', 'false');
+                });
+                parentGroup.classList.add('open');
+                const parentToggle = parentGroup.querySelector('.nav-group-toggle');
+                if (parentToggle) parentToggle.setAttribute('aria-expanded', 'true');
+            }
         }
     });
     

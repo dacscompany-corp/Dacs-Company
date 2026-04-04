@@ -1664,16 +1664,14 @@ mark.exp-search-highlight {
     .lb-nav { width: 34px; height: 34px; font-size: 1rem; }
 }
 
-/* ── Colorful action icons ──────────────────────────── */
+/* ── Action icon colors ──────────────────────────── */
 .exp-icon-btn-edit svg,
-.exp-icon-btn-edit i   { stroke: #ffffff; }
+.exp-icon-btn-edit i   { stroke: #3b82f6; }
 .exp-icon-btn-danger svg,
 .exp-icon-btn-danger i { stroke: #dc2626; }
 
-.exp-icon-btn-edit   { background: rgba(217,119,6,0.08);  border-color: rgba(217,119,6,0.2); }
-.exp-icon-btn-danger { background: rgba(220,38,38,0.08);  border-color: rgba(220,38,38,0.2); }
-.exp-icon-btn-edit:hover   { background: rgba(217,119,6,0.18); border-color: #4AC84A; }
-.exp-icon-btn-danger:hover { background: rgba(220,38,38,0.18); border-color: #dc2626; }
+.exp-icon-btn-edit:hover   { background: #bfdbfe; border-color: #3b82f6; }
+.exp-icon-btn-danger:hover { background: #fecaca; border-color: #dc2626; }
 
 /* Colorful modal icons */
 .modal-icon { stroke: #059669; }

@@ -70,6 +70,7 @@
             <img src="assets/images/DACS-TRANSPARENT.png" alt="DAC's" class="login-logo">
             <h1>Admin Dashboard</h1>
             <p>DAC's Building Design Services</p>
+            <div class="login-header-accent"></div>
         </div>
         <form id="loginForm" class="login-form">
             <div class="form-group">
@@ -101,67 +102,114 @@
             <h2>DAC'S</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="#" class="nav-item active" data-view="dashboard">
-                <span class="nav-icon-wrap"><i data-lucide="layout-dashboard" class="nav-icon"></i></span><span>Dashboard</span>
-            </a>
-            <a href="#" class="nav-item" data-view="appointments">
-                <span class="nav-icon-wrap"><i data-lucide="calendar-check" class="nav-icon"></i></span><span>Appointments</span>
-            </a>
-            <a href="#" class="nav-item" data-view="analytics">
-                <span class="nav-icon-wrap"><i data-lucide="bar-chart-2" class="nav-icon"></i></span><span>Analytics</span>
-            </a>
-            <a href="#" class="nav-item" data-view="feedback">
-                <span class="nav-icon-wrap"><i data-lucide="message-square" class="nav-icon"></i></span><span>Feedback</span>
-            </a>
-            <div class="nav-group-label">EXPENSES TRACKER</div>
-            <a href="#" class="nav-item" data-view="expOverview">
-                <span class="nav-icon-wrap"><i data-lucide="wallet" class="nav-icon"></i></span><span>Budget Overview</span>
-            </a>
-            <a href="#" class="nav-item" data-view="expExpenses">
-                <span class="nav-icon-wrap"><i data-lucide="receipt" class="nav-icon"></i></span><span>Expenses</span>
-            </a>
-            <a href="#" class="nav-item" data-view="expReports">
-                <span class="nav-icon-wrap"><i data-lucide="file-bar-chart" class="nav-icon"></i></span><span>Reports</span>
-            </a>
-            <a href="#" class="nav-item" data-view="expOverhead">
-                <span class="nav-icon-wrap"><i data-lucide="building-2" class="nav-icon"></i></span><span>Overhead</span>
-            </a>
-            <!-- Accomplishment Panel Section -->
-            <div class="nav-group-label">Accomplishment Panel</div>
-            <a href="#" class="nav-item" data-view="boqBuilder">
-                <span class="nav-icon-wrap"><i data-lucide="file-spreadsheet" class="nav-icon"></i></span><span>Accomplishment Report</span>
-            </a>
-            <a href="#" class="nav-item" data-view="clientAccounts">
-                <span class="nav-icon-wrap"><i data-lucide="user-circle" class="nav-icon"></i></span><span>Client Accounts</span>
-            </a>
-            <a href="#" class="nav-item" data-view="paymentRequests">
-                <span class="nav-icon-wrap"><i data-lucide="credit-card" class="nav-icon"></i></span><span>Payment Requests</span><span id="pr-admin-badge" style="display:none;" class="pr-nav-badge"></span>
-            </a>
-            <a href="#" class="nav-item" data-view="paymentReports">
-                <span class="nav-icon-wrap"><i data-lucide="bar-chart-2" class="nav-icon"></i></span><span>Payment Reports</span>
-            </a>
-            <a href="#" class="nav-item" data-view="invoices">
-                <span class="nav-icon-wrap"><i data-lucide="receipt-text" class="nav-icon"></i></span><span>Invoice Receipt</span>
-            </a>
-            <!-- Construction Management Section -->
-            <div class="nav-group-label">CONSTRUCTION</div>
-            <a href="#" class="nav-item" data-view="consBatch">
-                <span class="nav-icon-wrap"><i data-lucide="package" class="nav-icon"></i></span><span>Current Batch</span>
-            </a>
-            <a href="#" class="nav-item" data-view="consUrgent">
-                <span class="nav-icon-wrap"><i data-lucide="alert-circle" class="nav-icon"></i></span><span>Urgent Requests</span>
-            </a>
-            <a href="#" class="nav-item" data-view="consBatchHistory">
-                <span class="nav-icon-wrap"><i data-lucide="calendar" class="nav-icon"></i></span><span>Batch History</span>
-            </a>
-            <a href="#" class="nav-item" data-view="consInventory">
-                <span class="nav-icon-wrap"><i data-lucide="box" class="nav-icon"></i></span><span>Inventory</span>
-            </a>
-            <!-- User Logs Section -->
-            <div class="nav-group-label">USER LOGS</div>
-            <a href="#" class="nav-item" data-view="userNavigator">
-                <span class="nav-icon-wrap"><i data-lucide="user-round" class="nav-icon"></i></span><span>User Navigator</span>
-            </a>
+            <!-- APPOINTMENTS -->
+            <div class="nav-group" id="navGroup-appointments">
+                <button class="nav-group-toggle" data-group="appointments" aria-expanded="true">
+                    <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="calendar-check" class="nav-icon"></i></span>
+                    <span class="nav-group-title">Appointments</span>
+                    <i data-lucide="chevron-right" class="nav-group-chevron"></i>
+                </button>
+                <div class="nav-group-children">
+                    <a href="#" class="nav-item nav-child active" data-view="dashboard">
+                        <span class="nav-icon-wrap"><i data-lucide="layout-dashboard" class="nav-icon"></i></span><span>Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="appointments">
+                        <span class="nav-icon-wrap"><i data-lucide="calendar-check" class="nav-icon"></i></span><span>Appointments</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="analytics">
+                        <span class="nav-icon-wrap"><i data-lucide="bar-chart-2" class="nav-icon"></i></span><span>Analytics</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="feedback">
+                        <span class="nav-icon-wrap"><i data-lucide="message-square" class="nav-icon"></i></span><span>Feedback</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- EXPENSES TRACKER -->
+            <div class="nav-group" id="navGroup-expenses">
+                <button class="nav-group-toggle" data-group="expenses" aria-expanded="false">
+                    <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="wallet" class="nav-icon"></i></span>
+                    <span class="nav-group-title">Expenses Tracker</span>
+                    <i data-lucide="chevron-right" class="nav-group-chevron"></i>
+                </button>
+                <div class="nav-group-children">
+                    <a href="#" class="nav-item nav-child" data-view="expOverview">
+                        <span class="nav-icon-wrap"><i data-lucide="wallet" class="nav-icon"></i></span><span>Budget Overview</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="expExpenses">
+                        <span class="nav-icon-wrap"><i data-lucide="receipt" class="nav-icon"></i></span><span>Expenses</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="expReports">
+                        <span class="nav-icon-wrap"><i data-lucide="file-bar-chart" class="nav-icon"></i></span><span>Reports</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="expOverhead">
+                        <span class="nav-icon-wrap"><i data-lucide="building-2" class="nav-icon"></i></span><span>Overhead</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- ACCOMPLISHMENT PANEL -->
+            <div class="nav-group" id="navGroup-accomplishment">
+                <button class="nav-group-toggle" data-group="accomplishment" aria-expanded="false">
+                    <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="clipboard-list" class="nav-icon"></i></span>
+                    <span class="nav-group-title">Accomplishment</span>
+                    <i data-lucide="chevron-right" class="nav-group-chevron"></i>
+                </button>
+                <div class="nav-group-children">
+                    <a href="#" class="nav-item nav-child" data-view="boqBuilder">
+                        <span class="nav-icon-wrap"><i data-lucide="file-spreadsheet" class="nav-icon"></i></span><span>Accomplishment Report</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="clientAccounts">
+                        <span class="nav-icon-wrap"><i data-lucide="user-circle" class="nav-icon"></i></span><span>Client Accounts</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="paymentRequests">
+                        <span class="nav-icon-wrap"><i data-lucide="credit-card" class="nav-icon"></i></span><span>Payment Requests</span><span id="pr-admin-badge" style="display:none;" class="pr-nav-badge"></span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="paymentReports">
+                        <span class="nav-icon-wrap"><i data-lucide="bar-chart-2" class="nav-icon"></i></span><span>Payment Reports</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="invoices">
+                        <span class="nav-icon-wrap"><i data-lucide="receipt-text" class="nav-icon"></i></span><span>Invoice Receipt</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- CONSTRUCTION -->
+            <div class="nav-group" id="navGroup-construction">
+                <button class="nav-group-toggle" data-group="construction" aria-expanded="false">
+                    <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="hard-hat" class="nav-icon"></i></span>
+                    <span class="nav-group-title">Construction</span>
+                    <i data-lucide="chevron-right" class="nav-group-chevron"></i>
+                </button>
+                <div class="nav-group-children">
+                    <a href="#" class="nav-item nav-child" data-view="consBatch">
+                        <span class="nav-icon-wrap"><i data-lucide="package" class="nav-icon"></i></span><span>Current Batch</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="consUrgent">
+                        <span class="nav-icon-wrap"><i data-lucide="alert-circle" class="nav-icon"></i></span><span>Urgent Requests</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="consBatchHistory">
+                        <span class="nav-icon-wrap"><i data-lucide="calendar" class="nav-icon"></i></span><span>Batch History</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="consInventory">
+                        <span class="nav-icon-wrap"><i data-lucide="box" class="nav-icon"></i></span><span>Inventory</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- USER LOGS -->
+            <div class="nav-group" id="navGroup-userlogs">
+                <button class="nav-group-toggle" data-group="userlogs" aria-expanded="false">
+                    <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="users" class="nav-icon"></i></span>
+                    <span class="nav-group-title">User Logs</span>
+                    <i data-lucide="chevron-right" class="nav-group-chevron"></i>
+                </button>
+                <div class="nav-group-children">
+                    <a href="#" class="nav-item nav-child" data-view="userNavigator">
+                        <span class="nav-icon-wrap"><i data-lucide="user-round" class="nav-icon"></i></span><span>User Navigator</span>
+                    </a>
+                </div>
+            </div>
         </nav>
         <div class="sidebar-footer">
             <button id="logoutBtn" class="btn-logout">
@@ -170,8 +218,14 @@
         </div>
     </aside>
 
+    <!-- Mobile sidebar backdrop -->
+    <div class="sidebar-backdrop" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
     <main class="main-content">
         <header class="dashboard-header">
+            <button class="mobile-sidebar-toggle" id="mobileSidebarToggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
             <h1 id="pageTitle">Dashboard</h1>
             <div class="header-right" style="display: flex; align-items: center; gap: 1rem;">
                 <!-- Construction Notification Bell -->
@@ -1441,7 +1495,7 @@
                 <tbody id="clientReceiptsTbody"></tbody>
             </table>
         </div>
-        <div style="padding:12px 24px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;">
+        <div style="padding:12px 24px;border-top:1px solid rgba(255,255,255,0.25);display:flex;justify-content:flex-end;">
             <button class="exp-btn exp-btn-secondary" onclick="closeExpModal('clientReceiptsModal')">Close</button>
         </div>
     </div>

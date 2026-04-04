@@ -5825,7 +5825,7 @@ function mvpRenderPayrollInDetail() {
     }
     tbody.innerHTML = filtered.map(function(w) {
         return '<tr>'
-            + '<td>' + (w.paymentDate||'—') + '</td>'
+            + '<td>' + formatDate(w.paymentDate) + '</td>'
             + '<td>' + _mvpEsc(w.workerName||'—') + '</td>'
             + '<td>' + _mvpEsc(w.role||'—') + '</td>'
             + '<td>' + _mvpEsc(w.notes||'—') + '</td>'
@@ -5833,9 +5833,13 @@ function mvpRenderPayrollInDetail() {
             + '<td>' + _mvpFmt(w.dailyRate||0) + '</td>'
             + '<td>' + _mvpFmt(w.totalSalary||0) + '</td>'
             + '<td>—</td>'
-            + '<td><button class="exp-btn exp-btn-sm" onclick="openEditPayrollModal(\'' + w.id + '\')">Edit</button></td>'
+            + '<td class="exp-action-cell">'
+            +   '<button class="exp-icon-btn exp-icon-btn-edit" title="Edit" onclick="openEditPayrollModal(\'' + w.id + '\')"><i data-lucide="pencil"></i></button>'
+            +   '<button class="exp-icon-btn exp-icon-btn-danger" title="Delete" onclick="deletePayroll(\'' + w.id + '\')"><i data-lucide="trash-2"></i></button>'
+            + '</td>'
             + '</tr>';
     }).join('');
+    if (window.lucide) lucide.createIcons();
 }
 
 function mvpApplyPayrollSearch() {

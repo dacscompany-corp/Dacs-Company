@@ -808,6 +808,52 @@ body.dark-mode .profile-role-badge { background:rgba(0,168,94,0.15); color:#4ade
   .topbar-title { font-size:13px; }
 }
 
+/* ══════════════════════════════
+   ACCESSIBILITY & POLISH
+══════════════════════════════ */
+
+/* Text selection */
+::selection {
+  background: rgba(0, 200, 122, 0.18);
+  color: var(--text-dark);
+}
+
+/* Focus-visible states for keyboard navigation */
+.btn-signin:focus-visible,
+.btn-view:focus-visible,
+.btn-edit-profile:focus-visible,
+.btn-save-profile:focus-visible,
+.btn-cancel-edit:focus-visible,
+.modal-btn-confirm:focus-visible,
+.modal-btn-cancel:focus-visible,
+.logout-btn:focus-visible {
+  outline: 2px solid var(--green-mid);
+  outline-offset: 3px;
+}
+
+input[type="email"]:focus-visible,
+input[type="password"]:focus-visible,
+input[type="text"]:focus-visible {
+  outline: 2px solid var(--green-mid);
+  outline-offset: 1px;
+}
+
+.nav-item:focus-visible {
+  outline: 2px solid var(--green-light);
+  outline-offset: -2px;
+}
+
+.filter-pill:focus-visible {
+  outline: 2px solid var(--green-mid);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 168, 94, 0.2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 168, 94, 0.4); }
+
 * { -webkit-tap-highlight-color:transparent; }
 html { -webkit-text-size-adjust:100%; }
 
