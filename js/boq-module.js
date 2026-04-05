@@ -1291,8 +1291,11 @@
         boqGeneratePDF();
     };
 
-    function boqGeneratePDF() {
+    async function boqGeneratePDF() {
         collectHeader();
+        const _base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+        const h = boq.header;
+        const fmtDate = h.date ? new Date(h.date + 'T00:00:00').toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' }) : '';
         const jsPDF = (window.jspdf || window).jsPDF;
         const doc   = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageW = doc.internal.pageSize.getWidth();   // 210mm
@@ -1301,27 +1304,55 @@
         const usableW = pageW - M * 2;  // 190mm
         let y = M;
 
-        // ── Company title ─────────────────────────────────────
+        // ── Logo + Company title ───────────────────────────────
+        try {
+            const logoData = await new Promise(resolve => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    try {
+                        const c = document.createElement('canvas');
+                        c.width = img.naturalWidth; c.height = img.naturalHeight;
+                        c.getContext('2d').drawImage(img, 0, 0);
+                        resolve({ url: c.toDataURL('image/png'), w: img.naturalWidth, h: img.naturalHeight });
+                    } catch(e) { resolve(null); }
+                };
+                img.onerror = () => resolve(null);
+                img.src = _base + 'assets/images/DACS-TRANSPARENT.png';
+            });
+            if (logoData) {
+                const logoH = 14, logoW = logoH * (logoData.w / logoData.h);
+                doc.addImage(logoData.url, 'PNG', pageW / 2 - logoW / 2, y, logoW, logoH);
+                y += logoH + 2;
+            }
+        } catch(e) {}
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
         doc.text("DAC'S BUILDING DESIGN SERVICES", pageW / 2, y + 5, { align: 'center' });
         y += 10;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Professional Building Design & Construction Management', pageW / 2, y + 2, { align: 'center' });
+        doc.setTextColor(0, 0, 0);
+        y += 6;
 
-        // ── Header info box ───────────────────────────────────
-        // Pre-calculate location row height (may need 2 lines)
+        // ── Header info box (50% width, left-aligned — matches print design) ──
         doc.setFontSize(7.5);
         const lblW   = 26;
-        const valW   = usableW - lblW;
-        const locLines = doc.splitTextToSize(boq.header.location || '', valW - 3);
+        const boxW   = usableW / 2;           // 50% width
+        const valW   = boxW - lblW;
+        const locLines = doc.splitTextToSize(h.location || '', valW - 3);
         const baseH  = 6;
         const locH   = Math.max(baseH, locLines.length * 4 + 2);
 
         const rowDefs = [
-            { label: 'DATE:',     value: boq.header.date,        h: baseH },
-            { label: 'PROJECT:',  value: boq.header.projectName, h: baseH, extra: { label: 'AREA:', value: (boq.header.area || '') + ' SQM' } },
-            { label: 'OWNER:',    value: boq.header.ownerName,   h: baseH },
-            { label: 'LOCATION:', value: boq.header.location,    h: locH  },
-            { label: 'SUBJECT:',  value: boq.header.subject,     h: baseH },
+            { label: 'DATE:',     value: fmtDate,          h: baseH },
+            { label: 'PROJECT:',  value: h.projectName,    h: baseH },
+            { label: 'AREA:',     value: (h.area || '') + ' sqm', h: baseH },
+            { label: 'OWNER:',    value: h.ownerName,      h: baseH },
+            { label: 'LOCATION:', value: h.location,       h: locH  },
+            { label: 'SUBJECT:',  value: h.subject,        h: baseH },
         ];
         const boxH = rowDefs.reduce((s, r) => s + r.h, 0);
         const boxX = M;
@@ -1329,17 +1360,17 @@
 
         doc.setDrawColor(0);
         doc.setLineWidth(0.3);
-        doc.rect(boxX, boxY, usableW, boxH);
+        doc.rect(boxX, boxY, boxW, boxH);
 
         let ry = boxY;
         rowDefs.forEach((row, i) => {
             // Row divider
             if (i > 0) {
                 doc.setLineWidth(0.2);
-                doc.line(boxX, ry, boxX + usableW, ry);
+                doc.line(boxX, ry, boxX + boxW, ry);
             }
-            // Label background
-            doc.setFillColor(240, 240, 240);
+            // Label background — black, matches print
+            doc.setFillColor(17, 17, 17);
             doc.rect(boxX, ry, lblW, row.h, 'F');
             // Vertical divider after label
             doc.setLineWidth(0.2);
@@ -1347,35 +1378,15 @@
 
             const midY = ry + row.h / 2 + 1.5;
 
-            // Label text
+            // Label text — white on black
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(7.5);
-            doc.setTextColor(0, 0, 0);
+            doc.setTextColor(255, 255, 255);
             doc.text(row.label, boxX + 2, midY);
+            doc.setTextColor(0, 0, 0);
 
-            if (row.extra) {
-                // PROJECT | value   AREA: | value  (4-cell row)
-                const projValW = usableW - lblW;
-                const splitAt  = projValW * 0.56;
-                const aLblW    = 14;
-                const aValX    = boxX + lblW + splitAt + aLblW;
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.5);
-                doc.text(row.value || '', boxX + lblW + 2, midY, { maxWidth: splitAt - 4 });
-
-                doc.setLineWidth(0.2);
-                doc.line(boxX + lblW + splitAt, ry, boxX + lblW + splitAt, ry + row.h);
-
-                doc.setFillColor(240, 240, 240);
-                doc.rect(boxX + lblW + splitAt, ry, aLblW, row.h, 'F');
-                doc.line(boxX + lblW + splitAt + aLblW, ry, boxX + lblW + splitAt + aLblW, ry + row.h);
-
-                doc.setFont('helvetica', 'bold');
-                doc.text(row.extra.label, boxX + lblW + splitAt + 2, midY);
-
-                doc.setFont('helvetica', 'normal');
-                doc.text(row.extra.value || '', aValX + 1, midY);
+            if (false) {
+                // (removed extra/split row — each field is its own row now)
             } else {
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(7.5);
@@ -1406,9 +1417,11 @@
                 si.lineItems.forEach((li, liIdx) => {
                     const mat = li.materialOverride || (li.materialRate ? fmt(li.materialRate) : '-');
                     const lab = li.laborOverride    || (li.laborRate    ? fmt(li.laborRate)    : '-');
+                    // Item no goes into description (blank item no column — matches reference)
+                    const itemDesc = (li.itemNo ? li.itemNo + '  ' : '') + (li.description || '') + (li.isOptional ? ' (optional)' : '');
                     rows.push([
-                        li.itemNo || String(liIdx + 1),
-                        (li.description || '') + (li.isOptional ? ' (optional)' : ''),
+                        '',
+                        itemDesc,
                         li.qty   || '',
                         li.unit  || '',
                         mat, lab,
@@ -1424,16 +1437,22 @@
                 fmt(calcCostItemSubtotal(ci)), '',
                 fmt(calcCostItemAccomplishment(ci))]);
             styles.push('sub');
+            rows.push(['', '', '', '', '', '', '', '', '']);
+            styles.push('spacer');
         });
 
-        const grand = calcGrandTotal();
-        const disc  = boq.discount || 0;
-        rows.push(['', 'TOTAL PROJECT COST (VAT EX)', '', '', '', '', fmt(grand), '', fmt(calcTotalAccomplishment())]);
+        const grand    = calcGrandTotal();
+        const disc     = boq.discount || 0;
+        const totalAcc = calcTotalAccomplishment();
+        // First 3 cells transparent — colored section starts at col 3 (matches print design)
+        rows.push(['', '', '', { content: 'TOTAL PROJECT COST (VAT EXCLUSIVE)', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } }, fmt(grand), '', fmt(totalAcc)]);
         styles.push('grand');
-        rows.push(['', 'Discount', '', '', '', '', fmt(disc), '', '']);
-        styles.push('grand');
-        rows.push(['', 'DISCOUNTED TOTAL PROJECT COST (VAT EX)', '', '', '', '', fmt(Math.max(0, grand - disc)), '', '']);
+        rows.push(['', '', '', { content: 'DISCOUNT', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } }, fmt(disc), '', '']);
+        styles.push('discount');
+        rows.push(['', '', '', { content: 'DISCOUNTED TOTAL PROJECT COST (VAT EXCLUSIVE)', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } }, fmt(Math.max(0, grand - disc)), '', '']);
         styles.push('grandFinal');
+        rows.push(['', '', '', { content: 'TOTAL ACCOMPLISHMENT TO DATE', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } }, fmt(totalAcc)]);
+        styles.push('acc');
 
         // ── Draw table with two-row merged header ─────────────
         doc.autoTable({
@@ -1480,25 +1499,61 @@
             didParseCell: function (data) {
                 if (data.section !== 'body') return;
                 const s = styles[data.row.index];
+                if (s === 'spacer') {
+                    data.cell.styles.fillColor  = [255, 255, 255];
+                    data.cell.styles.lineColor  = [255, 255, 255];
+                    data.cell.styles.lineWidth  = 0;
+                    data.cell.styles.cellPadding = { top: 0, bottom: 0, left: 0, right: 0 };
+                    return;
+                }
+                const summaryRows = ['grand', 'discount', 'grandFinal', 'acc'];
+                // First 3 cols of summary rows = transparent (no fill, no border)
+                if (summaryRows.includes(s) && data.column.index < 3) {
+                    data.cell.styles.fillColor   = false;
+                    data.cell.styles.lineColor   = [255, 255, 255];
+                    data.cell.styles.lineWidth   = 0;
+                    return;
+                }
                 if (s === 'l1') {
-                    data.cell.styles.fillColor = [251, 191, 36];
-                    data.cell.styles.textColor = [0, 0, 0];
+                    // Red — matches print .pr-l1
+                    data.cell.styles.fillColor = [200, 30, 30];
+                    data.cell.styles.textColor = [255, 255, 255];
                     data.cell.styles.fontStyle = 'bold';
                 } else if (s === 'l2') {
-                    data.cell.styles.fillColor = [242, 242, 242];
+                    // White — matches print .pr-l2
+                    data.cell.styles.fillColor = [255, 255, 255];
+                    data.cell.styles.textColor = [0, 0, 0];
                     data.cell.styles.fontStyle = 'bold';
                 } else if (s === 'sub') {
-                    data.cell.styles.fillColor = [251, 191, 36];
+                    // Light amber — matches print .pr-sub #fde68a
+                    data.cell.styles.fillColor = [253, 230, 138];
+                    data.cell.styles.textColor = [0, 0, 0];
                     data.cell.styles.fontStyle = 'bold';
                     data.cell.styles.fontSize  = 7;
                 } else if (s === 'grand') {
-                    data.cell.styles.fillColor = [255, 192, 0];
+                    // Amber — matches print .pr-grand #fbbf24
+                    data.cell.styles.fillColor = [251, 191, 36];
+                    data.cell.styles.textColor = [0, 0, 0];
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.fontSize  = 7;
+                } else if (s === 'discount') {
+                    // Teal — matches print .pr-discount #17a2b8
+                    data.cell.styles.fillColor = [23, 162, 184];
+                    data.cell.styles.textColor = [0, 0, 0];
                     data.cell.styles.fontStyle = 'bold';
                     data.cell.styles.fontSize  = 7;
                 } else if (s === 'grandFinal') {
-                    data.cell.styles.fillColor = [255, 192, 0];
+                    // Green — matches print .pr-grand-final #70ad47
+                    data.cell.styles.fillColor = [112, 173, 71];
+                    data.cell.styles.textColor = [0, 0, 0];
                     data.cell.styles.fontStyle = 'bold';
                     data.cell.styles.fontSize  = 7.5;
+                } else if (s === 'acc') {
+                    // Dark navy — matches print .pr-acc #1a1a2e
+                    data.cell.styles.fillColor = [26, 26, 46];
+                    data.cell.styles.textColor = [255, 255, 255];
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.fontSize  = 8;
                 }
             }
         });
@@ -1550,7 +1605,7 @@
         doc.text(dLines, pageW / 2, fy, { align: 'center' });
 
         // ── Save ──────────────────────────────────────────────
-        const fname = `BOQ_${(boq.header.projectName || 'project').replace(/\s+/g,'_')}_${boq.header.date || 'draft'}.pdf`;
+        const fname = `AccomplishmentReport_${(boq.header.projectName || 'project').replace(/\s+/g,'_')}_${boq.header.date || 'draft'}.pdf`;
         doc.save(fname);
         boqToast('PDF exported!', 'success');
     }
@@ -1788,8 +1843,8 @@
   /* line item — white */
   .pr-l3 td{background:#fff;font-size:7pt;}
   .pr-l3.pr-opt td{color:#6b7280;font-style:italic;}
-  /* subtotal — full amber #fbbf24 */
-  .pr-sub td{background:#fbbf24;color:#000;font-weight:800;font-size:7.5pt;text-transform:uppercase;
+  /* subtotal — light amber #fde68a */
+  .pr-sub td{background:#fde68a;color:#000;font-weight:800;font-size:7.5pt;text-transform:uppercase;
              -webkit-print-color-adjust:exact;print-color-adjust:exact;}
   /* grand total — amber (TOTAL PROJECT COST) */
   .pr-grand td{background:#fbbf24;color:#000;font-weight:800;font-size:7.5pt;text-transform:uppercase;
@@ -1847,6 +1902,7 @@
 
   <!-- Company header -->
   <div class="pr-co-hdr">
+    <img src="${_base}assets/images/DACS-TRANSPARENT.png" style="height:54px;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto;" alt="DAC's Logo">
     <div class="pr-co-name">DAC'S BUILDING DESIGN SERVICES</div>
     <div class="pr-co-tagline">Professional Building Design &amp; Construction Management</div>
   </div>
