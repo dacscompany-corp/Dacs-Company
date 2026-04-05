@@ -1451,6 +1451,12 @@ mark.exp-search-highlight {
 .exp-icon-btn-edit { background: #eff6ff; color: #3b82f6; }
 .exp-icon-btn-edit:hover { background: #bfdbfe; }
 
+/* Acknowledge Invoice button */
+.exp-icon-btn-invoice { background: #f0fdf4; color: #16a34a; }
+.exp-icon-btn-invoice:hover { background: #bbf7d0; border-color: #16a34a; }
+.exp-icon-btn-invoice svg,
+.exp-icon-btn-invoice i { stroke: #16a34a; }
+
 /* Billing Summary print button */
 .exp-bs-print-btn {
     display: inline-flex;

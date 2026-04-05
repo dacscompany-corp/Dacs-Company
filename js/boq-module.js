@@ -1444,8 +1444,8 @@
         const grand    = calcGrandTotal();
         const disc     = boq.discount || 0;
         const totalAcc = calcTotalAccomplishment();
-        // First 3 cells transparent — colored section starts at col 3 (matches print design)
-        rows.push(['', '', '', { content: 'TOTAL PROJECT COST (VAT EXCLUSIVE)', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } }, fmt(grand), '', fmt(totalAcc)]);
+        const grandPct = grand > 0 ? (totalAcc / grand * 100).toFixed(0) + '%' : '';
+        rows.push(['', '', '', { content: 'TOTAL PROJECT COST (VAT EXCLUSIVE)', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } }, fmt(grand), grandPct, fmt(totalAcc)]);
         styles.push('grand');
         rows.push(['', '', '', { content: 'DISCOUNT', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } }, fmt(disc), '', '']);
         styles.push('discount');
@@ -1735,6 +1735,7 @@
         const disc       = boq.discount || 0;
         const discounted = Math.max(0, grand - disc);
         const totalAcc   = calcTotalAccomplishment();
+        const avgPct = grand > 0 ? (totalAcc / grand * 100).toFixed(0) + '%' : '';
 
         // ── Build table rows HTML ────────────────────────────
         let tableRows = '';
@@ -1811,11 +1812,15 @@
 
   /* ── Company header ── */
   .pr-co-hdr{
-    text-align:center;
     padding-bottom:7px;
     margin-bottom:7px;
     border-bottom:2.5px solid #1a1a1a;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    min-height:60px;
   }
+  .pr-co-hdr-text{ display:flex; flex-direction:column; }
   .pr-co-name{font-size:13pt;font-weight:900;letter-spacing:.1em;text-transform:uppercase;}
   .pr-co-tagline{font-size:7.5pt;color:#555;margin-top:2px;letter-spacing:.03em;}
 
@@ -1902,9 +1907,11 @@
 
   <!-- Company header -->
   <div class="pr-co-hdr">
-    <img src="${_base}assets/images/DACS-TRANSPARENT.png" style="height:54px;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto;" alt="DAC's Logo">
-    <div class="pr-co-name">DAC'S BUILDING DESIGN SERVICES</div>
-    <div class="pr-co-tagline">Professional Building Design &amp; Construction Management</div>
+    <div class="pr-co-hdr-text">
+      <div class="pr-co-name">DAC'S BUILDING DESIGN SERVICES</div>
+      <div class="pr-co-tagline">Accomplishment Report</div>
+    </div>
+    <img src="${_base}assets/images/DACS-TRANSPARENT.png" style="height:150px;display:block;align-self:flex-end;" alt="DAC's Logo">
   </div>
 
   <!-- Document info box -->
@@ -1950,7 +1957,7 @@
         <td class="pr-transparent"></td>
         <td colspan="3" style="text-align:right;font-weight:800">TOTAL PROJECT COST (VAT EXCLUSIVE)</td>
         <td class="c-amt">₱ ${fmt(grand)}</td>
-        <td class="c-pct"></td>
+        <td class="c-pct">${avgPct}</td>
         <td class="c-amt">₱ ${fmt(totalAcc)}</td>
       </tr>
       <tr class="pr-discount">

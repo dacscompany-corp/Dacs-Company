@@ -1707,6 +1707,7 @@ function renderPayrollTable() {
             <td>₱${formatNum(p.totalSalary)}</td>
             <td>${getReceiptThumbsHTML(p)}</td>
             <td class="exp-action-cell">
+                <button class="exp-icon-btn exp-icon-btn-invoice" title="Acknowledge Invoice" onclick="printSinglePayrollInvoice('${p.id}')"><i data-lucide="file-text"></i></button>
                 <button class="exp-icon-btn exp-icon-btn-edit" title="Edit" onclick="openEditPayrollModal('${p.id}')"><i data-lucide="pencil"></i></button>
                 <button class="exp-icon-btn exp-icon-btn-danger" title="Delete" onclick="deletePayroll('${p.id}')"><i data-lucide="trash-2"></i></button>
             </td>

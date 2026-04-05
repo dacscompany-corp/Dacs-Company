@@ -1162,6 +1162,237 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff;
     }
 
     // ══════════════════════════════════════════════════════
+    // ACKNOWLEDGE INVOICE — Single payroll entry
+    // ══════════════════════════════════════════════════════
+
+    window.printSinglePayrollInvoice = async function (payrollId) {
+        if (!_ownerUid) await _resolveOwnerUid();
+        if (!_defaults || !Object.keys(_defaults).length) await _loadDefaults();
+
+        const _allPay = (typeof _ovAllPayroll !== 'undefined' && _ovAllPayroll.length)
+                        ? _ovAllPayroll
+                        : (typeof expPayroll !== 'undefined' ? expPayroll : []);
+
+        const p = _allPay.find(e => e.id === payrollId);
+        if (!p) { alert('Payroll entry not found.'); return; }
+
+        const _projs   = (typeof expProjects !== 'undefined' ? expProjects : []);
+        const _folders = (typeof expFolders  !== 'undefined' ? expFolders  : []);
+        const proj     = _projs.find(pr => pr.id === p.projectId) || null;
+        const folder   = proj && proj.folderId ? _folders.find(f => f.id === proj.folderId) || null : null;
+        const projectName = folder ? folder.name : (proj ? (proj.month + ' ' + proj.year) : 'Labor & Payroll');
+
+        const bizName = _defaults.businessName    || "DAC's Building Design Services";
+        const bizTin  = _defaults.businessTin     || '—';
+        const bizAddr = _defaults.businessAddress || '—';
+        const pd      = _defaults.paymentDetails  || {};
+
+        const esc     = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const fmt     = n => '&#8369;&nbsp;' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmtDate = d => { if (!d) return '—'; try { return new Date(d).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}); } catch(e){ return d; } };
+
+        const invoiceNo = await _generateInvoiceNo();
+        const today     = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+        const totalSalary = p.totalSalary || (Number(p.dailyRate||0) * Number(p.daysWorked||0));
+
+        const payBlock = pd.method === 'gcash'
+            ? `<div class="pd-row"><span class="pd-lbl">Payment Via</span><span class="pd-val">GCash</span></div>
+               <div class="pd-row"><span class="pd-lbl">GCash No.</span><span class="pd-val">${esc(pd.gcashNumber||'—')}</span></div>
+               <div class="pd-row"><span class="pd-lbl">Account Name</span><span class="pd-val">${esc(pd.gcashName||'—')}</span></div>`
+            : `<div class="pd-row"><span class="pd-lbl">Payment Via</span><span class="pd-val">Bank Transfer</span></div>
+               <div class="pd-row"><span class="pd-lbl">Bank</span><span class="pd-val">${esc(pd.bank||'—')}</span></div>
+               <div class="pd-row"><span class="pd-lbl">Account No.</span><span class="pd-val">${esc(pd.accountNo||'—')}</span></div>
+               <div class="pd-row"><span class="pd-lbl">Account Name</span><span class="pd-val">${esc(pd.accountName||'—')}</span></div>
+               <div class="pd-row"><span class="pd-lbl">Branch</span><span class="pd-val">${esc(pd.branch||'—')}</span></div>`;
+
+        const w = window.open('','_blank','width=720,height=960');
+        if (!w) { alert('Please allow pop-ups to print the invoice.'); return; }
+
+        w.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Acknowledge Invoice — ${esc(p.workerName||'Worker')}</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#111; background:#f5f5f5; }
+.page { width:180mm; min-height:240mm; margin:24px auto; padding:14mm 14mm 12mm; background:#fff; box-shadow:0 2px 14px rgba(0,0,0,.13); border-radius:4px; }
+
+/* Header */
+.hdr { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:14px; border-bottom:3px solid #1e3a5f; margin-bottom:16px; }
+.hdr-biz h1 { font-size:17px; font-weight:800; color:#1a1a2e; }
+.hdr-biz p  { font-size:11px; color:#555; margin-top:3px; line-height:1.5; }
+.hdr-right { text-align:right; }
+.hdr-right .inv-title { font-size:20px; font-weight:900; color:#1e3a5f; letter-spacing:2px; text-transform:uppercase; }
+.hdr-right .inv-sub { font-size:11px; font-weight:700; color:#7c3aed; margin-top:3px; letter-spacing:.5px; text-transform:uppercase; }
+.hdr-right .inv-meta { font-size:11px; color:#444; margin-top:6px; line-height:1.7; }
+.hdr-right .inv-meta strong { color:#111; }
+
+/* Worker info band */
+.info-band { display:flex; gap:0; margin-bottom:18px; border:1.5px solid #e5e7eb; border-radius:6px; overflow:hidden; }
+.info-cell { flex:1; padding:11px 14px; border-right:1px solid #e5e7eb; }
+.info-cell:last-child { border-right:none; }
+.info-cell .lbl { font-size:9px; font-weight:700; color:#6b7280; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:4px; }
+.info-cell .val { font-size:13px; font-weight:700; color:#1a1a2e; }
+.info-cell .val.muted { font-weight:400; color:#444; font-size:12px; }
+
+/* Breakdown table */
+.section-title { font-size:10px; font-weight:700; color:#6b7280; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:8px; }
+table.breakdown { width:100%; border-collapse:collapse; margin-bottom:16px; }
+table.breakdown thead tr { background:#1e3a5f; color:#fff; }
+table.breakdown thead th { padding:8px 10px; font-size:11px; font-weight:700; text-align:left; }
+table.breakdown tbody td { padding:10px 10px; border-bottom:1px solid #e9ecef; font-size:12px; }
+table.breakdown tbody tr:nth-child(even) { background:#f8fafc; }
+.text-right { text-align:right; }
+.text-center { text-align:center; }
+
+/* Total */
+.total-wrap { display:flex; justify-content:flex-end; margin-bottom:18px; }
+.total-box { background:#1e3a5f; color:#fff; border-radius:6px; padding:10px 20px; text-align:right; min-width:220px; }
+.total-box .total-lbl { font-size:11px; letter-spacing:1px; text-transform:uppercase; opacity:.8; margin-bottom:4px; }
+.total-box .total-amt { font-size:20px; font-weight:800; }
+
+/* Notes */
+.notes-box { background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding:10px 14px; margin-bottom:18px; font-size:12px; color:#92400e; }
+.notes-box .notes-lbl { font-size:9px; font-weight:700; color:#b45309; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
+
+/* Payment details */
+.pay-box { background:#f1f5f9; border-radius:6px; padding:11px 14px; margin-bottom:20px; }
+.pay-box .section-title { margin-bottom:8px; }
+.pd-row { display:flex; justify-content:space-between; font-size:12px; padding:2px 0; }
+.pd-lbl { color:#6b7280; }
+.pd-val { font-weight:600; color:#111; }
+
+/* Acknowledgment */
+.ack-box { border:1.5px dashed #d1d5db; border-radius:6px; padding:14px 16px; margin-bottom:16px; }
+.ack-box .ack-title { font-size:10px; font-weight:700; color:#6b7280; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:10px; }
+.ack-text { font-size:12px; color:#374151; margin-bottom:16px; line-height:1.6; }
+.sig-row { display:flex; justify-content:space-between; gap:24px; margin-top:10px; }
+.sig-block { flex:1; text-align:center; }
+.sig-space { height:40px; }
+.sig-line { border-top:1.5px solid #374151; padding-top:5px; font-size:11px; color:#6b7280; }
+.sig-name { font-size:12px; font-weight:700; color:#1a1a2e; margin-top:2px; }
+
+/* Footer */
+.footer { text-align:center; font-size:10px; color:#9ca3af; border-top:1px solid #e5e7eb; padding-top:10px; margin-top:4px; }
+
+@media print {
+  body { background:#fff; }
+  .page { margin:0; box-shadow:none; padding:8mm 10mm; width:100%; border-radius:0; }
+  @page { size:A5 portrait; margin:6mm; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="hdr">
+    <div class="hdr-biz">
+      <h1>${esc(bizName)}</h1>
+      <p>TIN: ${esc(bizTin)}<br>${esc(bizAddr)}</p>
+    </div>
+    <div class="hdr-right">
+      <div class="inv-title">Acknowledge</div>
+      <div class="inv-title" style="margin-top:-4px;">Invoice</div>
+      <div class="inv-sub">Labor &amp; Payroll</div>
+      <div class="inv-meta">
+        No: <strong>${esc(invoiceNo)}</strong><br>
+        Date: <strong>${esc(today)}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Worker Info -->
+  <div class="info-band">
+    <div class="info-cell">
+      <div class="lbl">Worker Name</div>
+      <div class="val">${esc(p.workerName||'—')}</div>
+    </div>
+    <div class="info-cell">
+      <div class="lbl">Role</div>
+      <div class="val">${esc(p.role||'—')}</div>
+    </div>
+    <div class="info-cell">
+      <div class="lbl">Project</div>
+      <div class="val muted">${esc(projectName)}</div>
+    </div>
+    <div class="info-cell">
+      <div class="lbl">Payment Date</div>
+      <div class="val muted">${fmtDate(p.paymentDate)}</div>
+    </div>
+  </div>
+
+  <!-- Breakdown -->
+  <div class="section-title">Salary Breakdown</div>
+  <table class="breakdown">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="text-center">Days Worked</th>
+        <th class="text-right">Daily Rate</th>
+        <th class="text-right">Total Salary</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${esc(p.role||'Labor')} — ${esc(p.workerName||'—')}</td>
+        <td class="text-center">${p.daysWorked||0}</td>
+        <td class="text-right">${fmt(p.dailyRate)}</td>
+        <td class="text-right" style="font-weight:700;">${fmt(totalSalary)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Total -->
+  <div class="total-wrap">
+    <div class="total-box">
+      <div class="total-lbl">Total Amount Due</div>
+      <div class="total-amt">${fmt(totalSalary)}</div>
+    </div>
+  </div>
+
+  ${p.notes ? `<div class="notes-box"><div class="notes-lbl">Notes / Details</div>${esc(p.notes)}</div>` : ''}
+
+  <!-- Payment Details -->
+  <div class="pay-box">
+    <div class="section-title">Payment Details</div>
+    ${payBlock}
+  </div>
+
+  <!-- Acknowledgment -->
+  <div class="ack-box">
+    <div class="ack-title">Acknowledgment</div>
+    <div class="ack-text">
+      I, <strong>${esc(p.workerName||'the undersigned')}</strong>, hereby acknowledge receipt of the amount of
+      <strong>${fmt(totalSalary)}</strong> as full payment for labor rendered on the above project.
+    </div>
+    <div class="sig-row">
+      <div class="sig-block">
+        <div class="sig-space"></div>
+        <div class="sig-line">Worker's Signature</div>
+        <div class="sig-name">${esc(p.workerName||'—')}</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-space"></div>
+        <div class="sig-line">Prepared by</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-space"></div>
+        <div class="sig-line">Approved by</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">${esc(bizName)} &bull; ${esc(bizAddr)}</div>
+</div>
+<script>window.onload=function(){window.print();};<\/script>
+</body>
+</html>`);
+        w.document.close();
+    };
+
+    // ══════════════════════════════════════════════════════
     // PAYROLL INVOICE — Print from Labor/Payroll tab
     // ══════════════════════════════════════════════════════
 
