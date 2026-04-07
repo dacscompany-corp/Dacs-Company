@@ -3909,138 +3909,98 @@ function _rptRenderKPIs(_groups) {
     const row = document.getElementById('rptKpiRow');
     if (!row) return;
 
-    // Contract value
-    const contract      = _rptState.folderId
+    const contract = _rptState.folderId
         ? (expFolders.find(f => f.id === _rptState.folderId)?.totalBudget || 0)
         : expFolders.reduce((s, f) => s + (f.totalBudget || 0), 0);
     const contractLabel = _rptState.folderId
         ? (expFolders.find(f => f.id === _rptState.folderId)?.name || 'Folder')
         : 'Company-Wide';
 
-    // ── KPI totals mirror Budget Overview (all-time, no year filter) ──────────
-    // All projects for this folder/company (no year filter)
-    const _kpiFolderProjs  = _rptState.folderId
+    const _kpiFolderProjs = _rptState.folderId
         ? expProjects.filter(p => p.folderId === _rptState.folderId)
         : expProjects;
-    const _kpiClientProjs  = _kpiFolderProjs.filter(p => p.fundingType !== 'president');
-    const _kpiPresProjIds  = new Set(_kpiFolderProjs.filter(p => p.fundingType === 'president').map(p => p.id));
-    const _kpiProjIdSet    = new Set(_kpiFolderProjs.map(p => p.id));
+    const _kpiClientProjs = _kpiFolderProjs.filter(p => p.fundingType !== 'president');
+    const _kpiPresProjIds = new Set(_kpiFolderProjs.filter(p => p.fundingType === 'president').map(p => p.id));
+    const _kpiProjIdSet   = new Set(_kpiFolderProjs.map(p => p.id));
 
-    // Total Fund Allocated = all client billing months (same as Budget Overview)
-    const totReceived      = _kpiClientProjs.reduce((s, p) => s + (parseFloat(p.monthlyBudget) || 0), 0);
+    const totReceived     = _kpiClientProjs.reduce((s, p) => s + (parseFloat(p.monthlyBudget) || 0), 0);
     const activePeriodsCount = _kpiClientProjs.filter(p => (p.monthlyBudget || 0) > 0).length;
 
-    // Materials = all folder expenses excl. cover expenses — use global cache
-    const _srcExp   = _ovAllExpenses.length ? _ovAllExpenses : expExpenses;
-    const _srcPay   = _ovAllPayroll.length  ? _ovAllPayroll  : expPayroll;
-    const totMats   = _srcExp
-        .filter(e => _kpiProjIdSet.has(e.projectId) && !e.coverExpense)
-        .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-    // Labor = all folder payroll excl. president projects — use global cache
-    const totLabor  = _srcPay
-        .filter(p => _kpiProjIdSet.has(p.projectId) && !_kpiPresProjIds.has(p.projectId))
-        .reduce((s, p) => s + (parseFloat(p.totalSalary) || 0), 0);
-    const totSpent  = totMats + totLabor;
+    const _srcExp = _ovAllExpenses.length ? _ovAllExpenses : expExpenses;
+    const _srcPay = _ovAllPayroll.length  ? _ovAllPayroll  : expPayroll;
 
-    // Cover expenses total (matches Budget Overview: coverExpense flag OR president-type project)
-    const totCover = _srcExp
-        .filter(e => _kpiProjIdSet.has(e.projectId) && (e.coverExpense || _kpiPresProjIds.has(e.projectId)))
-        .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
-      + _srcPay
-        .filter(p => _kpiPresProjIds.has(p.projectId))
-        .reduce((s, p) => s + (parseFloat(p.totalSalary) || 0), 0);
-    // Percentage of allocated budget (matches Budget Overview formula)
+    const totMats  = _srcExp.filter(e => _kpiProjIdSet.has(e.projectId) && !e.coverExpense).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    const totLabor = _srcPay.filter(p => _kpiProjIdSet.has(p.projectId) && !_kpiPresProjIds.has(p.projectId)).reduce((s, p) => s + (parseFloat(p.totalSalary) || 0), 0);
+    const totSpent = totMats + totLabor;
+    const totCover = _srcExp.filter(e => _kpiProjIdSet.has(e.projectId) && (e.coverExpense || _kpiPresProjIds.has(e.projectId))).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+                   + _srcPay.filter(p => _kpiPresProjIds.has(p.projectId)).reduce((s, p) => s + (parseFloat(p.totalSalary) || 0), 0);
+
     const coverPctOfBudget = totReceived > 0 ? (totCover / totReceived) * 100 : 0;
+    const periodAlloc      = contract - totReceived;
+    const periodAllocPct   = contract > 0 ? (periodAlloc / contract) * 100 : 0;
+    const contractRem      = contract - totSpent;
+    const contractRemPct   = contract > 0 ? (contractRem / contract) * 100 : 0;
+    const utilizedPct      = totReceived > 0 ? (totSpent / totReceived) * 100 : 0;
+    const contractUsedPct  = contract > 0 ? (totSpent / contract) * 100 : 0;
+    const rcvOfContract    = contract > 0 ? (totReceived / contract) * 100 : 0;
+    const txCount          = _srcExp.filter(e => _kpiProjIdSet.has(e.projectId)).length;
+    const workerCount      = new Set(_srcPay.filter(p => _kpiProjIdSet.has(p.projectId)).map(p => p.workerName || p.id)).size;
 
-    // Variance calculations
-    const periodAlloc    = contract - totReceived;
-    const periodAllocPct = contract > 0 ? (periodAlloc / contract) * 100 : 0;
-    const contractRem    = contract - totSpent;
-    const contractRemPct = contract > 0 ? (contractRem / contract) * 100 : 0;
-    const utilizedPct    = totReceived > 0 ? (totSpent / totReceived) * 100 : 0;
-    const contractUsedPct= contract > 0 ? (totSpent / contract) * 100 : 0;
-    const rcvOfContract  = contract > 0 ? (totReceived / contract) * 100 : 0;
+    // Build a standard KPI card: label / big value / sub
+    function _card(label, val, sub) {
+        return '<div class="rpt-kpi-card">'
+            + '<div class="rpt-kpi-label">' + label + '</div>'
+            + '<div class="rpt-kpi-val">'   + val   + '</div>'
+            + '<div class="rpt-kpi-sub">'   + sub   + '</div>'
+            + '</div>';
+    }
 
-    const varClass = periodAlloc < 0 ? 'rpt-kpi-over' : 'rpt-kpi-remaining';
-    const varIcon  = periodAlloc < 0 ? 'trending-down' : 'trending-up';
+    const staffOnly = window.currentUserRole === 'staff';
+    let html = '';
 
-    row.innerHTML =
-        (window.currentUserRole !== 'staff'
-            ? '<div class="rpt-kpi-card rpt-kpi-contract">'
-              +   '<div class="rpt-kpi-ico-wrap"><i data-lucide="building-2" class="rpt-kpi-ico"></i></div>'
-              +   '<div class="rpt-kpi-body">'
-              +       '<div class="rpt-kpi-label">Contract Value</div>'
-              +       '<div class="rpt-kpi-val">₱' + formatNum(contract) + '</div>'
-              +       '<div class="rpt-kpi-sub">' + contractLabel + ' · ' + _rptState.year + '</div>'
-              +   '</div>'
-              + '</div>'
-              + '<div class="rpt-kpi-card rpt-kpi-budget">'
-              +   '<div class="rpt-kpi-ico-wrap"><i data-lucide="wallet" class="rpt-kpi-ico"></i></div>'
-              +   '<div class="rpt-kpi-body">'
-              +       '<div class="rpt-kpi-label">Fund Allocated</div>'
-              +       '<div class="rpt-kpi-val">₱' + formatNum(totReceived) + '</div>'
-              +       '<div class="rpt-kpi-sub">' + activePeriodsCount + ' billing period' + (activePeriodsCount !== 1 ? 's' : '') + ' · ' + rcvOfContract.toFixed(1) + '% of contract</div>'
-              +   '</div>'
-              + '</div>'
-            : '')
-        + '<div class="rpt-kpi-card rpt-kpi-materials">'
-        +   '<div class="rpt-kpi-ico-wrap"><i data-lucide="hard-hat" class="rpt-kpi-ico"></i></div>'
-        +   '<div class="rpt-kpi-body">'
-        +       '<div class="rpt-kpi-label">Materials & Costs</div>'
-        +       '<div class="rpt-kpi-val">₱' + formatNum(totMats) + '</div>'
-        +       '<div class="rpt-kpi-sub">' + (totReceived > 0 ? ((totMats / totReceived) * 100).toFixed(1) : '0.0') + '% of allocated budget</div>'
-        +   '</div>'
-        + '</div>'
-        + '<div class="rpt-kpi-card rpt-kpi-labor">'
-        +   '<div class="rpt-kpi-ico-wrap"><i data-lucide="users" class="rpt-kpi-ico"></i></div>'
-        +   '<div class="rpt-kpi-body">'
-        +       '<div class="rpt-kpi-label">Labor & Payroll</div>'
-        +       '<div class="rpt-kpi-val">₱' + formatNum(totLabor) + '</div>'
-        +       '<div class="rpt-kpi-sub">' + (totReceived > 0 ? ((totLabor / totReceived) * 100).toFixed(1) : '0.0') + '% of allocated budget</div>'
-        +   '</div>'
-        + '</div>'
-        + '<div class="rpt-kpi-card rpt-kpi-spent">'
-        +   '<div class="rpt-kpi-ico-wrap"><i data-lucide="sigma" class="rpt-kpi-ico"></i></div>'
-        +   '<div class="rpt-kpi-body">'
-        +       '<div class="rpt-kpi-label">Total Fund Spent</div>'
-        +       '<div class="rpt-kpi-val">₱' + formatNum(totSpent) + '</div>'
-        +       '<div class="rpt-kpi-sub">' + utilizedPct.toFixed(1) + '% utilized · ' + contractUsedPct.toFixed(1) + '% of contract</div>'
-        +   '</div>'
-        + '</div>'
-        + '<div class="rpt-kpi-card rpt-kpi-cover">'
-        +   '<div class="rpt-kpi-ico-wrap"><i data-lucide="shield" class="rpt-kpi-ico"></i></div>'
-        +   '<div class="rpt-kpi-body">'
-        +       '<div class="rpt-kpi-label">Cover Expenses</div>'
-        +       '<div class="rpt-kpi-val">₱' + formatNum(totCover) + '</div>'
-        +       '<div class="rpt-kpi-sub">' + (totCover <= 0 ? 'No cover expenses recorded' : coverPctOfBudget.toFixed(1) + '% of allocated budget · ' + (coverPctOfBudget >= 5 ? 'BAD' : coverPctOfBudget >= 2 ? 'WARNING' : 'HEALTHY')) + '</div>'
-        +   '</div>'
-        + '</div>'
-        + (window.currentUserRole !== 'staff'
-            ? '<div class="rpt-kpi-card rpt-kpi-variance-wide ' + varClass + '">'
-              +   '<div class="rpt-kpi-ico-wrap"><i data-lucide="' + varIcon + '" class="rpt-kpi-ico"></i></div>'
-              +   '<div class="rpt-kpi-body">'
-              +       '<div class="rpt-kpi-label" style="margin-bottom:0.5rem">Remaining Allocation</div>'
-              +       '<div class="rpt-variance-split">'
-              +           '<div class="rpt-variance-col">'
-              +               '<div class="rpt-variance-col-label">Receivable Balance</div>'
-              +               '<div class="rpt-variance-kpi-badge ' + (periodAlloc < 0 ? 'rpt-variance-kpi-badge--red' : 'rpt-variance-kpi-badge--green') + '">' + periodAllocPct.toFixed(1) + '% of contract</div>'
-              +               '<div class="rpt-variance-col-val">' + (periodAlloc < 0 ? '-' : '') + '₱' + formatNum(Math.abs(periodAlloc)) + '</div>'
-              +               '<div class="rpt-variance-bar-wrap"><div class="rpt-variance-bar-fill" style="width:' + Math.max(Math.min(Math.abs(periodAllocPct), 100), 2).toFixed(1) + '%;background:' + (periodAlloc < 0 ? 'rgba(239,68,68,0.8)' : 'rgba(255,255,255,0.6)') + '"></div></div>'
-              +               '<div class="rpt-variance-col-sub">' + (periodAlloc < 0 ? 'over-billed' : 'pending billing') + '</div>'
-              +           '</div>'
-              +           '<div class="rpt-variance-divider"></div>'
-              +           '<div class="rpt-variance-col">'
-              +               '<div class="rpt-variance-col-label">Budget Remaining</div>'
-              +               '<div class="rpt-variance-kpi-badge ' + (contractRem < 0 ? 'rpt-variance-kpi-badge--red' : 'rpt-variance-kpi-badge--green') + '">' + (contract > 0 ? contractRemPct.toFixed(1) + '% of contract' : 'No contract set') + '</div>'
-              +               '<div class="rpt-variance-col-val">' + (contractRem < 0 ? '-' : '') + '₱' + formatNum(Math.abs(contractRem)) + '</div>'
-              +               '<div class="rpt-variance-bar-wrap"><div class="rpt-variance-bar-fill" style="width:' + Math.max(Math.min(Math.abs(contractRemPct), 100), 2).toFixed(1) + '%;background:' + (contractRem < 0 ? '#ef4444' : '#4ade80') + '"></div></div>'
-              +               '<div class="rpt-variance-col-sub">' + (contract > 0 ? (contractRem < 0 ? 'over budget' : 'available') : 'no contract set') + '</div>'
-              +           '</div>'
-              +       '</div>'
-              +   '</div>'
-              + '</div>'
-            : '');
+    if (!staffOnly) {
+        // Row 1
+        html += _card('Contract Value',        '&#8369;' + formatNum(contract),     contractLabel + ' &middot; ' + _rptState.year);
+        html += _card('Fund Allocated',        '&#8369;' + formatNum(totReceived),  activePeriodsCount + ' billing period' + (activePeriodsCount !== 1 ? 's' : '') + ' &middot; ' + rcvOfContract.toFixed(1) + '% of contract');
+        html += _card('Materials &amp; Costs', '&#8369;' + formatNum(totMats),      (totReceived > 0 ? ((totMats / totReceived) * 100).toFixed(1) : '0.0') + '% of allocated budget');
+        // Row 2
+        html += _card('Labor &amp; Payroll',   '&#8369;' + formatNum(totLabor),     (totReceived > 0 ? ((totLabor / totReceived) * 100).toFixed(1) : '0.0') + '% of allocated budget');
+        html += _card('Total Fund Spent',      '&#8369;' + formatNum(totSpent),     utilizedPct.toFixed(1) + '% utilized &middot; ' + contractUsedPct.toFixed(1) + '% of contract');
+        html += _card('Cover Expenses',        '&#8369;' + formatNum(totCover),     coverPctOfBudget.toFixed(1) + '% of allocated budget &middot; ' + (coverPctOfBudget >= 5 ? 'BAD' : coverPctOfBudget >= 2 ? 'WARNING' : 'HEALTHY'));
+    } else {
+        html += _card('Materials &amp; Costs', '&#8369;' + formatNum(totMats),      txCount + ' transaction' + (txCount !== 1 ? 's' : ''));
+        html += _card('Labor &amp; Payroll',   '&#8369;' + formatNum(totLabor),     workerCount + ' worker' + (workerCount !== 1 ? 's' : ''));
+        html += _card('Total Fund Spent',      '&#8369;' + formatNum(totSpent),     contractUsedPct.toFixed(1) + '% of contract value');
+    }
 
+    // Remaining Allocation — full-width card with two side-by-side columns
+    if (!staffOnly) {
+        const varClass = periodAlloc < 0 ? 'rpt-variance-kpi-badge--red' : 'rpt-variance-kpi-badge--green';
+        const remClass = contractRem  < 0 ? 'rpt-variance-kpi-badge--red' : 'rpt-variance-kpi-badge--green';
+        html += '<div class="rpt-kpi-card rpt-kpi-variance-wide">'
+            + '<div class="rpt-kpi-label rpt-kpi-label--highlight">Remaining Allocation</div>'
+            + '<div class="rpt-variance-rule"></div>'
+            + '<div class="rpt-variance-split">'
+            +   '<div class="rpt-variance-col">'
+            +     '<div class="rpt-variance-col-label">Receivable Balance</div>'
+            +     '<div class="rpt-variance-kpi-badge ' + varClass + '">' + periodAllocPct.toFixed(1) + '% of contract</div>'
+            +     '<div class="rpt-variance-col-val">' + (periodAlloc < 0 ? '-' : '') + '&#8369;' + formatNum(Math.abs(periodAlloc)) + '</div>'
+            +     '<div class="rpt-variance-bar-wrap"><div class="rpt-variance-bar-fill" style="width:' + Math.max(Math.min(Math.abs(periodAllocPct), 100), 2).toFixed(1) + '%;background:' + (periodAlloc < 0 ? 'rgba(239,68,68,0.8)' : 'rgba(255,255,255,0.6)') + '"></div></div>'
+            +     '<div class="rpt-variance-col-sub">' + (periodAlloc < 0 ? 'over-billed' : 'pending billing') + '</div>'
+            +   '</div>'
+            +   '<div class="rpt-variance-divider"></div>'
+            +   '<div class="rpt-variance-col">'
+            +     '<div class="rpt-variance-col-label">Budget Remaining</div>'
+            +     '<div class="rpt-variance-kpi-badge ' + remClass + '">' + (contract > 0 ? contractRemPct.toFixed(1) + '% of contract' : 'No contract set') + '</div>'
+            +     '<div class="rpt-variance-col-val">' + (contractRem < 0 ? '-' : '') + '&#8369;' + formatNum(Math.abs(contractRem)) + '</div>'
+            +     '<div class="rpt-variance-bar-wrap"><div class="rpt-variance-bar-fill" style="width:' + Math.max(Math.min(Math.abs(contractRemPct), 100), 2).toFixed(1) + '%;background:' + (contractRem < 0 ? '#ef4444' : '#4ade80') + '"></div></div>'
+            +     '<div class="rpt-variance-col-sub">' + (contract > 0 ? (contractRem < 0 ? 'over budget' : 'available') : 'no contract set') + '</div>'
+            +   '</div>'
+            + '</div>'
+            + '</div>';
+    }
+
+    row.innerHTML = html;
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 

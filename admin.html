@@ -961,29 +961,28 @@
             <div class="rpt-kpi-row" id="rptKpiRow">
                 <div class="rpt-empty-state"><i data-lucide="bar-chart-2" class="rpt-empty-ico"></i><p>Loading company-wide data…</p></div>
             </div>
-            <!-- TREND + COMPOSITION CHARTS -->
-            <div class="rpt-charts-grid">
-                <div class="section-card rpt-chart-wide">
-                    <div class="card-header">
-                        <div><h2 id="rptTrendTitle">Spending Trend</h2><p class="card-subtitle" id="rptTrendSubtitle">Cost breakdown over time</p></div>
-                    </div>
-                    <div class="chart-wrapper" style="height:200px"><canvas id="rptTrendChart"></canvas></div>
-                </div>
-                <div class="section-card">
-                    <div class="card-header"><div><h2>Cost Composition</h2><p class="card-subtitle">Spending by category &amp; labor</p></div></div>
-                    <div class="chart-wrapper" style="height:200px"><canvas id="rptCompositionChart"></canvas></div>
-                </div>
-            </div>
-            <!-- BUDGET vs ACTUAL + CATEGORY -->
+            <!-- DATA ANALYTICS: COST COMPOSITION & CATEGORY BREAKDOWN -->
             <div class="rpt-charts-grid rpt-charts-grid-equal">
                 <div class="section-card">
-                    <div class="card-header"><div><h2>Budget vs Actual</h2><p class="card-subtitle">Allocated budget vs real spend per period</p></div></div>
-                    <div class="chart-wrapper" style="height:200px"><canvas id="rptBudgetVsActualChart"></canvas></div>
+                    <div class="card-header"><div><h2>Cost Composition</h2><p class="card-subtitle">Spending by category &amp; labor</p></div></div>
+                    <div class="chart-wrapper" style="height:260px"><canvas id="rptCompositionChart"></canvas></div>
                 </div>
                 <div class="section-card">
                     <div class="card-header"><div><h2>Category Breakdown</h2><p class="card-subtitle">Distribution including payroll</p></div></div>
-                    <div class="chart-wrapper" style="height:200px"><canvas id="expCategoryChart"></canvas></div>
+                    <div class="chart-wrapper" style="height:260px"><canvas id="expCategoryChart"></canvas></div>
                 </div>
+            </div>
+            <!-- MONTH SPENDING TREND -->
+            <div class="section-card" style="margin-top:1rem;">
+                <div class="card-header">
+                    <div><h2 id="rptTrendTitle">Spending Trend</h2><p class="card-subtitle" id="rptTrendSubtitle">Cost breakdown over time</p></div>
+                </div>
+                <div class="chart-wrapper" style="height:260px"><canvas id="rptTrendChart"></canvas></div>
+            </div>
+            <!-- BUDGET VS ACTUAL -->
+            <div class="section-card" style="margin-top:1rem;">
+                <div class="card-header"><div><h2>Budget vs Actual</h2><p class="card-subtitle">Allocated budget vs real spend per period</p></div></div>
+                <div class="chart-wrapper" style="height:260px"><canvas id="rptBudgetVsActualChart"></canvas></div>
             </div>
             <!-- PERIOD BREAKDOWN TABLE -->
             <div class="section-card rpt-table-card">

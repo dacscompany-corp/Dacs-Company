@@ -570,25 +570,6 @@
                     </button>
                 </div>
                 <div id="prVerifyConfirm" style="display:none;margin-top:14px;background:#f0fdf9;border:1.5px solid #6ee7b7;border-radius:10px;padding:14px;">
-                    ${(r.paidAmount != null && r.paidAmount > r.amount) ? `
-                    <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:8px;padding:12px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        <div>
-                            <div style="font-size:13px;font-weight:700;color:#92400e;">Overpayment Detected</div>
-                            <div style="font-size:12.5px;color:#92400e;margin-top:2px;">
-                                Client paid <strong>${_formatAmount(r.paidAmount)}</strong> but the request was <strong>${_formatAmount(r.amount)}</strong>.<br>
-                                Excess: <strong style="color:#d97706;">${_formatAmount(r.paidAmount - r.amount)}</strong>
-                            </div>
-                            <div style="margin-top:8px;">
-                                <label style="font-size:12px;font-weight:600;color:#92400e;display:block;margin-bottom:4px;">How to handle the excess?</label>
-                                <select id="prOverpayAction" class="inv-input" style="font-size:12.5px;padding:6px 10px;border-color:#fed7aa;">
-                                    <option value="credit">Apply as credit to next billing</option>
-                                    <option value="note">Record as overpayment (note only)</option>
-                                    <option value="ignore">Ignore — treat as exact payment</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>` : ''}
                     <p style="font-size:13.5px;color:#065f46;font-weight:500;margin:0 0 12px;">Confirm that payment has been received and verified?</p>
                     <div style="display:flex;gap:8px;">
                         <button class="pr-btn-verify" onclick="prConfirmVerify('${id}')">
@@ -947,24 +928,11 @@
         try {
             _clearRequestBadge(id);
             const verifiedBy = auth.currentUser ? auth.currentUser.email : '';
-            const r = _allRequests.find(x => x.id === id) || {};
-
-            // Handle overpayment
-            const updateData = {
+            await db.collection('paymentRequests').doc(id).update({
                 status:     'verified',
                 verifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 verifiedBy
-            };
-            if (r.paidAmount != null && r.paidAmount > r.amount) {
-                const overpayAction = document.getElementById('prOverpayAction')?.value || 'note';
-                const excessAmount  = r.paidAmount - r.amount;
-                updateData.overpaidAmount  = excessAmount;
-                updateData.overpayAction   = overpayAction;
-                if (overpayAction === 'credit') {
-                    updateData.creditBalance = excessAmount;
-                }
-            }
-            await db.collection('paymentRequests').doc(id).update(updateData);
+            });
 
             // Auto-generate invoice from this verified payment request
             const req = _allRequests.find(x => x.id === id) || { id };

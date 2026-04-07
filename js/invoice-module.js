@@ -1495,7 +1495,7 @@ table.breakdown tbody tr:nth-child(even) { background:#f8fafc; }
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Payroll Invoice — ${esc(projectName)}</title>
+<title>Receipt of Payment — ${esc(projectName)}</title>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#111; background:#f5f5f5; }
@@ -1543,7 +1543,7 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff; backgrou
       <p>Business Tax Id: ${esc(bizTin)}<br>${esc(bizAddr)}</p>
     </div>
     <div class="inv-title-block">
-      <h2>LABOR INVOICE</h2>
+      <h2>RECEIPT OF PAYMENT</h2>
       <div class="inv-sub">Labor &amp; Payroll</div>
       <div class="inv-meta">
         Invoice No: <strong>${esc(invoiceNo)}</strong><br>
@@ -1557,11 +1557,7 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff; backgrou
       <div class="name">${esc(projectName)}</div>
       <p>Billing Period: ${esc(periodLabel)}</p>
     </div>
-    <div class="bill-to">
-      <h4>Summary</h4>
-      <p style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">Total Workers: <input id="sumWorkers" type="number" min="0" value="${entries.length}" style="width:60px;border:1px solid #d1d5db;border-radius:5px;padding:2px 6px;font-size:12px;font-weight:600;"></p>
-      <p style="display:flex;align-items:center;gap:6px;">Total Entries: <input id="sumEntries" type="number" min="0" value="${entries.length}" style="width:60px;border:1px solid #d1d5db;border-radius:5px;padding:2px 6px;font-size:12px;font-weight:600;"></p>
-    </div>
+
   </div>
   <table class="items">
     <thead>
