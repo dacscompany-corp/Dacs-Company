@@ -5795,6 +5795,7 @@ function mvpRenderPayrollInDetail() {
             + '<td>' + _mvpFmt(w.totalSalary||0) + '</td>'
             + '<td>—</td>'
             + '<td class="exp-action-cell">'
+            +   '<button class="exp-icon-btn exp-icon-btn-invoice" title="Acknowledge Invoice" onclick="printSinglePayrollInvoice(\'' + w.id + '\')"><i data-lucide="file-text"></i></button>'
             +   '<button class="exp-icon-btn exp-icon-btn-edit" title="Edit" onclick="openEditPayrollModal(\'' + w.id + '\')"><i data-lucide="pencil"></i></button>'
             +   '<button class="exp-icon-btn exp-icon-btn-danger" title="Delete" onclick="deletePayroll(\'' + w.id + '\')"><i data-lucide="trash-2"></i></button>'
             + '</td>'

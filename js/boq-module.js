@@ -449,6 +449,7 @@
                     <td class="boq-col-actions boq-l2-actions">
                         <button class="boq-icon-btn boq-icon-btn-edit" title="Edit label"  onclick="boqEditSILabel('${ci.id}','${si.id}')"><i data-lucide="pencil"></i></button>
                         <button class="boq-icon-btn boq-icon-btn-add"  title="Add Line Item" onclick="boqAddLineItem('${ci.id}','${si.id}')"><i data-lucide="plus"></i></button>
+                        <button class="boq-icon-btn boq-icon-btn-group" title="Add Group Header" onclick="boqAddGroupHeader('${ci.id}','${si.id}')"><i data-lucide="layout-list"></i></button>
                         <button class="boq-icon-btn boq-icon-btn-photos" title="Photos" onclick="boqTogglePhotos('${ci.id}','${si.id}')" id="photos-btn-${si.id}">
                             <i data-lucide="image"></i>${(si.images||[]).length ? `<span class="boq-img-count">${si.images.length}</span>` : ''}
                         </button>
@@ -479,6 +480,37 @@
 
     // ── Render single line item row ────────────────────────────
     function renderLineItemRow(ciId, siId, li, liIdx, editMode) {
+        // ── Group header row (category label, no quantities) ──
+        if (li.type === 'group') {
+            if (editMode) {
+                return `
+                <tr class="boq-row-group boq-row-editing" id="row-li-${li.id}">
+                    <td colspan="9" class="boq-group-label" id="group-label-${li.id}">
+                        <input type="text" class="boq-label-input boq-group-input" id="group-inp-${li.id}"
+                               value="${escAttr(li.label||'')}" placeholder="Group header (e.g. ENTRY/FOYER)"
+                               onkeydown="if(event.key==='Enter')boqSaveGroupHeader('${ciId}','${siId}','${li.id}');else if(event.key==='Escape')boqCancelGroupHeader('${ciId}','${siId}','${li.id}')">
+                        <span class="boq-label-actions">
+                            <button class="boq-icon-btn boq-icon-btn-save" onclick="boqSaveGroupHeader('${ciId}','${siId}','${li.id}')"><i data-lucide="check"></i></button>
+                            <button class="boq-icon-btn boq-icon-btn-cancel" onclick="boqCancelGroupHeader('${ciId}','${siId}','${li.id}')"><i data-lucide="x"></i></button>
+                        </span>
+                    </td>
+                    <td class="boq-col-actions"></td>
+                </tr>`;
+            }
+            return `
+            <tr class="boq-row-group" id="row-li-${li.id}">
+                <td colspan="9" class="boq-group-label" id="group-label-${li.id}">
+                    <span class="boq-group-text" ondblclick="boqEditGroupHeader('${ciId}','${siId}','${li.id}')">${escHtml(li.label || 'GROUP HEADER')}</span>
+                </td>
+                <td class="boq-col-actions">
+                    <button class="boq-icon-btn boq-icon-btn-edit" title="Edit" onclick="boqEditGroupHeader('${ciId}','${siId}','${li.id}')"><i data-lucide="pencil"></i></button>
+                    <button class="boq-icon-btn" title="Move Up"   onclick="boqMoveLineItem('${ciId}','${siId}','${li.id}',-1)" style="color:#6b7280"><i data-lucide="chevron-up"></i></button>
+                    <button class="boq-icon-btn" title="Move Down" onclick="boqMoveLineItem('${ciId}','${siId}','${li.id}',1)"  style="color:#6b7280"><i data-lucide="chevron-down"></i></button>
+                    <button class="boq-icon-btn boq-icon-btn-del"  title="Delete" onclick="boqDeleteLineItem('${ciId}','${siId}','${li.id}')"><i data-lucide="trash-2"></i></button>
+                </td>
+            </tr>`;
+        }
+
         if (editMode) {
             const matSel = li.materialOverride
                 ? `<option value="value">Enter value</option><option value="by owner" ${li.materialOverride==='by owner'?'selected':''}>By owner</option><option value="not applicable" ${li.materialOverride==='not applicable'?'selected':''}>N/A</option>`
@@ -783,6 +815,58 @@
         setTimeout(() => boqEditLineItem(ciId, siId, li.id), 60);
     };
 
+    // ── Add / Edit / Save / Cancel Group Header ───────────────
+    window.boqAddGroupHeader = function (ciId, siId) {
+        const ci = boq.costItems.find(c => c.id === ciId);
+        if (!ci) return;
+        const si = ci.subItems.find(s => s.id === siId);
+        if (!si) return;
+        const li = { id: genId(), type: 'group', label: '' };
+        si.lineItems.push(li);
+        markDirty(); refreshTable();
+        setTimeout(() => boqEditGroupHeader(ciId, siId, li.id), 60);
+    };
+
+    window.boqEditGroupHeader = function (ciId, siId, liId) {
+        const ci = boq.costItems.find(c => c.id === ciId);
+        const si = ci?.subItems.find(s => s.id === siId);
+        const li = si?.lineItems.find(l => l.id === liId);
+        if (!li) return;
+        const row = el(`row-li-${liId}`);
+        if (!row) return;
+        row.outerHTML = renderLineItemRow(ciId, siId, li, si.lineItems.indexOf(li), true);
+        el(`group-inp-${liId}`)?.focus();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    window.boqSaveGroupHeader = function (ciId, siId, liId) {
+        const ci = boq.costItems.find(c => c.id === ciId);
+        const si = ci?.subItems.find(s => s.id === siId);
+        const li = si?.lineItems.find(l => l.id === liId);
+        if (!li) return;
+        const inp = el(`group-inp-${liId}`);
+        if (inp) li.label = inp.value.toUpperCase().trim() || 'GROUP HEADER';
+        const row = el(`row-li-${liId}`);
+        if (row) row.outerHTML = renderLineItemRow(ciId, siId, li, si.lineItems.indexOf(li), false);
+        markDirty();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    window.boqCancelGroupHeader = function (ciId, siId, liId) {
+        const ci = boq.costItems.find(c => c.id === ciId);
+        const si = ci?.subItems.find(s => s.id === siId);
+        const li = si?.lineItems.find(l => l.id === liId);
+        if (!li) return;
+        // If label is still empty it was just created — remove it
+        if (!li.label) {
+            si.lineItems = si.lineItems.filter(l => l.id !== liId);
+            markDirty(); refreshTable(); return;
+        }
+        const row = el(`row-li-${liId}`);
+        if (row) row.outerHTML = renderLineItemRow(ciId, siId, li, si.lineItems.indexOf(li), false);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
     // ── Confirm delete modal ───────────────────────────────────
     function boqConfirmDelete(title, message, onConfirm) {
         const existing = document.getElementById('boqDeleteModal');
@@ -835,9 +919,10 @@
         const ci = boq.costItems.find(c => c.id === ciId);
         const si = ci?.subItems.find(s => s.id === siId);
         const li = si?.lineItems.find(l => l.id === liId);
+        const isGroup = li?.type === 'group';
         boqConfirmDelete(
-            'Delete Line Item',
-            `Are you sure you want to delete <strong>${escHtml(li?.description || 'this item')}</strong>? This cannot be undone.`,
+            isGroup ? 'Delete Group Header' : 'Delete Line Item',
+            `Are you sure you want to delete <strong>${escHtml(isGroup ? (li.label || 'this group header') : (li?.description || 'this item'))}</strong>? This cannot be undone.`,
             () => {
                 const c2 = boq.costItems.find(c => c.id === ciId);
                 if (!c2) return;
@@ -1305,6 +1390,8 @@
         let y = M;
 
         // ── Logo + Company title ───────────────────────────────
+        const headerBottom = M + 48; // fixed bottom of header block
+        const logoH = 40;
         try {
             const logoData = await new Promise(resolve => {
                 const img = new Image();
@@ -1321,21 +1408,26 @@
                 img.src = _base + 'assets/images/DACS-TRANSPARENT.png';
             });
             if (logoData) {
-                const logoH = 14, logoW = logoH * (logoData.w / logoData.h);
-                doc.addImage(logoData.url, 'PNG', pageW / 2 - logoW / 2, y, logoW, logoH);
-                y += logoH + 2;
+                const logoW = logoH * (logoData.w / logoData.h);
+                // logo bottom aligned to headerBottom
+                doc.addImage(logoData.url, 'PNG', pageW - M - logoW, headerBottom - logoH, logoW, logoH);
             }
         } catch(e) {}
+        // Business name & tagline — left aligned, bottom aligned to headerBottom
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
-        doc.text("DAC'S BUILDING DESIGN SERVICES", pageW / 2, y + 5, { align: 'center' });
-        y += 10;
+        doc.text("DAC'S BUILDING DESIGN SERVICES", M, headerBottom - 10);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7.5);
         doc.setTextColor(100, 100, 100);
-        doc.text('Professional Building Design & Construction Management', pageW / 2, y + 2, { align: 'center' });
+        doc.text('Accomplishment Report', M, headerBottom - 4);
         doc.setTextColor(0, 0, 0);
-        y += 6;
+        // Divider line below header
+        y = headerBottom + 2;
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.5);
+        doc.line(M, y, pageW - M, y);
+        y += 4;
 
         // ── Header info box (50% width, left-aligned — matches print design) ──
         doc.setFontSize(7.5);
@@ -1415,6 +1507,11 @@
                 styles.push('l2');
 
                 si.lineItems.forEach((li, liIdx) => {
+                    if (li.type === 'group') {
+                        rows.push(['', li.label || '', '', '', '', '', '', '', '']);
+                        styles.push('group');
+                        return;
+                    }
                     const mat = li.materialOverride || (li.materialRate ? fmt(li.materialRate) : '-');
                     const lab = li.laborOverride    || (li.laborRate    ? fmt(li.laborRate)    : '-');
                     // Item no goes into description (blank item no column — matches reference)
@@ -1524,6 +1621,12 @@
                     data.cell.styles.fillColor = [255, 255, 255];
                     data.cell.styles.textColor = [0, 0, 0];
                     data.cell.styles.fontStyle = 'bold';
+                } else if (s === 'group') {
+                    // Light gray — group/category header
+                    data.cell.styles.fillColor = [229, 231, 235];
+                    data.cell.styles.textColor = [31, 41, 55];
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.fontSize  = 6.5;
                 } else if (s === 'sub') {
                     // Light amber — matches print .pr-sub #fde68a
                     data.cell.styles.fillColor = [253, 230, 138];
@@ -1757,6 +1860,14 @@
                 </tr>`;
 
                 si.lineItems.forEach((li, liIdx) => {
+                    if (li.type === 'group') {
+                        tableRows += `
+                        <tr class="pr-group">
+                            <td class="c-no"></td>
+                            <td colspan="8">${escHtml(li.label || '')}</td>
+                        </tr>`;
+                        return;
+                    }
                     const mat = li.materialOverride || (li.materialRate ? fmt(li.materialRate) : '-');
                     const lab = li.laborOverride    || (li.laborRate    ? fmt(li.laborRate)    : '-');
                     // L3: 9 individual cells ✓
@@ -1864,6 +1975,9 @@
   .pr-acc td{background:#1a1a2e;color:#fff;font-weight:900;font-size:8pt;text-transform:uppercase;
              -webkit-print-color-adjust:exact;print-color-adjust:exact;}
 
+  /* group/category header row — light gray */
+  .pr-group td{background:#e5e7eb;color:#111;font-weight:700;font-size:7pt;text-transform:uppercase;
+               -webkit-print-color-adjust:exact;print-color-adjust:exact;}
   /* spacer row after each subtotal */
   .pr-spacer td{height:5px;background:#fff;border:none;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   /* transparent cell — no bg, no border */

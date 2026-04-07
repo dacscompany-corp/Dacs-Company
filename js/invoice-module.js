@@ -1216,7 +1216,7 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff;
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#111; background:#f5f5f5; }
-.page { width:180mm; min-height:240mm; margin:24px auto; padding:14mm 14mm 12mm; background:#fff; box-shadow:0 2px 14px rgba(0,0,0,.13); border-radius:4px; }
+.page { width:210mm; min-height:297mm; margin:24px auto; padding:14mm 16mm 12mm; background:#fff; box-shadow:0 2px 14px rgba(0,0,0,.13); border-radius:4px; }
 
 /* Header */
 .hdr { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:14px; border-bottom:3px solid #1e3a5f; margin-bottom:16px; }
@@ -1279,7 +1279,7 @@ table.breakdown tbody tr:nth-child(even) { background:#f8fafc; }
 @media print {
   body { background:#fff; }
   .page { margin:0; box-shadow:none; padding:8mm 10mm; width:100%; border-radius:0; }
-  @page { size:A5 portrait; margin:6mm; }
+  @page { size:A4 portrait; margin:8mm; }
 }
 </style>
 </head>

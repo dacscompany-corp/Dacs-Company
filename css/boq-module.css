@@ -304,6 +304,23 @@
 .boq-l3-no { padding-left: 2rem; color: #6b7280; font-size: 0.78rem; }
 .boq-optional-tag { font-size: 0.75rem; color: #9ca3af; font-style: italic; }
 
+/* ── Group Header row (category label within a sub-item) ─────────────────── */
+.boq-row-group td {
+    background: #e5e7eb;
+    color: #1f2937;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-color: #d1d5db;
+}
+.boq-row-group.boq-row-editing td { background: #f3f4f6; }
+.boq-group-label { padding-left: 2rem !important; }
+.boq-group-text  { cursor: pointer; }
+.boq-group-input { border-color: #6b7280; }
+.boq-icon-btn-group { color: #6b7280; }
+.boq-icon-btn-group:hover { color: #374151; background: #f3f4f6; }
+
 /* â”€â”€ Subtotal row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .boq-row-subtotal td {
     background: #fffde7;
