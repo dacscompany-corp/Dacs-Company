@@ -1,3 +1,57 @@
+
+// ── Forgot Password ──────────────────────────────────────────
+window.doForgotPassword = function () {
+    var modal = document.getElementById('forgotPasswordModal');
+    var input = document.getElementById('forgotEmailInput');
+    var msg   = document.getElementById('forgotPasswordMsg');
+    // Pre-fill with whatever is in the login email field
+    var loginEmail = (document.getElementById('login-email') || {}).value || '';
+    if (input) input.value = loginEmail;
+    if (msg)   { msg.style.display = 'none'; msg.textContent = ''; }
+    if (modal) modal.style.display = 'flex';
+    setTimeout(function() { if (input) input.focus(); }, 100);
+};
+
+window.closeForgotPasswordModal = function () {
+    var modal = document.getElementById('forgotPasswordModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.sendResetEmail = async function () {
+    var input = document.getElementById('forgotEmailInput');
+    var msg   = document.getElementById('forgotPasswordMsg');
+    var btn   = document.getElementById('sendResetBtn');
+    var email = (input ? input.value : '').trim();
+
+    function showMsg(text, isError) {
+        if (!msg) return;
+        msg.textContent    = text;
+        msg.style.display  = 'block';
+        msg.style.background = isError ? '#fef2f2' : '#f0fdf4';
+        msg.style.color      = isError ? '#b91c1c' : '#065f46';
+        msg.style.border     = '1px solid ' + (isError ? '#fecaca' : '#a7f3d0');
+    }
+
+    if (!email) { showMsg('Please enter your email address.', true); return; }
+    if (!/^[^s@]+@[^s@]+.[^s@]+$/.test(email)) { showMsg('Please enter a valid email address.', true); return; }
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+    try {
+        await firebase.auth().sendPasswordResetEmail(email);
+        showMsg('Reset link sent! Check your email inbox (and spam folder).', false);
+        if (input) input.value = '';
+        setTimeout(function() { window.closeForgotPasswordModal(); }, 3000);
+    } catch (e) {
+        var errMsg = 'Failed to send reset email.';
+        if (e.code === 'auth/user-not-found')    errMsg = 'No account found with this email address.';
+        else if (e.code === 'auth/invalid-email') errMsg = 'Invalid email address.';
+        else if (e.code === 'auth/too-many-requests') errMsg = 'Too many requests. Please try again later.';
+        showMsg(errMsg, true);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Send Reset Link'; }
+    }
+};
+
 // ============================================================
 // CLIENT PORTAL — Firebase Edition
 // DAC's Building Design Services
