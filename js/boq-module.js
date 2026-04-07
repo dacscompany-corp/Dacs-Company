@@ -272,9 +272,12 @@
                 boq.clientEmail = '';
                 boq.status      = 'draft';
                 boq.terms       = {
-                    payments:   '50% DOWNPAYMENT\n40% PROGRESS BILLING\n  15% Progress Billing No. 1\n  15% Progress Billing No. 2\n  10% Progress Billing No. 3\n10% UPON TURNOVER/COC',
-                    exclusions: 'Fire Protection Works (Sprinkler, Smoke Detectors, etc)\nMattress, Beddings and Pillows\nPanel Board and other electrical works not mentioned\nPlumbing works not mentioned\nAppliances (TV, Refrigerator, Stove, Range Hood, Water Heater, Filters and etc)\nA/C Supply and Install\nDecors and Accessories (Wall Paintings, Vases, Displays and etc)\nRetained Wall, Ceiling and Floor Finishes\nWindow Treatments (Blinds and Curtains)',
-                    duration:   '45 - 60 Days'
+                    payments:          '50% DOWNPAYMENT\n40% PROGRESS BILLING\n  15% Progress Billing No. 1\n  15% Progress Billing No. 2\n  10% Progress Billing No. 3\n10% UPON TURNOVER/COC',
+                    exclusions:        'Fire Protection Works (Sprinkler, Smoke Detectors, etc)\nMattress, Beddings and Pillows\nPanel Board and other electrical works not mentioned\nPlumbing works not mentioned\nAppliances (TV, Refrigerator, Stove, Range Hood, Water Heater, Filters and etc)\nA/C Supply and Install\nDecors and Accessories (Wall Paintings, Vases, Displays and etc)\nRetained Wall, Ceiling and Floor Finishes\nWindow Treatments (Blinds and Curtains)',
+                    duration:          '45 - 60 Days',
+                    includePayments:   true,
+                    includeExclusions: true,
+                    includeDuration:   true
                 };
             }
             renderBuilderArea();
@@ -344,19 +347,28 @@
 
             <div class="boq-terms-panel">
                 <div class="boq-section-title">Terms &amp; Conditions
-                    <span class="boq-terms-note">(included in PDF export)</span>
+                    <span class="boq-terms-note">(check each section to include in PDF &amp; Print)</span>
                 </div>
                 <div class="boq-terms-grid">
                     <div class="boq-terms-group">
-                        <label class="boq-terms-label">I. Terms of Payment</label>
+                        <label class="boq-terms-label">
+                            <input type="checkbox" id="boqIncludePayments" class="boq-terms-chk" ${boq.terms.includePayments !== false ? 'checked' : ''}>
+                            I. Terms of Payment
+                        </label>
                         <textarea id="boqTermsPayments" class="boq-terms-textarea" rows="7" placeholder="Enter payment terms...">${escHtml(boq.terms.payments)}</textarea>
                     </div>
                     <div class="boq-terms-group">
-                        <label class="boq-terms-label">II. Exclusions</label>
+                        <label class="boq-terms-label">
+                            <input type="checkbox" id="boqIncludeExclusions" class="boq-terms-chk" ${boq.terms.includeExclusions !== false ? 'checked' : ''}>
+                            II. Exclusions
+                        </label>
                         <textarea id="boqTermsExclusions" class="boq-terms-textarea" rows="7" placeholder="List exclusions (one per line)...">${escHtml(boq.terms.exclusions)}</textarea>
                     </div>
                     <div class="boq-terms-group">
-                        <label class="boq-terms-label">III. Duration</label>
+                        <label class="boq-terms-label">
+                            <input type="checkbox" id="boqIncludeDuration" class="boq-terms-chk" ${boq.terms.includeDuration !== false ? 'checked' : ''}>
+                            III. Duration
+                        </label>
                         <textarea id="boqTermsDuration" class="boq-terms-textarea" rows="2" placeholder="e.g. 45 - 60 Days">${escHtml(boq.terms.duration)}</textarea>
                     </div>
                 </div>
@@ -1279,11 +1291,17 @@
         const tp = el('boqTermsPayments');
         const te = el('boqTermsExclusions');
         const td = el('boqTermsDuration');
+        const chkP = el('boqIncludePayments');
+        const chkE = el('boqIncludeExclusions');
+        const chkD = el('boqIncludeDuration');
         if (tp || te || td) {
             boq.terms = {
-                payments:   tp ? tp.value : boq.terms.payments,
-                exclusions: te ? te.value : boq.terms.exclusions,
-                duration:   td ? td.value : boq.terms.duration
+                payments:          tp ? tp.value : boq.terms.payments,
+                exclusions:        te ? te.value : boq.terms.exclusions,
+                duration:          td ? td.value : boq.terms.duration,
+                includePayments:   chkP ? chkP.checked : (boq.terms.includePayments !== false),
+                includeExclusions: chkE ? chkE.checked : (boq.terms.includeExclusions !== false),
+                includeDuration:   chkD ? chkD.checked : (boq.terms.includeDuration !== false)
             };
         }
     }
@@ -1611,7 +1629,7 @@
                 fillColor: [251, 191, 36],
                 textColor: [0, 0, 0],
                 fontStyle: 'bold',
-                fontSize: 6.5,
+                fontSize: 6,
                 cellPadding: 1.5,
                 valign: 'middle'
             },
@@ -1620,10 +1638,10 @@
                 1: { cellWidth: 'auto' },
                 2: { cellWidth: 8,  halign: 'center' },
                 3: { cellWidth: 10, halign: 'center' },
-                4: { cellWidth: 20, halign: 'right' },
-                5: { cellWidth: 20, halign: 'right' },
+                4: { cellWidth: 22, halign: 'right' },
+                5: { cellWidth: 22, halign: 'right' },
                 6: { cellWidth: 22, halign: 'right' },
-                7: { cellWidth: 14, halign: 'center' },
+                7: { cellWidth: 18, halign: 'center' },
                 8: { cellWidth: 22, halign: 'right' }
             },
             didParseCell: function (data) {
@@ -1700,47 +1718,58 @@
 
         const fs = 7.5;
 
+        let termSectionIdx = 1;
         // I. TERMS OF PAYMENT
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(fs); doc.setTextColor(0, 0, 0);
-        doc.text('I.  TERMS OF PAYMENT', M, fy); fy += 5;
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(fs);
-        const paymentLines = (boq.terms.payments || '').split('\n');
-        paymentLines.forEach(line => {
-            const wrapped = doc.splitTextToSize(line, usableW - 4);
-            doc.text(wrapped, M + 4, fy);
-            fy += wrapped.length * 4;
-        });
-        fy += 3;
+        if (boq.terms.includePayments !== false) {
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(fs); doc.setTextColor(0, 0, 0);
+            doc.text(`${termSectionIdx++}.  TERMS OF PAYMENT`, M, fy); fy += 5;
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(fs);
+            const paymentLines = (boq.terms.payments || '').split('\n');
+            paymentLines.forEach(line => {
+                const wrapped = doc.splitTextToSize(line, usableW - 4);
+                doc.text(wrapped, M + 4, fy);
+                fy += wrapped.length * 4;
+            });
+            fy += 3;
+        }
 
         // II. EXCLUSIONS
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(fs);
-        doc.text('II.  EXCLUSIONS', M, fy); fy += 5;
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(fs);
-        const exclLines = (boq.terms.exclusions || '').split('\n');
-        exclLines.forEach((line, i) => {
-            const wrapped = doc.splitTextToSize(`${String.fromCharCode(97 + i)}. ${line}`, usableW - 8);
-            doc.text(wrapped, M + 4, fy);
-            fy += wrapped.length * 4;
-        });
-        fy += 3;
+        if (boq.terms.includeExclusions !== false) {
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(fs);
+            doc.text(`${termSectionIdx++}.  EXCLUSIONS`, M, fy); fy += 5;
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(fs);
+            const exclLines = (boq.terms.exclusions || '').split('\n');
+            exclLines.forEach((line, i) => {
+                const wrapped = doc.splitTextToSize(`${String.fromCharCode(97 + i)}. ${line}`, usableW - 8);
+                doc.text(wrapped, M + 4, fy);
+                fy += wrapped.length * 4;
+            });
+            fy += 3;
+        }
 
         // III. DURATION
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(fs);
-        doc.text('III.  DURATION', M, fy); fy += 5;
-        doc.setFont('helvetica', 'normal');
-        const durLines = doc.splitTextToSize((boq.terms.duration || '45 - 60 Days'), usableW - 8);
-        doc.text(durLines, M + 4, fy);
-        fy += durLines.length * 4 + 4;
+        if (boq.terms.includeDuration !== false) {
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(fs);
+            doc.text(`${termSectionIdx++}.  DURATION`, M, fy); fy += 5;
+            doc.setFont('helvetica', 'normal');
+            const durLines = doc.splitTextToSize((boq.terms.duration || '45 - 60 Days'), usableW - 8);
+            doc.text(durLines, M + 4, fy);
+            fy += durLines.length * 4 + 4;
+        }
 
-        // Disclaimer
-        doc.setFont('helvetica', 'italic'); doc.setFontSize(6.5);
+        // ── Save ──────────────────────────────────────────────
+        // Add disclaimer to footer on last page only
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.setPage(pageCount); // Go to last page
+        doc.setFont('helvetica', 'italic'); doc.setFontSize(6.5); doc.setTextColor(100, 100, 100);
         const disclaimer = 'Disclaimer: This document does not constitute a formal contract and is not legally binding. ' +
             'A formal contract will be issued upon approval of the total project cost and the subsequent signing of the contract.\n' +
             'This document serves for reference purposes only.';
         const dLines = doc.splitTextToSize(disclaimer, usableW);
-        doc.text(dLines, pageW / 2, fy, { align: 'center' });
+        const disclaimerHeight = dLines.length * 3.5;
+        const footerY = pageH - M - disclaimerHeight;
+        doc.text(dLines, pageW / 2, footerY, { align: 'center' });
 
-        // ── Save ──────────────────────────────────────────────
         const fname = `AccomplishmentReport_${(boq.header.projectName || 'project').replace(/\s+/g,'_')}_${boq.header.date || 'draft'}.pdf`;
         doc.save(fname);
         boqToast('PDF exported!', 'success');
@@ -1932,8 +1961,23 @@
         });
 
         // ── Terms ────────────────────────────────────────────
-        const payLines = (boq.terms.payments || '').split('\n').map(l => `<div class="pr-term-ln">${escHtml(l)}</div>`).join('');
+        const payLines  = (boq.terms.payments   || '').split('\n').map(l => `<div class="pr-term-ln">${escHtml(l)}</div>`).join('');
         const exclLines = (boq.terms.exclusions || '').split('\n').map((l, i) => `<div class="pr-term-ln">${String.fromCharCode(97+i)}. ${escHtml(l)}</div>`).join('');
+        let printTermIdx = 1;
+        const _prTermRoman = ['I', 'II', 'III', 'IV', 'V'];
+        const _prTermSections = [
+            { include: boq.terms.includePayments  !== false, title: 'Terms of Payment', body: payLines },
+            { include: boq.terms.includeExclusions !== false, title: 'Exclusions',       body: exclLines },
+            { include: boq.terms.includeDuration  !== false, title: 'Duration',          body: `<div class="pr-term-ln">${escHtml(boq.terms.duration || '45 - 60 Days')}</div>` }
+        ];
+        const termsSectionsHTML = _prTermSections.filter(s => s.include).map(s => {
+            const roman = _prTermRoman[printTermIdx - 1] || String(printTermIdx);
+            printTermIdx++;
+            return `<div class="pr-term-sec">
+              <div class="pr-term-hd">${roman}.&nbsp; ${s.title}</div>
+              ${s.body}
+            </div>`;
+        }).join('');
 
         const html = `<!DOCTYPE html>
 <html lang="en">
@@ -1976,12 +2020,13 @@
 
   /* ── Table ── */
   .pr-tbl{width:100%;border-collapse:collapse;font-size:7pt;margin-bottom:5px;table-layout:fixed;}
-  .pr-tbl th,.pr-tbl td{border:1px solid #888;padding:3px 4px;vertical-align:middle;overflow:hidden;}
+  .pr-tbl th{border:1px solid #888;padding:3px 4px;vertical-align:middle;overflow:visible;word-break:break-word;}
+  .pr-tbl td{border:1px solid #888;padding:3px 4px;vertical-align:middle;overflow:hidden;}
 
   /* exact same colours as PDF export */
-  .pr-th-top{background:#fbbf24;color:#000;font-weight:800;text-align:center;font-size:7pt;text-transform:uppercase;
+  .pr-th-top{background:#fbbf24;color:#000;font-weight:800;text-align:center;font-size:6pt;text-transform:uppercase;
              -webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .pr-th-sub{background:#fbbf24;color:#000;font-weight:700;text-align:center;font-size:6.5pt;
+  .pr-th-sub{background:#fbbf24;color:#000;font-weight:700;text-align:center;font-size:5.5pt;
              -webkit-print-color-adjust:exact;print-color-adjust:exact;}
   /* section header — red #c81e1e */
   .pr-l1 td{background:#c81e1e;color:#fff;font-weight:800;font-size:7.5pt;text-transform:uppercase;border-color:#991b1b;
@@ -2017,13 +2062,13 @@
   .pr-transparent{background:transparent!important;border:none!important;}
 
   /* ── Col widths ── */
-  .c-no  {width:28px;text-align:center;white-space:nowrap;}
+  .c-no  {width:32px;text-align:center;white-space:nowrap;}
   .c-desc{width:auto;}
   .c-qty {width:30px;text-align:center;}
   .c-unit{width:32px;text-align:center;}
   .c-rate{width:66px;text-align:right;white-space:nowrap;}
   .c-amt {width:90px;text-align:right;white-space:nowrap;}
-  .c-pct {width:36px;text-align:center;}
+  .c-pct {width:68px;text-align:center;}
 
   /* ── Terms ── */
   .pr-terms{margin-top:9px;font-size:7.5pt;border-top:1.5px solid #ccc;padding-top:7px;}
@@ -2090,9 +2135,9 @@
         <th class="pr-th-top" colspan="2">ACCOMPLISHMENT TO DATE</th>
       </tr>
       <tr>
-        <th class="pr-th-sub">MATERIAL &amp;<br>CONSUMABLES</th>
-        <th class="pr-th-sub">LABOR &amp;<br>EQUIPMENT</th>
-        <th class="pr-th-sub">% OF<br>COMPLETION</th>
+        <th class="pr-th-sub">MATERIAL &<br>CONSUMABLES</th>
+        <th class="pr-th-sub">LABOR &<br>EQUIPMENT</th>
+        <th class="pr-th-sub">%<br>COMPLETION</th>
         <th class="pr-th-sub">AMOUNT</th>
       </tr>
     </thead>
@@ -2134,20 +2179,7 @@
   </table>
 
   <!-- Terms -->
-  <div class="pr-terms">
-    <div class="pr-term-sec">
-      <div class="pr-term-hd">I.&nbsp; Terms of Payment</div>
-      ${payLines}
-    </div>
-    <div class="pr-term-sec">
-      <div class="pr-term-hd">II.&nbsp; Exclusions</div>
-      ${exclLines}
-    </div>
-    <div class="pr-term-sec">
-      <div class="pr-term-hd">III.&nbsp; Duration</div>
-      <div class="pr-term-ln">${escHtml(boq.terms.duration || '45 - 60 Days')}</div>
-    </div>
-  </div>
+  ${termsSectionsHTML ? `<div class="pr-terms">${termsSectionsHTML}</div>` : ''}
 
   <!-- Signatures -->
   <div class="pr-sig">

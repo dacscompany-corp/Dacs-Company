@@ -513,7 +513,15 @@
 @media(max-width:768px){ .boq-terms-grid { grid-template-columns:1fr; } }
 .boq-terms-group { display:flex; flex-direction:column; gap:0.35rem; }
 .boq-terms-group:last-child { grid-column:1/-1; }
-.boq-terms-label { font-size:0.78rem; font-weight:700; color:#374151; }
+.boq-terms-label {
+    display: flex; align-items: center; gap: 0.45rem;
+    font-size: 0.78rem; font-weight: 700; color: #374151;
+    cursor: pointer; user-select: none;
+}
+.boq-terms-chk {
+    width: 15px; height: 15px; flex-shrink: 0;
+    accent-color: #4f46e5; cursor: pointer;
+}
 .boq-terms-textarea {
     padding:0.6rem 0.75rem; border:1px solid #d1d5db; border-radius:8px;
     font-size:0.8rem; font-family:'Barlow',sans-serif; color:#374151;
