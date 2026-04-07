@@ -76,6 +76,7 @@ function initExpensesModule() {
     setupEditExpenseFormListeners();
     setupEditPayrollFormListeners();
     loadCategories();
+
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1707,9 +1708,10 @@ function renderPayrollTable() {
             <td>₱${formatNum(p.totalSalary)}</td>
             <td>${getReceiptThumbsHTML(p)}</td>
             <td class="exp-action-cell">
-                <button class="exp-icon-btn exp-icon-btn-invoice" title="Acknowledge Invoice" onclick="printSinglePayrollInvoice('${p.id}')"><i data-lucide="file-text"></i></button>
-                <button class="exp-icon-btn exp-icon-btn-edit" title="Edit" onclick="openEditPayrollModal('${p.id}')"><i data-lucide="pencil"></i></button>
-                <button class="exp-icon-btn exp-icon-btn-danger" title="Delete" onclick="deletePayroll('${p.id}')"><i data-lucide="trash-2"></i></button>
+                <button class="exp-icon-btn exp-icon-btn-view" title="View All Receipts" onclick="openWorkerSummaryModal('${(p.workerName||'').replace(/'/g,"\\'")}')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="exp-icon-btn exp-icon-btn-invoice" title="Acknowledge Invoice" onclick="printSinglePayrollInvoice('${p.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>
+                <button class="exp-icon-btn exp-icon-btn-edit" title="Edit" onclick="openEditPayrollModal('${p.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="exp-icon-btn exp-icon-btn-danger" title="Delete" onclick="deletePayroll('${p.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
             </td>
         </tr>`).join('') + `
         <tr class="exp-total-row">
@@ -1721,6 +1723,7 @@ function renderPayrollTable() {
 
     _updatePaySearchCount(filtered.length, expPayroll.length);
     if (window.lucide) lucide.createIcons();
+
 }
 
 function applyPayrollSearch() {
@@ -2859,6 +2862,318 @@ function getReceiptThumbsHTML(e) {
 }
 
 const _receiptStore = {};
+
+// ── Worker Receipt Summary Modal ──────────────────────────────
+function openWorkerSummaryModal(workerName) {
+    // Merge current-project payroll + global cache, deduplicate by id
+    const seen = new Set();
+    const pool = [...(expPayroll || []), ...(_ovAllPayroll || [])].filter(p => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+    });
+
+    const entries = pool
+        .filter(p => (p.workerName || '').toLowerCase() === (workerName || '').toLowerCase())
+        .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
+
+    if (!entries.length) {
+        showExpNotif('No payroll entries found for "' + workerName + '".', 'error');
+        return;
+    }
+
+    const totalPaid     = entries.reduce((s, p) => s + (p.totalSalary || 0), 0);
+    const totalDays     = entries.reduce((s, p) => s + (Number(p.daysWorked) || 0), 0);
+    const totalReceipts = entries.reduce((s, p) => {
+        const imgs = p.receiptImages?.length ? p.receiptImages : (p.receiptURL ? [p.receiptURL] : []);
+        return s + imgs.length;
+    }, 0);
+    const role    = entries[0].role || '—';
+    const fmtAmt  = n => '₱' + Number(n||0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtDate = d => { try { return new Date(d).toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' }); } catch(e) { return d||'—'; } };
+    const esc     = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    const _projs   = (typeof expProjects !== 'undefined' ? expProjects : []);
+    const _folders = (typeof expFolders  !== 'undefined' ? expFolders  : []);
+
+    const entriesHTML = entries.map((p, idx) => {
+        const imgs     = p.receiptImages?.length ? p.receiptImages : (p.receiptURL ? [p.receiptURL] : []);
+        const storeKey = 'wrs_' + p.id;
+        _receiptStore[storeKey] = { images: imgs, name: `${p.workerName} — ${fmtDate(p.paymentDate)}` };
+
+        // Resolve project/folder name
+        const proj      = _projs.find(pr => pr.id === p.projectId) || null;
+        const folder    = proj && proj.folderId ? _folders.find(f => f.id === proj.folderId) || null : null;
+        const projLabel = folder ? esc(folder.name) : (proj ? esc((proj.month||'') + ' ' + (proj.year||'')) : '—');
+        const periodLabel = proj ? esc((proj.month||'') + ' ' + (proj.year||'')) : '—';
+
+        const thumbsHTML = imgs.length
+            ? `<div class="wrs-receipt-row">${imgs.slice(0, 6).map((src, i) =>
+                `<img src="${esc(src)}" class="wrs-receipt-thumb" onclick="openLightbox('${storeKey}',${i})" alt="receipt ${i+1}">`
+              ).join('') + (imgs.length > 6 ? `<span class="wrs-more-badge" onclick="openLightbox('${storeKey}',0)">+${imgs.length - 6}</span>` : '')}</div>`
+            : '<div class="wrs-no-receipt-row"><span class="wrs-no-receipt">No receipt attached</span></div>';
+
+        const hasReceipt = imgs.length > 0;
+
+        return `
+        <div class="wrs-entry">
+            <div class="wrs-entry-topbar">
+                <div class="wrs-entry-num">#${entries.length - idx}</div>
+                <div class="wrs-entry-project">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    ${projLabel}${folder ? `<span class="wrs-entry-period">${periodLabel}</span>` : ''}
+                </div>
+                <div class="wrs-entry-receipt-badge ${hasReceipt ? 'has-receipt' : 'no-receipt'}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${hasReceipt ? '<polyline points="20 6 9 17 4 12"/>' : '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'}</svg>
+                    ${hasReceipt ? imgs.length + ' receipt' + (imgs.length > 1 ? 's' : '') : 'No receipt'}
+                </div>
+                <button class="wrs-inv-btn" title="Print Invoice" onclick="printSinglePayrollInvoice('${p.id}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Invoice
+                </button>
+            </div>
+            <div class="wrs-entry-body">
+                <div class="wrs-entry-info-row">
+                    <div class="wrs-entry-info-cell">
+                        <span class="wrs-info-label">Payment Date</span>
+                        <span class="wrs-info-value">${fmtDate(p.paymentDate)}</span>
+                    </div>
+                    <div class="wrs-entry-info-cell">
+                        <span class="wrs-info-label">Role</span>
+                        <span class="wrs-info-value">${esc(p.role||'—')}</span>
+                    </div>
+                    <div class="wrs-entry-info-cell">
+                        <span class="wrs-info-label">Days Worked</span>
+                        <span class="wrs-info-value">${p.daysWorked||0} days</span>
+                    </div>
+                    <div class="wrs-entry-info-cell">
+                        <span class="wrs-info-label">Daily Rate</span>
+                        <span class="wrs-info-value">${fmtAmt(p.dailyRate)}</span>
+                    </div>
+                </div>
+                ${p.notes ? `<div class="wrs-entry-notes-row"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>${esc(p.notes)}</div>` : ''}
+                <div class="wrs-entry-total-row">
+                    <span class="wrs-entry-total-formula">${p.daysWorked||0} days × ${fmtAmt(p.dailyRate)}/day</span>
+                    <span class="wrs-entry-total-amt">${fmtAmt(p.totalSalary)}</span>
+                </div>
+            </div>
+            ${thumbsHTML}
+        </div>`;
+    }).join('');
+
+    document.getElementById('wrsWorkerName').textContent   = workerName;
+    document.getElementById('wrsRole').textContent         = role;
+    document.getElementById('wrsEntryCount').textContent   = entries.length + (entries.length === 1 ? ' entry' : ' entries');
+    document.getElementById('wrsTotalDays').textContent    = totalDays + ' days';
+    document.getElementById('wrsReceiptCount').textContent = totalReceipts + (totalReceipts === 1 ? ' receipt' : ' receipts');
+    document.getElementById('wrsTotalPaid').textContent    = fmtAmt(totalPaid);
+    document.getElementById('wrsEntriesList').innerHTML    = entriesHTML;
+    document.getElementById('workerSummaryModal').dataset.worker = workerName;
+
+    openExpModal('workerSummaryModal');
+    if (window.lucide) lucide.createIcons();
+}
+window.openWorkerSummaryModal = openWorkerSummaryModal;
+
+function printWorkerReceiptSummary(workerName) {
+    // Merge current-project + global cache, deduplicate
+    const seen2 = new Set();
+    const allPay = [...(expPayroll || []), ...(_ovAllPayroll || [])].filter(p => {
+        if (seen2.has(p.id)) return false;
+        seen2.add(p.id);
+        return true;
+    });
+
+    const entries = allPay
+        .filter(p => (p.workerName || '').toLowerCase() === (workerName || '').toLowerCase())
+        .sort((a, b) => new Date(a.paymentDate) - new Date(b.paymentDate));
+
+    if (!entries.length) return;
+
+    const totalPaid   = entries.reduce((s, p) => s + (p.totalSalary || 0), 0);
+    const totalDays   = entries.reduce((s, p) => s + (Number(p.daysWorked) || 0), 0);
+    const fmtAmt      = n => '&#8369;&nbsp;' + Number(n||0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtDate     = d => { try { return new Date(d).toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' }); } catch(e) { return d||'—'; } };
+    const fmtDateSh   = d => { try { return new Date(d).toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' }); } catch(e) { return d||'—'; } };
+    const esc         = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    const _projs   = (typeof expProjects !== 'undefined' ? expProjects : []);
+    const _folders = (typeof expFolders  !== 'undefined' ? expFolders  : []);
+    const bizName  = (typeof _defaults !== 'undefined' && _defaults && _defaults.businessName) ? _defaults.businessName : "DAC's Building Design Services";
+    const bizAddr  = (typeof _defaults !== 'undefined' && _defaults && _defaults.businessAddress) ? _defaults.businessAddress : '';
+    const today    = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+
+    const entriesHTML = entries.map((p, idx) => {
+        const imgs = p.receiptImages?.length ? p.receiptImages : (p.receiptURL ? [p.receiptURL] : []);
+        const imgsHTML = imgs.length
+            ? `<div style="margin-top:10px;"><div style="font-size:9px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Receipts (${imgs.length})</div><div style="display:flex;flex-wrap:wrap;gap:8px;">${imgs.map(src =>
+                `<img src="${esc(src)}" style="max-width:160px;max-height:120px;border:1px solid #e5e7eb;border-radius:5px;object-fit:cover;" alt="receipt">`
+              ).join('')}</div></div>`
+            : `<div style="margin-top:8px;padding:8px 10px;background:#fef2f2;border-radius:5px;font-size:11px;color:#ef4444;font-weight:600;">&#9888; No receipt attached</div>`;
+
+        const proj      = _projs.find(pr => pr.id === p.projectId) || null;
+        const folder    = proj && proj.folderId ? _folders.find(f => f.id === proj.folderId) || null : null;
+        const projLabel = folder ? esc(folder.name) : (proj ? esc((proj.month||'') + ' ' + (proj.year||'')) : '—');
+        const periodTxt = proj ? `${esc(proj.month||'')} ${esc(proj.year||'')}` : '';
+
+        return `
+        <div style="margin-bottom:16px;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;page-break-inside:avoid;">
+            <div style="background:#f8fafc;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="background:#1e3a5f;color:#fff;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">Entry #${idx+1}</span>
+                    <span style="font-size:11px;color:#374151;font-weight:600;">${projLabel}${periodTxt ? ' &mdash; ' + periodTxt : ''}</span>
+                </div>
+                <span style="font-size:11px;color:#6b7280;">${fmtDate(p.paymentDate)}</span>
+            </div>
+            <div style="padding:12px 14px;">
+                <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+                    <thead>
+                        <tr style="background:#1e3a5f;color:#fff;">
+                            <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:left;">Description</th>
+                            <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:center;">Days</th>
+                            <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:right;">Daily Rate</th>
+                            <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #e9ecef;">
+                            <td style="padding:9px 10px;font-size:12px;">${esc(p.role||'Labor')} — ${esc(p.workerName||'—')}${p.notes ? `<div style="font-size:10px;color:#92400e;margin-top:2px;">${esc(p.notes)}</div>` : ''}</td>
+                            <td style="padding:9px 10px;font-size:12px;text-align:center;">${p.daysWorked||0}</td>
+                            <td style="padding:9px 10px;font-size:12px;text-align:right;">${fmtAmt(p.dailyRate)}</td>
+                            <td style="padding:9px 10px;font-size:13px;font-weight:800;text-align:right;color:#1a1a2e;">${fmtAmt(p.totalSalary)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                ${imgsHTML}
+            </div>
+        </div>`;
+    }).join('');
+
+    // Summary table
+    const summaryTableHTML = `
+        <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+            <thead>
+                <tr style="background:#f1f5f9;">
+                    <th style="padding:7px 10px;font-size:10px;font-weight:700;color:#6b7280;text-align:left;border-bottom:2px solid #e2e8f0;">#</th>
+                    <th style="padding:7px 10px;font-size:10px;font-weight:700;color:#6b7280;text-align:left;border-bottom:2px solid #e2e8f0;">Date</th>
+                    <th style="padding:7px 10px;font-size:10px;font-weight:700;color:#6b7280;text-align:left;border-bottom:2px solid #e2e8f0;">Project / Period</th>
+                    <th style="padding:7px 10px;font-size:10px;font-weight:700;color:#6b7280;text-align:center;border-bottom:2px solid #e2e8f0;">Days</th>
+                    <th style="padding:7px 10px;font-size:10px;font-weight:700;color:#6b7280;text-align:right;border-bottom:2px solid #e2e8f0;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${entries.map((p, i) => {
+                    const proj2   = _projs.find(pr => pr.id === p.projectId) || null;
+                    const folder2 = proj2 && proj2.folderId ? _folders.find(f => f.id === proj2.folderId) || null : null;
+                    const lbl2    = folder2 ? esc(folder2.name) : (proj2 ? esc((proj2.month||'') + ' ' + (proj2.year||'')) : '—');
+                    return `<tr style="border-bottom:1px solid #e9ecef;${i%2===1?'background:#f8fafc;':''}">
+                        <td style="padding:7px 10px;font-size:11px;color:#6b7280;">${i+1}</td>
+                        <td style="padding:7px 10px;font-size:11px;">${fmtDateSh(p.paymentDate)}</td>
+                        <td style="padding:7px 10px;font-size:11px;">${lbl2}</td>
+                        <td style="padding:7px 10px;font-size:11px;text-align:center;">${p.daysWorked||0}</td>
+                        <td style="padding:7px 10px;font-size:11px;text-align:right;font-weight:700;">${fmtAmt(p.totalSalary)}</td>
+                    </tr>`;
+                }).join('')}
+                <tr style="background:#1e3a5f;color:#fff;">
+                    <td colspan="3" style="padding:8px 10px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;">TOTAL</td>
+                    <td style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;">${totalDays}</td>
+                    <td style="padding:8px 10px;font-size:13px;font-weight:800;text-align:right;">${fmtAmt(totalPaid)}</td>
+                </tr>
+            </tbody>
+        </table>`;
+
+    const w = window.open('', '_blank', 'width=820,height=1050');
+    if (!w) { alert('Please allow pop-ups to print.'); return; }
+    w.document.write(`<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Payroll Summary — ${esc(workerName)}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#111;background:#f5f5f5;}
+.page{width:210mm;min-height:297mm;margin:24px auto;padding:14mm 16mm 12mm;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.13);border-radius:4px;}
+@media print{body{background:#fff;}.page{margin:0;box-shadow:none;padding:8mm 10mm;border-radius:0;}@page{size:A4 portrait;margin:8mm;}}
+</style></head><body>
+<div class="page">
+
+  <!-- Header -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:14px;border-bottom:3px solid #1e3a5f;margin-bottom:18px;">
+    <div>
+      <h1 style="font-size:17px;font-weight:800;color:#1a1a2e;">${esc(bizName)}</h1>
+      ${bizAddr ? `<p style="font-size:11px;color:#555;margin-top:3px;">${esc(bizAddr)}</p>` : ''}
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:20px;font-weight:900;color:#1e3a5f;letter-spacing:2px;text-transform:uppercase;">Payroll</div>
+      <div style="font-size:20px;font-weight:900;color:#1e3a5f;letter-spacing:2px;text-transform:uppercase;margin-top:-4px;">Summary</div>
+      <div style="font-size:11px;font-weight:700;color:#7c3aed;margin-top:3px;letter-spacing:.5px;text-transform:uppercase;">Labor &amp; Payroll</div>
+      <div style="font-size:11px;color:#444;margin-top:6px;">Printed: <strong>${today}</strong></div>
+    </div>
+  </div>
+
+  <!-- Worker Info Band -->
+  <div style="display:flex;gap:0;margin-bottom:18px;border:1.5px solid #e5e7eb;border-radius:6px;overflow:hidden;">
+    <div style="flex:2;padding:11px 14px;border-right:1px solid #e5e7eb;">
+      <div style="font-size:9px;font-weight:700;color:#6b7280;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px;">Worker Name</div>
+      <div style="font-size:15px;font-weight:800;color:#1a1a2e;">${esc(workerName)}</div>
+    </div>
+    <div style="flex:1;padding:11px 14px;border-right:1px solid #e5e7eb;">
+      <div style="font-size:9px;font-weight:700;color:#6b7280;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px;">Role</div>
+      <div style="font-size:13px;font-weight:700;color:#1a1a2e;">${esc(entries[0].role||'—')}</div>
+    </div>
+    <div style="flex:1;padding:11px 14px;border-right:1px solid #e5e7eb;">
+      <div style="font-size:9px;font-weight:700;color:#6b7280;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px;">Total Entries</div>
+      <div style="font-size:13px;font-weight:700;color:#1a1a2e;">${entries.length} entries</div>
+    </div>
+    <div style="flex:1;padding:11px 14px;border-right:1px solid #e5e7eb;">
+      <div style="font-size:9px;font-weight:700;color:#6b7280;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px;">Total Days</div>
+      <div style="font-size:13px;font-weight:700;color:#1a1a2e;">${totalDays} days</div>
+    </div>
+    <div style="flex:1;padding:11px 14px;background:#1e3a5f;color:#fff;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px;opacity:.8;">Total Paid</div>
+      <div style="font-size:14px;font-weight:800;">${fmtAmt(totalPaid)}</div>
+    </div>
+  </div>
+
+  <!-- Summary Table -->
+  <div style="font-size:10px;font-weight:700;color:#6b7280;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;">Payment Summary</div>
+  ${summaryTableHTML}
+
+  <!-- Detailed Entries -->
+  <div style="font-size:10px;font-weight:700;color:#6b7280;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;margin-top:20px;">Detailed Payroll Entries</div>
+  ${entriesHTML}
+
+  <!-- Acknowledgment -->
+  <div style="border:1.5px dashed #d1d5db;border-radius:6px;padding:14px 16px;margin-top:8px;page-break-inside:avoid;">
+    <div style="font-size:10px;font-weight:700;color:#6b7280;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;">Acknowledgment</div>
+    <div style="font-size:12px;color:#374151;margin-bottom:18px;line-height:1.6;">
+      I, <strong>${esc(workerName)}</strong>, hereby acknowledge receipt of the total amount of <strong>${fmtAmt(totalPaid)}</strong>
+      covering ${entries.length} payroll ${entries.length === 1 ? 'entry' : 'entries'} totaling <strong>${totalDays} days</strong> of labor rendered.
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:24px;">
+      <div style="flex:1;text-align:center;">
+        <div style="height:40px;"></div>
+        <div style="border-top:1.5px solid #374151;padding-top:5px;font-size:11px;color:#6b7280;">Worker's Signature</div>
+        <div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-top:2px;">${esc(workerName)}</div>
+      </div>
+      <div style="flex:1;text-align:center;">
+        <div style="height:40px;"></div>
+        <div style="border-top:1.5px solid #374151;padding-top:5px;font-size:11px;color:#6b7280;">Prepared by</div>
+      </div>
+      <div style="flex:1;text-align:center;">
+        <div style="height:40px;"></div>
+        <div style="border-top:1.5px solid #374151;padding-top:5px;font-size:11px;color:#6b7280;">Approved by</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;padding-top:10px;border-top:1px solid #e5e7eb;text-align:center;font-size:10px;color:#9ca3af;">
+    ${esc(bizName)}${bizAddr ? ' &bull; ' + esc(bizAddr) : ''} &bull; Printed ${today}
+  </div>
+</div>
+<script>window.onload=function(){window.print();};<\/script>
+</body></html>`);
+    w.document.close();
+}
+window.printWorkerReceiptSummary = printWorkerReceiptSummary;
 
 let _lbImages = [], _lbCurrent = 0, _lbTitle = '';
 let _lbZoom = 1, _lbDragging = false, _lbTranslate = { x: 0, y: 0 };
@@ -5795,9 +6110,10 @@ function mvpRenderPayrollInDetail() {
             + '<td>' + _mvpFmt(w.totalSalary||0) + '</td>'
             + '<td>—</td>'
             + '<td class="exp-action-cell">'
-            +   '<button class="exp-icon-btn exp-icon-btn-invoice" title="Acknowledge Invoice" onclick="printSinglePayrollInvoice(\'' + w.id + '\')"><i data-lucide="file-text"></i></button>'
-            +   '<button class="exp-icon-btn exp-icon-btn-edit" title="Edit" onclick="openEditPayrollModal(\'' + w.id + '\')"><i data-lucide="pencil"></i></button>'
-            +   '<button class="exp-icon-btn exp-icon-btn-danger" title="Delete" onclick="deletePayroll(\'' + w.id + '\')"><i data-lucide="trash-2"></i></button>'
+            +   '<button class="exp-icon-btn exp-icon-btn-view" title="View All Receipts" onclick="openWorkerSummaryModal(\'' + (w.workerName||'').replace(/'/g,"\\'") + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>'
+            +   '<button class="exp-icon-btn exp-icon-btn-invoice" title="Acknowledge Invoice" onclick="printSinglePayrollInvoice(\'' + w.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>'
+            +   '<button class="exp-icon-btn exp-icon-btn-edit" title="Edit" onclick="openEditPayrollModal(\'' + w.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+            +   '<button class="exp-icon-btn exp-icon-btn-danger" title="Delete" onclick="deletePayroll(\'' + w.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
             + '</td>'
             + '</tr>';
     }).join('');

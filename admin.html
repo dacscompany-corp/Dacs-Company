@@ -2480,6 +2480,41 @@
 </script>
 
 <!-- Receipt Lightbox -->
+<!-- ── Worker Receipt Summary Modal ──────────────────────── -->
+<div id="workerSummaryModal" class="exp-modal" onclick="if(event.target===this)closeExpModal('workerSummaryModal')">
+    <div class="exp-modal-box wrs-modal-box">
+        <div class="exp-modal-header">
+            <div class="wrs-header-info">
+                <div class="wrs-avatar"><i data-lucide="user"></i></div>
+                <div>
+                    <h2 id="wrsWorkerName" class="wrs-title">Worker</h2>
+                    <div class="wrs-meta">
+                        <span id="wrsRole" class="wrs-meta-role"></span>
+                        <span class="wrs-meta-sep">·</span>
+                        <span id="wrsEntryCount"></span>
+                        <span class="wrs-meta-sep">·</span>
+                        <span id="wrsTotalDays"></span>
+                        <span class="wrs-meta-sep">·</span>
+                        <span id="wrsReceiptCount" class="wrs-receipt-badge"></span>
+                    </div>
+                </div>
+            </div>
+            <button class="exp-modal-close" onclick="closeExpModal('workerSummaryModal')">&times;</button>
+        </div>
+        <div class="wrs-total-bar">
+            <span class="wrs-total-label">Total Paid</span>
+            <span id="wrsTotalPaid" class="wrs-total-amount"></span>
+        </div>
+        <div class="wrs-body" id="wrsEntriesList"></div>
+        <div class="exp-modal-footer">
+            <button class="exp-btn exp-btn-secondary" onclick="closeExpModal('workerSummaryModal')">Close</button>
+            <button class="exp-btn exp-btn-primary" onclick="printWorkerReceiptSummary(document.getElementById('workerSummaryModal').dataset.worker)">
+                <i data-lucide="printer"></i> Print Summary
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="receiptLightbox" class="lb-overlay" onclick="if(event.target===this)closeLightbox()">
     <div class="lb-box">
         <div class="lb-header">

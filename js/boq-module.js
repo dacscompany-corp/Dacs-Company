@@ -460,8 +460,10 @@
                 </tr>
                 ${buildPhotosRow(ci.id, si)}`;
 
-                si.lineItems.forEach((li, liIdx) => {
-                    html += renderLineItemRow(ci.id, si.id, li, liIdx, false);
+                let itemCount = 0;
+                si.lineItems.forEach((li) => {
+                    if (li.type !== 'group') itemCount++;
+                    html += renderLineItemRow(ci.id, si.id, li, itemCount - 1, false);
                 });
             });
 
@@ -476,6 +478,16 @@
             </tr>`;
         });
         return html;
+    }
+
+    // Returns the 0-based display index of a line item, skipping group headers
+    function itemDisplayIdx(lineItems, liId) {
+        let count = 0;
+        for (const item of lineItems) {
+            if (item.type !== 'group') count++;
+            if (item.id === liId) return count - 1;
+        }
+        return 0;
     }
 
     // ── Render single line item row ────────────────────────────
@@ -503,7 +515,8 @@
                     <span class="boq-group-text" ondblclick="boqEditGroupHeader('${ciId}','${siId}','${li.id}')">${escHtml(li.label || 'GROUP HEADER')}</span>
                 </td>
                 <td class="boq-col-actions">
-                    <button class="boq-icon-btn boq-icon-btn-edit" title="Edit" onclick="boqEditGroupHeader('${ciId}','${siId}','${li.id}')"><i data-lucide="pencil"></i></button>
+                    <button class="boq-icon-btn boq-icon-btn-edit" title="Edit"       onclick="boqEditGroupHeader('${ciId}','${siId}','${li.id}')"><i data-lucide="pencil"></i></button>
+                    <button class="boq-icon-btn boq-icon-btn-add"  title="Add Line Item" onclick="boqInsertLineItemAfter('${ciId}','${siId}','${li.id}')"><i data-lucide="plus"></i></button>
                     <button class="boq-icon-btn" title="Move Up"   onclick="boqMoveLineItem('${ciId}','${siId}','${li.id}',-1)" style="color:#6b7280"><i data-lucide="chevron-up"></i></button>
                     <button class="boq-icon-btn" title="Move Down" onclick="boqMoveLineItem('${ciId}','${siId}','${li.id}',1)"  style="color:#6b7280"><i data-lucide="chevron-down"></i></button>
                     <button class="boq-icon-btn boq-icon-btn-del"  title="Delete" onclick="boqDeleteLineItem('${ciId}','${siId}','${li.id}')"><i data-lucide="trash-2"></i></button>
@@ -519,44 +532,45 @@
                 ? `<option value="value">Enter value</option><option value="by owner" ${li.laborOverride==='by owner'?'selected':''}>By owner</option><option value="not applicable" ${li.laborOverride==='not applicable'?'selected':''}>N/A</option>`
                 : `<option value="value" selected>Enter value</option><option value="by owner">By owner</option><option value="not applicable">N/A</option>`;
 
+            const _liKeys = `onkeydown="if(event.key==='Enter')boqSaveLineItem('${ciId}','${siId}','${li.id}');else if(event.key==='Escape')boqCancelEditLI('${ciId}','${siId}','${li.id}')"`;
             return `
             <tr class="boq-row-l3 boq-row-editing" id="row-li-${li.id}">
                 <td class="boq-col-no">
-                    <input type="text" class="boq-cell-input" id="li-no-${li.id}" value="${escAttr(li.itemNo||'')}" placeholder="#">
+                    <input type="text" class="boq-cell-input" id="li-no-${li.id}" value="${escAttr(li.itemNo||'')}" placeholder="#" ${_liKeys}>
                 </td>
                 <td class="boq-col-desc">
                     <div style="display:flex;align-items:center;gap:5px;">
-                        <input type="text" class="boq-cell-input boq-input-desc" id="li-desc-${li.id}" value="${escAttr(li.description||'')}" placeholder="Description">
+                        <input type="text" class="boq-cell-input boq-input-desc" id="li-desc-${li.id}" value="${escAttr(li.description||'')}" placeholder="Description" ${_liKeys}>
                         <label class="boq-opt-check" title="Optional item">
                             <input type="checkbox" id="li-opt-${li.id}" ${li.isOptional?'checked':''}> Opt.
                         </label>
                     </div>
                 </td>
                 <td class="boq-col-qty">
-                    <input type="text" class="boq-cell-input" id="li-qty-${li.id}" value="${li.qty||''}" oninput="boqCalcRow('${li.id}')" placeholder="0">
+                    <input type="text" class="boq-cell-input" id="li-qty-${li.id}" value="${li.qty||''}" oninput="boqCalcRow('${li.id}')" placeholder="0" ${_liKeys}>
                 </td>
                 <td class="boq-col-unit">
-                    <input type="text" class="boq-cell-input" id="li-unit-${li.id}" value="${escAttr(li.unit||'')}" placeholder="unit">
+                    <input type="text" class="boq-cell-input" id="li-unit-${li.id}" value="${escAttr(li.unit||'')}" placeholder="unit" ${_liKeys}>
                 </td>
                 <td class="boq-col-rate">
                     <select class="boq-cell-select" id="li-mat-type-${li.id}" onchange="boqToggleRate('${li.id}','mat')">${matSel}</select>
                     <input type="text" class="boq-cell-input" id="li-mat-${li.id}"
                            value="${li.materialOverride?'':fmt(li.materialRate)}"
                            oninput="boqCalcRow('${li.id}')" placeholder="0.00"
-                           style="${li.materialOverride?'display:none':''}">
+                           style="${li.materialOverride?'display:none':''}" ${_liKeys}>
                 </td>
                 <td class="boq-col-rate">
                     <select class="boq-cell-select" id="li-lab-type-${li.id}" onchange="boqToggleRate('${li.id}','lab')">${labSel}</select>
                     <input type="text" class="boq-cell-input" id="li-lab-${li.id}"
                            value="${li.laborOverride?'':fmt(li.laborRate)}"
                            oninput="boqCalcRow('${li.id}')" placeholder="0.00"
-                           style="${li.laborOverride?'display:none':''}">
+                           style="${li.laborOverride?'display:none':''}" ${_liKeys}>
                 </td>
                 <td class="boq-col-amount boq-cell-calc" id="li-total-${li.id}">₱ ${fmt(li.totalAmount)}</td>
                 <td class="boq-col-pct">
                     <input type="number" class="boq-cell-input" id="li-pct-${li.id}"
                            value="${li.percentCompletion||0}" min="0" max="100"
-                           oninput="boqCalcRow('${li.id}')" placeholder="0">
+                           oninput="boqCalcRow('${li.id}')" placeholder="0" ${_liKeys}>
                 </td>
                 <td class="boq-col-amount boq-cell-calc" id="li-acc-${li.id}">₱ ${fmt(li.accomplishmentAmount)}</td>
                 <td class="boq-col-actions">
@@ -811,6 +825,25 @@
             isOptional: false, materialOverride: null, laborOverride: null
         };
         si.lineItems.push(li);
+        markDirty(); refreshTable();
+        setTimeout(() => boqEditLineItem(ciId, siId, li.id), 60);
+    };
+
+    // ── Insert Line Item after a specific item (used by group header + button) ─
+    window.boqInsertLineItemAfter = function (ciId, siId, afterId) {
+        const ci = boq.costItems.find(c => c.id === ciId);
+        if (!ci) return;
+        const si = ci.subItems.find(s => s.id === siId);
+        if (!si) return;
+        const li = {
+            id: genId(), itemNo: '', description: '', qty: '', unit: '',
+            materialRate: 0, laborRate: 0, totalAmount: 0,
+            percentCompletion: 0, accomplishmentAmount: 0,
+            isOptional: false, materialOverride: null, laborOverride: null
+        };
+        const idx = si.lineItems.findIndex(l => l.id === afterId);
+        if (idx >= 0) si.lineItems.splice(idx + 1, 0, li);
+        else si.lineItems.push(li);
         markDirty(); refreshTable();
         setTimeout(() => boqEditLineItem(ciId, siId, li.id), 60);
     };
@@ -1201,7 +1234,7 @@
         li.accomplishmentAmount = calcLIAcc(li);
 
         const row = el(`row-li-${liId}`);
-        if (row) row.outerHTML = renderLineItemRow(ciId, siId, li, si.lineItems.indexOf(li), false);
+        if (row) row.outerHTML = renderLineItemRow(ciId, siId, li, itemDisplayIdx(si.lineItems, liId), false);
 
         // Update this cost item's subtotal
         const subEl = el(`subtotal-${ciId}`);
@@ -1219,7 +1252,7 @@
         const li = si?.lineItems.find(l => l.id === liId);
         if (!li) return;
         const row = el(`row-li-${liId}`);
-        if (row) row.outerHTML = renderLineItemRow(ciId, siId, li, si.lineItems.indexOf(li), false);
+        if (row) row.outerHTML = renderLineItemRow(ciId, siId, li, itemDisplayIdx(si.lineItems, liId), false);
         if (typeof lucide !== 'undefined') lucide.createIcons();
     };
 
