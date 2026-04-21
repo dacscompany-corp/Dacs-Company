@@ -6,10 +6,11 @@
 (function () {
     'use strict';
 
-    let _allRequests = [];
-    let _loading     = false;
-    let _trendChart  = null;
-    let _statusChart = null;
+    let _allRequests   = [];
+    let _loading       = false;
+    let _trendChart    = null;
+    let _statusChart   = null;
+    let _selectedMonth = ''; // '' = all time, 'YYYY-MM' = filtered month
 
     // ══════════════════════════════════════════════════════
     // PUBLIC ENTRY POINT
@@ -62,6 +63,7 @@
     // ══════════════════════════════════════════════════════
 
     function _render() {
+        _populateMonthFilter();
         _renderKPIs();
         _renderClientTable();
         if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -74,14 +76,56 @@
     }
 
     // ══════════════════════════════════════════════════════
+    // MONTH FILTER HELPERS
+    // ══════════════════════════════════════════════════════
+
+    function _getMonthKey(r) {
+        const ms = _tsToMs(r.createdAt) || _tsToMs(r.dueDate) || _tsToMs(r.updatedAt);
+        if (!ms) return null;
+        const d = new Date(ms);
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+
+    function _filterRequests() {
+        if (!_selectedMonth) return _allRequests;
+        return _allRequests.filter(r => _getMonthKey(r) === _selectedMonth);
+    }
+
+    function _populateMonthFilter() {
+        const sel = document.getElementById('rptMonthFilter');
+        if (!sel) return;
+        const months = new Set();
+        _allRequests.forEach(r => { const k = _getMonthKey(r); if (k) months.add(k); });
+        const sorted = [...months].sort().reverse();
+        sel.innerHTML = '<option value="">All Months</option>'
+            + sorted.map(m => {
+                const [y, mo] = m.split('-');
+                const label = new Date(+y, +mo - 1, 1)
+                    .toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+                return `<option value="${m}" ${m === _selectedMonth ? 'selected' : ''}>${label}</option>`;
+            }).join('');
+    }
+
+    window.rptOnMonthChange = function (val) {
+        _selectedMonth = val;
+        _renderKPIs();
+        _renderClientTable();
+        requestAnimationFrame(() => {
+            _renderTrendChart();
+            _renderStatusChart();
+        });
+    };
+
+    // ══════════════════════════════════════════════════════
     // KPI CARDS
     // ══════════════════════════════════════════════════════
 
     function _renderKPIs() {
-        const now = Date.now();
+        const now      = Date.now();
+        const requests = _filterRequests();
         let totalBilled = 0, totalCollected = 0, outstanding = 0, overdue = 0;
 
-        _allRequests.forEach(r => {
+        requests.forEach(r => {
             const amt = r.amount || 0;
             totalBilled += amt;
 
@@ -104,8 +148,22 @@
 
         // Colour the overdue card red if there's any overdue amount
         const overdueCard = document.getElementById('rptOverdueCard');
-        if (overdueCard) {
-            overdueCard.classList.toggle('rpt-kpi-cell--danger', overdue > 0);
+        if (overdueCard) overdueCard.classList.toggle('rpt-kpi-cell--danger', overdue > 0);
+
+        // Remaining Allocation card
+        const remainingEl = document.getElementById('rptRemainingAmt');
+        if (remainingEl) remainingEl.textContent = _fmt(outstanding);
+
+        // Expense Coverage — red when collected exceeds billed (>100%) or when
+        // outstanding > collected (expenses exceed what's been funded)
+        const coveragePct = totalBilled > 0
+            ? ((totalCollected / totalBilled) * 100).toFixed(1)
+            : '0.0';
+        const coverageEl = document.getElementById('rptExpenseCoverage');
+        if (coverageEl) {
+            coverageEl.textContent = coveragePct + '%';
+            const isOver = parseFloat(coveragePct) > 100;
+            coverageEl.classList.toggle('rpt-remaining-amt--red', isOver);
         }
     }
 
@@ -134,8 +192,9 @@
         }
 
         try {
+            const requests = _filterRequests();
             const monthly = {};
-            _allRequests.forEach(r => {
+            requests.forEach(r => {
                 if (r.status !== 'verified') return;
                 const ms = _tsToMs(r.verifiedAt) || _tsToMs(r.createdAt)
                          || _tsToMs(r.updatedAt)  || _tsToMs(r.dueDate);
@@ -217,7 +276,7 @@
 
     function _renderStatusChart() {
         const c = { pending: 0, partial_pending: 0, submitted: 0, verified: 0, rejected: 0 };
-        _allRequests.forEach(r => { if (c[r.status] !== undefined) c[r.status]++; });
+        _filterRequests().forEach(r => { if (c[r.status] !== undefined) c[r.status]++; });
 
         const ctx = document.getElementById('rptStatusChart');
         if (!ctx) return;
@@ -254,7 +313,7 @@
     function _renderClientTable() {
         const clients = {};
 
-        _allRequests.forEach(r => {
+        _filterRequests().forEach(r => {
             const key = r.clientEmail || 'unknown';
             if (!clients[key]) {
                 clients[key] = {

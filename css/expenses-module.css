@@ -2019,6 +2019,9 @@ mark.exp-search-highlight {
    REPORTS DASHBOARD — Professional Construction Analytics
 ══════════════════════════════════════════════════════════ */
 
+/* ── Reports view: prevent horizontal overflow ── */
+#expReportsView { overflow-x: hidden; }
+
 /* ── Top Bar ──────────────────────────────────────────────── */
 .rpt-topbar {
     display: flex;
@@ -2099,7 +2102,7 @@ mark.exp-search-highlight {
 /* ── Reports KPI Grid ─────────────────────────────────────── */
 .rpt-kpi-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
     margin-bottom: 1.5rem;
     border-radius: 16px;
@@ -2107,6 +2110,7 @@ mark.exp-search-highlight {
     box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     width: 100%;
     max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Standard card */
@@ -2116,8 +2120,8 @@ mark.exp-search-highlight {
     justify-content: flex-start;
     padding: 1.5rem 1.6rem 1.4rem;
     background: #4AC84A;
-    border-right: 1.5px solid rgba(255,255,255,0.22);
-    border-bottom: 1.5px solid rgba(255,255,255,0.22);
+    border-right: 3px solid #ffffff;
+    border-bottom: 3px solid #ffffff;
     transition: background 0.15s ease;
     min-width: 0;
     overflow: hidden;
@@ -2127,13 +2131,18 @@ mark.exp-search-highlight {
 /* Remove bottom border on the last row of 3-col cards (cards 4-6) */
 .rpt-kpi-card:nth-child(n+4):not(.rpt-kpi-variance-wide) { border-bottom: none; }
 .rpt-kpi-card:hover { background: #3db83d; }
+/* Cover Expenses — red when BAD, yellow when WARNING */
+.rpt-kpi-card--bad  { background: #dc2626 !important; }
+.rpt-kpi-card--bad:hover  { background: #b91c1c !important; }
+.rpt-kpi-card--warn { background: #d97706 !important; }
+.rpt-kpi-card--warn:hover { background: #b45309 !important; }
 
 /* Remaining Allocation — spans all 3 columns, always last */
 .rpt-kpi-variance-wide {
     grid-column: 1 / -1 !important;
     border-right: none !important;
     border-bottom: none !important;
-    border-top: 1.5px solid rgba(255,255,255,0.28);
+    border-top: 3px solid #ffffff;
     display: flex;
     flex-direction: column;
 }
@@ -2159,7 +2168,7 @@ mark.exp-search-highlight {
 }
 /* Big value */
 .rpt-kpi-val {
-    font-size: 1.9rem;
+    font-size: clamp(1.1rem, 1.6vw, 1.9rem);
     font-weight: 900;
     letter-spacing: -0.03em;
     line-height: 1;
@@ -2244,7 +2253,7 @@ mark.exp-search-highlight {
 .rpt-variance-kpi-badge--green { background: rgba(255,255,255,0.25); color: #ffffff; }
 .rpt-variance-kpi-badge--red   { background: rgba(239,68,68,0.45);   color: #ffffff; }
 .rpt-variance-col-val {
-    font-size: 1.7rem;
+    font-size: clamp(1.1rem, 1.5vw, 1.7rem);
     font-weight: 900;
     letter-spacing: -0.02em;
     line-height: 1.1;
@@ -2276,9 +2285,9 @@ mark.exp-search-highlight {
 /* Responsive */
 @media (max-width: 768px) {
     .rpt-kpi-row { grid-template-columns: repeat(2, 1fr); border-radius: 12px; }
-    .rpt-kpi-card:nth-child(3n)  { border-right: 1.5px solid rgba(255,255,255,0.22); }
+    .rpt-kpi-card:nth-child(3n)  { border-right: 3px solid #ffffff; }
     .rpt-kpi-card:nth-child(2n)  { border-right: none; }
-    .rpt-kpi-card:nth-child(n+4):not(.rpt-kpi-variance-wide) { border-bottom: 1.5px solid rgba(255,255,255,0.22); }
+    .rpt-kpi-card:nth-child(n+4):not(.rpt-kpi-variance-wide) { border-bottom: 3px solid #ffffff; }
     .rpt-kpi-card:nth-last-child(-n+2):not(.rpt-kpi-variance-wide) { border-bottom: none; }
     .rpt-kpi-val { font-size: 1.4rem; }
     .rpt-kpi-card { padding: 1.1rem 1.2rem; }

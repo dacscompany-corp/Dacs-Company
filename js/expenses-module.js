@@ -4261,9 +4261,14 @@ function _rptRenderKPIs(_groups) {
     const txCount          = _srcExp.filter(e => _kpiProjIdSet.has(e.projectId)).length;
     const workerCount      = new Set(_srcPay.filter(p => _kpiProjIdSet.has(p.projectId)).map(p => p.workerName || p.id)).size;
 
-    // Build a standard KPI card: label / big value / sub
-    function _card(label, val, sub) {
-        return '<div class="rpt-kpi-card">'
+    // Build a standard KPI card: label / big value / sub / optional extra class
+    function _card(label, val, sub, cls) {
+        const isBad  = cls === 'rpt-kpi-card--bad';
+        const isWarn = cls === 'rpt-kpi-card--warn';
+        const style  = isBad  ? ' style="background:#dc2626!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;"'
+                     : isWarn ? ' style="background:#d97706!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;"'
+                     : '';
+        return '<div class="rpt-kpi-card' + (cls ? ' ' + cls : '') + '"' + style + '>'
             + '<div class="rpt-kpi-label">' + label + '</div>'
             + '<div class="rpt-kpi-val">'   + val   + '</div>'
             + '<div class="rpt-kpi-sub">'   + sub   + '</div>'
@@ -4281,7 +4286,7 @@ function _rptRenderKPIs(_groups) {
         // Row 2
         html += _card('Labor &amp; Payroll',   '&#8369;' + formatNum(totLabor),     (totReceived > 0 ? ((totLabor / totReceived) * 100).toFixed(1) : '0.0') + '% of allocated budget');
         html += _card('Total Fund Spent',      '&#8369;' + formatNum(totSpent),     utilizedPct.toFixed(1) + '% utilized &middot; ' + contractUsedPct.toFixed(1) + '% of contract');
-        html += _card('Cover Expenses',        '&#8369;' + formatNum(totCover),     coverPctOfBudget.toFixed(1) + '% of allocated budget &middot; ' + (coverPctOfBudget >= 5 ? 'BAD' : coverPctOfBudget >= 2 ? 'WARNING' : 'HEALTHY'));
+        html += _card('Cover Expenses',        '&#8369;' + formatNum(totCover),     coverPctOfBudget.toFixed(1) + '% of allocated budget &middot; ' + (coverPctOfBudget >= 5 ? 'BAD' : coverPctOfBudget >= 2 ? 'WARNING' : 'HEALTHY'), coverPctOfBudget >= 5 ? 'rpt-kpi-card--bad' : coverPctOfBudget >= 2 ? 'rpt-kpi-card--warn' : '');
     } else {
         html += _card('Materials &amp; Costs', '&#8369;' + formatNum(totMats),      txCount + ' transaction' + (txCount !== 1 ? 's' : ''));
         html += _card('Labor &amp; Payroll',   '&#8369;' + formatNum(totLabor),     workerCount + ' worker' + (workerCount !== 1 ? 's' : ''));
@@ -5593,7 +5598,8 @@ function printReportsDashboard() {
   .proj-meta { font-size:0.72rem; color:#6b7280; margin-top:2px; }
   .print-info { text-align:right; font-size:0.7rem; color:#9ca3af; }
   .kpi-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; padding:14px 28px 0; }
-  .kpi-card { background:#4AC84A; border:1px solid transparent; border-radius:10px; padding:10px 12px; box-shadow:0 1px 4px rgba(0,0,0,0.06); -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact; }
+  .kpi-card { background:#4AC84A; border:1.5px solid rgba(255,255,255,0.55); border-radius:10px; padding:10px 12px; box-shadow:0 1px 4px rgba(0,0,0,0.06); -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact; }
+  .kpi-card--bad { background:#dc2626 !important; border-color:rgba(255,255,255,0.55) !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .kpi-card-head { margin-bottom:4px; }
   .kpi-card-label { font-size:0.58rem; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#ffffff; }
   .kpi-card-val { font-size:1rem; font-weight:800; margin-bottom:2px; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -5623,6 +5629,7 @@ function printReportsDashboard() {
     body { background:#fff; }
     .page { box-shadow:none; margin:0; max-width:100%; }
     .kpi-card { background:#4AC84A !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .kpi-card--bad { background:#dc2626 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .variance-card { background:#4AC84A !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .kpi-card-label, .kpi-card-val, .kpi-card-sub { color:#ffffff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .variance-label, .variance-val, .variance-sub, .variance-col-label, .variance-col-val { color:#ffffff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -5681,7 +5688,7 @@ function printReportsDashboard() {
       <div class="kpi-card-val">₱${formatNum(totSpent)}</div>
       <div class="kpi-card-sub">${utilizedPct.toFixed(1)}% utilized · ${contractPct.toFixed(1)}% of contract</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card${coverPctOfBudget >= 5 && totCoverPrt > 0 ? ' kpi-card--bad' : ''}">
       <div class="kpi-card-head"><span class="kpi-card-label">COVER EXPENSES</span></div>
       <div class="kpi-card-val">₱${formatNum(totCoverPrt)}</div>
       <div class="kpi-card-sub">${totCoverPrt <= 0 ? 'No cover expenses' : coverPctOfBudget.toFixed(1) + '% of allocated budget · ' + (coverPctOfBudget >= 5 ? 'BAD' : coverPctOfBudget >= 2 ? 'WARNING' : 'HEALTHY')}</div>

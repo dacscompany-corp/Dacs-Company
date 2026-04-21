@@ -1364,6 +1364,9 @@
                 <div class="rpt-page-sub">Collection summary, trends &amp; per-client breakdown</div>
             </div>
             <div class="rpt-header-actions">
+                <select id="rptMonthFilter" class="rpt-month-select" onchange="window.rptOnMonthChange(this.value)">
+                    <option value="">All Months</option>
+                </select>
                 <button class="rpt-btn-refresh" onclick="prRefreshReports()">
                     <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh
                 </button>
@@ -1399,6 +1402,23 @@
                 <div class="rpt-kpi-cell__label">Collection Rate</div>
                 <div class="rpt-kpi-cell__amt" id="rptCollectionRate">0.0%</div>
                 <div class="rpt-kpi-cell__sub">Collected / Billed</div>
+            </div>
+        </div>
+
+        <!-- Remaining Allocation + Expense Coverage -->
+        <div class="rpt-remaining-card">
+            <div class="rpt-remaining-inner">
+                <div class="rpt-remaining-section">
+                    <div class="rpt-remaining-label">Remaining Allocation</div>
+                    <div class="rpt-remaining-amt" id="rptRemainingAmt">₱ 0.00</div>
+                    <div class="rpt-remaining-sub">Total Billed &minus; Total Collected</div>
+                </div>
+                <div class="rpt-remaining-divider"></div>
+                <div class="rpt-remaining-section">
+                    <div class="rpt-remaining-label">Expense Coverage</div>
+                    <div class="rpt-remaining-amt" id="rptExpenseCoverage">0.0%</div>
+                    <div class="rpt-remaining-sub">Collected &divide; Billed &times; 100</div>
+                </div>
             </div>
         </div>
 

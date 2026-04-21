@@ -1101,8 +1101,66 @@
     color: #374151;
     margin-bottom: 16px;
 }
-.rpt-chart-wrap { height: 240px; position: relative; min-width: 0; }
+.rpt-chart-wrap { height: 360px; position: relative; min-width: 0; }
 .rpt-chart-wrap canvas { display: block; width: 100% !important; }
+
+/* ── Remaining Allocation / Expense Coverage card ── */
+.rpt-remaining-card {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%);
+    border-radius: 14px;
+    padding: 1.6rem 2rem;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(30,58,95,.18);
+}
+.rpt-remaining-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3.5rem;
+    flex-wrap: wrap;
+}
+.rpt-remaining-section { text-align: center; }
+.rpt-remaining-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: rgba(255,255,255,.6);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 0.45rem;
+}
+.rpt-remaining-amt {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.2rem;
+    transition: color .2s;
+}
+.rpt-remaining-amt--red { color: #fca5a5 !important; }
+.rpt-remaining-sub {
+    font-size: 0.68rem;
+    color: rgba(255,255,255,.45);
+}
+.rpt-remaining-divider {
+    width: 1px;
+    height: 64px;
+    background: rgba(255,255,255,.2);
+    flex-shrink: 0;
+}
+
+/* ── Month filter select ── */
+.rpt-month-select {
+    padding: 7px 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    background: #fff;
+    cursor: pointer;
+    outline: none;
+    transition: border-color .15s;
+}
+.rpt-month-select:focus { border-color: #00a85e; }
 
 /* ── Client table ── */
 .rpt-table-card {

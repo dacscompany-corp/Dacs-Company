@@ -128,6 +128,9 @@
             <td><span class="inv-status inv-status--${inv.status || 'draft'}">${inv.status === 'issued' ? 'Issued' : 'Draft'}</span></td>
             <td>
                 <div class="inv-actions">
+                    <button class="inv-action-btn" title="Print Preview" onclick="window.invPreview('${inv.id}')">
+                        <i data-lucide="eye" style="width:14px;height:14px;"></i>
+                    </button>
                     <button class="inv-action-btn" title="Print" onclick="window.invPrint('${inv.id}')">
                         <i data-lucide="printer" style="width:14px;height:14px;"></i>
                     </button>
@@ -265,10 +268,78 @@
     // BUSINESS SETTINGS MODAL
     // ══════════════════════════════════════════════════════
 
+    // ── Logo helpers ───────────────────────────────────────────────────
+    function _logoToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Normalize logos array: old format (string[]) → new format ({src, enabled}[])
+    function _normLogos(logos) {
+        if (!logos) return [];
+        return logos.map(l => (typeof l === 'string' ? { src: l, enabled: true } : l));
+    }
+
+    function _renderLogoSettingsGrid() {
+        const logos = _normLogos(_defaults.logos);
+        _defaults.logos = logos; // ensure normalized in memory
+        const grid = document.getElementById('isLogoGrid');
+        if (!grid) return;
+        if (!logos.length) {
+            grid.innerHTML = '<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No logos uploaded yet.</div>';
+            return;
+        }
+        grid.innerHTML = logos.map((logo, i) => `
+            <div style="position:relative;display:inline-flex;flex-direction:column;align-items:center;margin:4px;gap:4px;">
+                <div style="position:relative;">
+                    <img src="${logo.src}"
+                        style="height:56px;max-width:120px;object-fit:contain;border:1.5px solid ${logo.enabled ? '#059669' : '#e5e7eb'};border-radius:8px;background:repeating-conic-gradient(#e5e7eb 0% 25%,#fff 0% 50%) 0 0/12px 12px;padding:4px;opacity:${logo.enabled ? '1' : '0.45'};"
+                        onerror="this.style.display='none'">
+                    <button onclick="window._invRemoveLogo(${i})" title="Remove"
+                        style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#ef4444;color:#fff;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;">✕</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;">
+                    ${i > 0 ? `<button onclick="window._invMoveLogo(${i},-1)" title="Move left"
+                        style="width:20px;height:20px;border-radius:50%;background:#1e3a5f;color:#fff;border:none;cursor:pointer;font-size:11px;">◀</button>` : '<span style="width:20px;"></span>'}
+                    <label title="Show in print" style="cursor:pointer;display:flex;align-items:center;">
+                        <input type="checkbox" ${logo.enabled ? 'checked' : ''} onchange="window._invToggleLogo(${i},this.checked)"
+                            style="width:13px;height:13px;cursor:pointer;">
+                    </label>
+                    ${i < logos.length - 1 ? `<button onclick="window._invMoveLogo(${i},1)" title="Move right"
+                        style="width:20px;height:20px;border-radius:50%;background:#1e3a5f;color:#fff;border:none;cursor:pointer;font-size:11px;">▶</button>` : '<span style="width:20px;"></span>'}
+                </div>
+            </div>`).join('');
+    }
+
+    window._invRemoveLogo = function (i) {
+        if (!_defaults.logos) return;
+        _defaults.logos.splice(i, 1);
+        _renderLogoSettingsGrid();
+    };
+
+    window._invMoveLogo = function (i, dir) {
+        const logos = _defaults.logos || [];
+        const j = i + dir;
+        if (j < 0 || j >= logos.length) return;
+        [logos[i], logos[j]] = [logos[j], logos[i]];
+        _renderLogoSettingsGrid();
+    };
+
+    window._invToggleLogo = function (i, enabled) {
+        const logos = _defaults.logos || [];
+        if (logos[i]) logos[i].enabled = enabled;
+        _renderLogoSettingsGrid();
+    };
+
     window.invOpenSettings = function () {
         const d = _defaults;
         const pm = (d.paymentDetails && d.paymentDetails.method) || 'bank';
         const pd = d.paymentDetails || {};
+        if (!_defaults.logos) _defaults.logos = [];
 
         const PH_BANKS = ['BDO Unibank','Bank of the Philippine Islands (BPI)','Metrobank','PNB (Philippine National Bank)',
             'Landbank of the Philippines','DBP (Development Bank of the Philippines)','UnionBank','Chinabank',
@@ -281,7 +352,7 @@
         modal.id = 'invSettingsModal';
         modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
         modal.innerHTML = `
-        <div style="background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.18);">
+        <div style="background:#fff;border-radius:14px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.18);">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f3f4f6;">
                 <div>
                     <div style="font-size:15px;font-weight:700;color:#1a1a2e;">Business Settings</div>
@@ -308,6 +379,24 @@
                         <label>Business Address</label>
                         <input class="inv-input" id="isBizAddr" value="${_esc(d.businessAddress || '')}">
                     </div>
+                </div>
+
+                <!-- ── LOGO SECTION ── -->
+                <div class="inv-section-title" style="margin-top:4px;">Invoice Logos</div>
+                <div style="font-size:12px;color:#6b7280;margin-top:-8px;">Logos appear side-by-side in the invoice header. PNG with transparent background recommended.</div>
+
+                <!-- Current logos -->
+                <div id="isLogoGrid" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-height:32px;"></div>
+
+                <!-- Upload button -->
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <label for="isLogoUpload" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#f0fdf4;border:1.5px dashed #059669;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:#059669;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Upload Logo
+                    </label>
+                    <input type="file" id="isLogoUpload" accept="image/png,image/jpeg,image/svg+xml,image/webp" multiple style="display:none;"
+                        onchange="window._invHandleLogoUpload(this)">
+                    <span style="font-size:11px;color:#9ca3af;">PNG, JPG, SVG · max 3 logos</span>
                 </div>
 
                 <div class="inv-section-title" style="margin-top:4px;">Payment Receiving Details</div>
@@ -361,6 +450,22 @@
         </div>`;
         document.body.appendChild(modal);
         modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+        // Render existing logos after modal is in DOM
+        _renderLogoSettingsGrid();
+    };
+
+    window._invHandleLogoUpload = async function (input) {
+        const files = Array.from(input.files);
+        if (!_defaults.logos) _defaults.logos = [];
+        _defaults.logos = _normLogos(_defaults.logos); // ensure normalized
+        for (const file of files) {
+            if (_defaults.logos.length >= 3) { alert('Maximum 3 logos allowed.'); break; }
+            if (file.size > 2 * 1024 * 1024) { alert(`"${file.name}" exceeds 2 MB and was skipped.`); continue; }
+            const b64 = await _logoToBase64(file);
+            _defaults.logos.push({ src: b64, enabled: true });
+        }
+        input.value = '';
+        _renderLogoSettingsGrid();
     };
 
     window._isTogglePay = function (method) {
@@ -393,7 +498,8 @@
             businessName:    document.getElementById('isBizName')?.value.trim() || '',
             businessTin:     document.getElementById('isBizTin')?.value.trim()  || '',
             businessAddress: document.getElementById('isBizAddr')?.value.trim() || '',
-            paymentDetails:  pd
+            paymentDetails:  pd,
+            logos:           _normLogos(_defaults.logos)
         };
         try {
             await db.collection('settings').doc('invoiceDefaults').set(newDefaults, { merge: true });
@@ -890,16 +996,42 @@
     window.invPrint = function (id) {
         const inv = _invoices.find(i => i.id === id);
         if (!inv) { alert('Invoice not found.'); return; }
-        _doPrint(inv);
+        _doPrint(inv, false);
     };
 
-    function _doPrint(inv) {
+    window.invPreview = function (id) {
+        const inv = _invoices.find(i => i.id === id);
+        if (!inv) { alert('Invoice not found.'); return; }
+        _doPrint(inv, true);
+    };
+
+    function _buildLogoHtml(logos) {
+        if (!logos || !logos.length) return '';
+        // Normalize and filter to only enabled logos
+        const enabled = _normLogos(logos).filter(l => l.enabled !== false);
+        if (!enabled.length) return '';
+        const imgs = enabled.map(l =>
+            `<img src="${l.src}"
+                  style="height:64px;max-width:140px;width:auto;object-fit:contain;flex-shrink:0;mix-blend-mode:multiply;"
+                  onerror="this.style.display='none'">`
+        ).join('');
+        const justification = enabled.length === 1 ? 'center' : 'space-evenly';
+        return `
+  <div style="display:flex;align-items:center;justify-content:${justification};gap:24px;
+              padding:12px 0 16px;border-bottom:2.5px solid #1e3a5f;margin-bottom:18px;
+              flex-wrap:nowrap;overflow:hidden;">
+    ${imgs}
+  </div>`;
+    }
+
+    function _doPrint(inv, previewOnly) {
         // Fall back to saved defaults for fields the invoice may not have
         const pd       = Object.assign({}, _defaults.paymentDetails || {}, inv.paymentDetails || {});
         const bizName  = inv.businessName    || _defaults.businessName    || 'Business Name';
         const bizTin   = inv.businessTin     || _defaults.businessTin     || '—';
         const bizAddr  = inv.businessAddress || _defaults.businessAddress || '—';
         const vatLabel = (inv.vatRate != null ? inv.vatRate : (_defaults.vatRate != null ? _defaults.vatRate : 12)) + '%';
+        const logoHtml = _buildLogoHtml(_defaults.logos);
 
         const itemRows = (inv.items || []).map((item, idx) => `
             <tr>
@@ -918,7 +1050,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Invoice ${_pEsc(inv.invoiceNo || '')}</title>
+<title>${previewOnly ? 'Preview' : 'Print'} — Invoice ${_pEsc(inv.invoiceNo || '')}</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #111; background: #f5f5f5; }
@@ -980,15 +1112,31 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff;
 .footer { text-align:center; margin-top:24px; font-size:10px; color:#9ca3af;
           border-top:1px solid #e5e7eb; padding-top:10px; }
 
+/* Preview toolbar — hidden when printing */
+.preview-bar { display:flex; align-items:center; justify-content:space-between;
+               background:#1e3a5f; color:#fff; padding:10px 20px;
+               font-family:Arial,sans-serif; font-size:13px; }
+.preview-bar button { background:#4AC84A; color:#fff; border:none; border-radius:6px;
+                      padding:7px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+.preview-bar button:hover { background:#3ab53a; }
+
 @media print {
   body { background:#fff; }
   .page { margin:0; box-shadow:none; padding:10mm 10mm; width:100%; }
+  .preview-bar { display:none !important; }
   @page { size:A4 portrait; margin:8mm; }
 }
 </style>
 </head>
 <body>
+${previewOnly ? `
+<div class="preview-bar">
+  <span>Print Preview — Invoice ${_pEsc(inv.invoiceNo || '')}</span>
+  <button onclick="window.print()">Print</button>
+</div>` : ''}
 <div class="page">
+
+  ${logoHtml}
 
   <!-- Header -->
   <div class="inv-header">
@@ -1070,7 +1218,7 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff;
   </div>
 
 </div>
-<script>window.onload = function () { window.print(); };<\/script>
+${previewOnly ? '' : '<script>window.onload=function(){window.print();};<\\/script>'}
 </body>
 </html>`);
         w.document.close();
@@ -1487,6 +1635,7 @@ table.breakdown tbody tr:nth-child(even) { background:#f8fafc; }
 
         const invoiceNo = await _generateInvoiceNo();
         const today = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+        const logoHtml = _buildLogoHtml(_defaults.logos);
 
         const w = window.open('','_blank','width=870,height=1100');
         if (!w) { alert('Please allow pop-ups to print the invoice.'); return; }
@@ -1537,6 +1686,7 @@ table.totals tr.grand td { font-size:15px; font-weight:800; color:#fff; backgrou
 </head>
 <body>
 <div class="page">
+  ${logoHtml}
   <div class="inv-header">
     <div class="inv-biz">
       <h1>${esc(bizName)}</h1>

@@ -1131,14 +1131,22 @@
                     <div style="font-size:15px;font-weight:800;color:#00a85e;">${_formatAmount(inv.totalAmount)}</div>
                     <span style="font-size:11px;color:#065f46;background:#d1fae5;padding:2px 8px;border-radius:99px;font-weight:700;">Issued</span>
                 </div>
-                <button onclick="clientPrintInvoice(${safeInv})"
-                    style="display:inline-flex;align-items:center;gap:6px;background:#f8fafc;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;"
-                    onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
-                    </svg>
-                    Print
-                </button>
+                <div style="display:flex;gap:6px;flex-shrink:0;">
+                    <button onclick="clientPreviewInvoice(${safeInv})"
+                        style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;"
+                        onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Preview
+                    </button>
+                    <button onclick="clientPrintInvoice(${safeInv})"
+                        style="display:inline-flex;align-items:center;gap:6px;background:#f8fafc;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;"
+                        onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                        Print
+                    </button>
+                </div>
             </div>
         </div>`;
     }
@@ -1204,11 +1212,63 @@
         }
     };
 
-    window.clientPrintInvoice = function (inv) {
+    // ── Logo helpers (client-side, mirrors admin invoice-module.js) ──
+    function _clientNormLogos(logos) {
+        if (!logos) return [];
+        return logos.map(l => (typeof l === 'string' ? { src: l, enabled: true } : l));
+    }
+
+    function _clientBuildLogoHtml(logos) {
+        const enabled = _clientNormLogos(logos).filter(l => l.enabled !== false);
+        if (!enabled.length) return '';
+        const imgs = enabled.map(l =>
+            `<img src="${l.src}" style="height:64px;max-width:140px;width:auto;object-fit:contain;flex-shrink:0;mix-blend-mode:multiply;" onerror="this.style.display='none'">`
+        ).join('');
+        const justify = enabled.length === 1 ? 'center' : 'space-evenly';
+        return `<div style="display:flex;align-items:center;justify-content:${justify};gap:24px;padding:12px 0 16px;border-bottom:2.5px solid #1e3a5f;margin-bottom:18px;flex-wrap:nowrap;overflow:hidden;">${imgs}</div>`;
+    }
+
+    // Fetch invoice defaults (logos + business info) once and cache
+    let _clientSettingsCache = null;
+    async function _fetchClientSettings() {
+        if (_clientSettingsCache !== null) return _clientSettingsCache;
+        try {
+            const doc = await db.collection('settings').doc('invoiceDefaults').get();
+            _clientSettingsCache = doc.exists ? (doc.data() || {}) : {};
+        } catch (_) {
+            _clientSettingsCache = {};
+        }
+        return _clientSettingsCache;
+    }
+
+    // Build logo HTML for client print — always shows DACS logo,
+    // plus any additional admin-configured logos from Firestore
+    function _buildClientPrintLogoHtml(settings) {
+        const base = window.location.origin + '/assets/images/DACS-TRANSPARENT.png';
+        // Merge: DACS base logo first, then any enabled Firestore logos
+        const extra = _clientNormLogos(settings.logos || []).filter(l => l.enabled !== false);
+        // Avoid duplicating the base logo if admin already uploaded it
+        const imgs = [
+            `<img src="${base}" style="height:64px;max-width:160px;width:auto;object-fit:contain;flex-shrink:0;mix-blend-mode:multiply;" onerror="this.style.display='none'">`,
+            ...extra.map(l => `<img src="${l.src}" style="height:64px;max-width:140px;width:auto;object-fit:contain;flex-shrink:0;mix-blend-mode:multiply;" onerror="this.style.display='none'">`)
+        ].join('');
+        const justify = extra.length > 0 ? 'space-evenly' : 'center';
+        return `<div style="display:flex;align-items:center;justify-content:${justify};gap:24px;padding:12px 0 16px;border-bottom:2.5px solid #1e3a5f;margin-bottom:18px;flex-wrap:nowrap;overflow:hidden;">${imgs}</div>`;
+    }
+
+    async function _doClientPrint(inv, previewOnly) {
+        const settings  = await _fetchClientSettings();
+        const logoHtml  = _buildClientPrintLogoHtml(settings);
+
+        // Fall back to stored settings when invoice fields are blank
+        const bizName    = inv.businessName    || settings.businessName    || "DAC's Building Design Services";
+        const bizTin     = inv.businessTin     || settings.businessTin     || '';
+        const bizAddress = inv.businessAddress || settings.businessAddress || '';
+
         const _e = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         const _m = n => '\u20b1' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits:2, maximumFractionDigits:2 });
         const _d = s => { try { return new Date(s + 'T00:00:00').toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' }); } catch(e) { return s || '—'; } };
-        const pd = inv.paymentDetails || {};
+        const pd = inv.paymentDetails || settings.paymentDetails || {};
 
         const itemRows = (inv.items || []).map((item, i) => `
             <tr>
@@ -1223,19 +1283,24 @@
         const w = window.open('', '_blank', 'width=870,height=1100');
         if (!w) { alert('Please allow pop-ups to print the invoice.'); return; }
         w.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<title>Invoice ${_e(inv.invoiceNo || '')}</title>
+<title>${previewOnly ? 'Preview' : 'Print'} — Invoice ${_e(inv.invoiceNo || '')}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#111;background:#f5f5f5}
 .page{width:210mm;min-height:297mm;margin:20px auto;padding:18mm 16mm 14mm;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.12)}
-.inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
-.inv-biz h1{font-size:20px;font-weight:800;color:#1a1a2e}
-.inv-biz p{font-size:12px;color:#555;margin-top:4px;line-height:1.5}
+.preview-bar{display:flex;align-items:center;justify-content:space-between;background:#1e3a5f;color:#fff;padding:10px 20px;font-family:Arial,sans-serif;font-size:13px;}
+.preview-bar button{background:#4AC84A;color:#fff;border:none;border-radius:6px;padding:7px 18px;font-size:13px;font-weight:700;cursor:pointer;}
+.preview-bar button:hover{background:#3ab53a;}
+.inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;padding-bottom:14px;border-bottom:2.5px solid #1e3a5f}
+.inv-biz{display:flex;align-items:center;gap:14px}
+.inv-biz-logo{height:64px;max-width:150px;width:auto;object-fit:contain;mix-blend-mode:multiply;flex-shrink:0}
+.inv-biz-text h1{font-size:20px;font-weight:800;color:#1a1a2e}
+.inv-biz-text p{font-size:12px;color:#555;margin-top:4px;line-height:1.5}
 .inv-title-block{text-align:right}
 .inv-title-block h2{font-size:26px;font-weight:800;color:#1e3a5f;letter-spacing:2px}
 .inv-meta{margin-top:8px;font-size:12px;color:#444;line-height:1.8}
 .inv-meta strong{color:#111}
-.bill-row{display:flex;gap:32px;margin-bottom:18px;padding:14px 0;border-top:2.5px solid #1e3a5f;border-bottom:1px solid #e5e7eb}
+.bill-row{display:flex;gap:32px;margin-bottom:18px;padding:14px 0;border-bottom:1px solid #e5e7eb}
 .bill-to h4{font-size:10px;font-weight:700;color:#6b7280;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
 .bill-to .name{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:3px}
 .bill-to p{font-size:12px;color:#555;line-height:1.5}
@@ -1255,12 +1320,17 @@ table.totals tr.grand td{font-size:15px;font-weight:800;color:#fff;background:#1
 .pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 24px;font-size:12px}
 .pay-grid .lbl{color:#6b7280}.pay-grid .val{font-weight:600;color:#111}
 .footer{text-align:center;margin-top:24px;font-size:10px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:10px}
-@media print{body{background:#fff}.page{margin:0;box-shadow:none;padding:10mm 10mm;width:100%}@page{size:A4 portrait;margin:8mm}}
-</style></head><body><div class="page">
+@media print{body{background:#fff}.page{margin:0;box-shadow:none;padding:10mm 10mm;width:100%}.preview-bar{display:none!important}@page{size:A4 portrait;margin:8mm}}
+</style></head><body>
+${previewOnly ? `<div class="preview-bar"><span>Print Preview &mdash; Invoice ${_e(inv.invoiceNo || '')}</span><button onclick="window.print()">Print</button></div>` : ''}
+<div class="page">
   <div class="inv-header">
-    <div class="inv-biz"><h1>${_e(inv.businessName || 'Business Name')}</h1>
-      <p>TIN: ${_e(inv.businessTin || '—')}<br>${_e(inv.businessAddress || '—')}</p></div>
-    <div class="inv-title-block"><h2>SALES INVOICE</h2>
+    <div class="inv-biz">
+      <img class="inv-biz-logo" src="${window.location.origin}/assets/images/DACS-TRANSPARENT.png" onerror="this.style.display='none'">
+      <div class="inv-biz-text"><h1>${_e(bizName)}</h1>
+        <p>${bizTin ? 'TIN: ' + _e(bizTin) + '<br>' : ''}${_e(bizAddress)}</p></div>
+    </div>
+    <div class="inv-title-block"><h2>ACKNOWLEDGEMENT RECEIPT</h2>
       <div class="inv-meta">Receipt No: <strong>${_e(inv.invoiceNo || '—')}</strong><br>Date: <strong>${_d(inv.date)}</strong></div></div>
   </div>
   <div class="bill-row"><div class="bill-to">
@@ -1280,17 +1350,24 @@ table.totals tr.grand td{font-size:15px;font-weight:800;color:#fff;background:#1
     <tr><td>Total Sales</td><td>${_m(inv.subtotal)}</td></tr>
     <tr class="grand"><td>TOTAL AMOUNT DUE</td><td>${_m(inv.totalAmount)}</td></tr>
   </table></div>
-  ${(pd.bank || pd.accountNo) ? `<div class="pay-box"><h4>Payment Details</h4><div class="pay-grid">
+  ${(pd.method === 'gcash') ? `<div class="pay-box"><h4>Payment Details</h4><div class="pay-grid">
+    <div><span class="lbl">Payment Via: </span><span class="val">GCash</span></div>
+    <div><span class="lbl">GCash No.: </span><span class="val">${_e(pd.gcashNumber || '—')}</span></div>
+    <div><span class="lbl">Account Name: </span><span class="val">${_e(pd.gcashName || '—')}</span></div>
+  </div></div>` : (pd.bank || pd.accountNo) ? `<div class="pay-box"><h4>Payment Details</h4><div class="pay-grid">
     <div><span class="lbl">Bank: </span><span class="val">${_e(pd.bank || '—')}</span></div>
     <div><span class="lbl">Account No.: </span><span class="val">${_e(pd.accountNo || '—')}</span></div>
     <div><span class="lbl">Account Name: </span><span class="val">${_e(pd.accountName || '—')}</span></div>
     <div><span class="lbl">Branch: </span><span class="val">${_e(pd.branch || '—')}</span></div>
   </div></div>` : ''}
   ${inv.notes ? `<p style="font-size:12px;color:#555;margin-bottom:16px;">${_e(inv.notes)}</p>` : ''}
-  <div class="footer">This is an official sales invoice. Thank you for your payment.</div>
-</div><script>window.onload=()=>{window.print();}<\/script></body></html>`);
+  <div class="footer">${_e(bizName)}${bizAddress ? ' &bull; ' + _e(bizAddress) : ''}<br>This is an official acknowledgement receipt. Thank you for your payment.</div>
+</div>${previewOnly ? '' : '<script>window.onload=()=>{window.print();}<\\/script>'}</body></html>`);
         w.document.close();
-    };
+    }
+
+    window.clientPrintInvoice   = function (inv) { _doClientPrint(inv, false); };
+    window.clientPreviewInvoice = function (inv) { _doClientPrint(inv, true);  };
 
     // ══════════════════════════════════════════════════════
     // SOWA REQUEST (client → admin)
