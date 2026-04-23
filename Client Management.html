@@ -6,9 +6,10 @@
   <title>DAC's Client Portal</title>
   <link rel="icon" href="assets/images/DACS-TRANSPARENT.png" type="image/png"/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="css/client.css"/>
+<link rel="stylesheet" href="css/client.css"/>
+  <link rel="stylesheet" href="css/hero-kpis.css"/>
   <link rel="stylesheet" href="css/payment-requests.css"/>
-  <link rel="stylesheet" href="css/soa-module.css"/>
+  <link rel="stylesheet" href="css/client-management.css"/>
 </head>
 <body>
 
@@ -56,6 +57,21 @@
       <div class="login-error" id="login-error">Incorrect email or password. Please try again.</div>
 
       <button class="btn-signin" id="btn-login" type="button" onclick="doLogin()">Sign In</button>
+
+      <!-- Demo account hint -->
+      <div style="margin-top:14px;padding:12px 14px;background:#f0fdf4;border:1.5px dashed #6ee7b7;border-radius:10px;text-align:center;">
+        <div style="font-size:11.5px;font-weight:700;color:#059669;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;">Demo Account</div>
+        <div style="font-size:13px;color:#374151;line-height:1.7;">
+          <span style="font-weight:600;">Email:</span> demo@dacs.com<br/>
+          <span style="font-weight:600;">Password:</span> demo1234
+        </div>
+        <button type="button" onclick="
+          document.getElementById('login-email').value='demo@dacs.com';
+          document.getElementById('login-password').value='demo1234';
+        " style="margin-top:8px;padding:5px 14px;border-radius:7px;border:1.5px solid #6ee7b7;background:#fff;color:#059669;font-size:12px;font-weight:700;cursor:pointer;">
+          Fill in Demo Credentials
+        </button>
+      </div>
 
       <hr class="form-divider"/>
       <div class="footer-signup-cta">
@@ -162,22 +178,6 @@
         </svg>
         Dashboard
       </a>
-      <a class="nav-item" onclick="showSection('accomplishment')">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-          <polyline points="10 9 9 9 8 9"/>
-        </svg>
-        Accomplishment Reports
-      </a>
-      <a class="nav-item" onclick="showSection('billing')">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-        </svg>
-        Billing Periods
-        <span id="billing-badge" class="pr-nav-badge" style="display:none;">0</span>
-      </a>
       <a class="nav-item" onclick="showSection('notifications')">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -194,6 +194,42 @@
         </svg>
         Documents
       </a>
+
+      <div class="nav-label pm-parent">Project Management</div>
+      <a class="nav-item nav-pm-sub" onclick="showSection('weekly-billing')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="2"/>
+          <line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/>
+          <line x1="9" y1="15" x2="13" y2="15"/>
+        </svg>
+        Weekly Summary
+        <span id="weekly-overdue-badge" class="pr-nav-badge" style="display:none;background:#ef4444;">!</span>
+      </a>
+      <a class="nav-item nav-pm-sub" onclick="showSection('procurement-list')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+          <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
+        </svg>
+        Materials Procurement
+        <span id="procurement-pending-badge" class="pr-nav-badge" style="display:none;background:#f59e0b;">!</span>
+      </a>
+      <a class="nav-item nav-pm-sub" onclick="showSection('revolving-fund')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        </svg>
+        Revolving Fund
+        <span id="rf-low-badge" class="pr-nav-badge" style="display:none;background:#f59e0b;">!</span>
+      </a>
+      <a class="nav-item nav-pm-sub" onclick="showSection('billing')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+        </svg>
+        Payment
+        <span id="billing-badge" class="pr-nav-badge" style="display:none;">0</span>
+      </a>
+
       <div class="nav-label">Account</div>
       <a class="nav-item" onclick="showSection('profile')">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -273,6 +309,39 @@
 
       <!-- ── Dashboard ── -->
       <div class="sub-page active" id="section-dashboard">
+
+      <!-- ══════════ HERO 3-KPI ROW (Dashboard only) ══════════ -->
+      <div class="hero-kpi-row" id="hero-kpis">
+        <!-- 1. Outstanding Balance -->
+        <div class="hero-kpi-card design-progress">
+          <div class="kpi-icon">💸</div>
+          <div class="kpi-text">
+            <div class="kpi-label">Outstanding Balance</div>
+            <div class="kpi-main" id="hero-design-pct">&#8369;0</div>
+            <div class="kpi-sub" id="hero-design-sub">no overdue bills</div>
+          </div>
+        </div>
+
+        <!-- 2. Total Paid -->
+        <div class="hero-kpi-card total-billed">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-text">
+            <div class="kpi-label">Total Paid</div>
+            <div class="kpi-main" id="hero-billed-pct">&#8369;0</div>
+            <div class="kpi-sub" id="hero-billed-sub">0 weekly bills paid</div>
+          </div>
+        </div>
+
+        <!-- 3. Recent Activity -->
+        <div class="hero-kpi-card recent-activity">
+          <div class="kpi-icon">🔔</div>
+          <div class="kpi-text">
+            <div class="kpi-label">Recent Activity</div>
+            <div class="kpi-main" id="hero-activity-count">0</div>
+            <div class="kpi-sub" id="hero-activity-last">-</div>
+          </div>
+        </div>
+      </div>
         <!-- No project assigned state -->
         <div id="no-project-state" style="display:none;">
           <div class="content-panel" style="text-align:center; padding:60px 20px;">
@@ -287,10 +356,33 @@
         </div>
 
         <div id="project-content">
-          <div class="section-title" id="dash-project-title">Dashboard</div>
-          <div class="section-sub" id="dash-project-sub">Here's an overview of all your projects.</div>
+          <div class="section-title" id="dash-project-title">Manager Dashboard</div>
+          <div class="section-sub" id="dash-project-sub">Cost-Plus project management overview (Labor + Materials + 15% Fee).</div>
+
+          <!-- Scope of Services KPIs -->
+          <div class="hero-kpi-row scope-kpis">
+            <div class="hero-kpi-card kpi-labor">
+              <div class="kpi-icon">👷</div>
+              <div class="kpi-main" id="kpi-labor-value">₱0</div>
+              <div class="kpi-label">Labor Management</div>
+              <div class="kpi-sub" id="kpi-labor-sub">Sourcing, supervising &amp; scheduling</div>
+            </div>
+            <div class="hero-kpi-card kpi-procurement">
+              <div class="kpi-icon">📦</div>
+              <div class="kpi-main" id="kpi-procurement-value">₱0</div>
+              <div class="kpi-label">Procurement Management</div>
+              <div class="kpi-sub" id="kpi-procurement-sub">Materials sourcing &amp; quality control</div>
+            </div>
+            <div class="hero-kpi-card kpi-site-supervision">
+              <div class="kpi-icon">🏗️</div>
+              <div class="kpi-main" id="kpi-site-value">₱0</div>
+              <div class="kpi-label">Site Supervision</div>
+              <div class="kpi-sub" id="kpi-site-sub">Labor + Procurement total</div>
+            </div>
+          </div>
 
           <div class="stats-grid">
+
             <div class="stat-card budget">
               <div class="stat-icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00a85e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -425,8 +517,8 @@
       <div class="sub-page" id="section-billing">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
           <div>
-            <div class="section-title" style="margin-bottom:4px;">Billing &amp; Payments</div>
-            <div class="section-sub" style="margin-bottom:0;">Manage your payments and view your billing history.</div>
+            <div class="section-title" style="margin-bottom:4px;">Payment</div>
+            <div class="section-sub" style="margin-bottom:0;">Manage your payments and view your billing history. Payment is due every Friday.</div>
           </div>
           <button onclick="prClientOpenSelfPayModal()" style="display:inline-flex;align-items:center;gap:8px;background:#00a85e;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,168,94,.25);">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
@@ -660,8 +752,26 @@
       <div class="sub-page" id="section-documents">
         <div style="margin-bottom:24px;">
           <div class="section-title" style="margin-bottom:4px;">Documents</div>
-          <div class="section-sub" style="margin-bottom:0;">Download your invoices and statements.</div>
+          <div class="section-sub" style="margin-bottom:0;">Download your invoices, contract, and statements.</div>
         </div>
+
+        <!-- Signed Contract -->
+        <div class="content-panel" style="padding:0;overflow:hidden;margin-bottom:24px;">
+          <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#1f2937;font-family:'Playfair Display',serif;">Signed Contract</div>
+              <div style="font-size:12.5px;color:#9ca3af;margin-top:2px;">Project Management &amp; Procurement Agreement — view only.</div>
+            </div>
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;background:#f0fdf4;border:1px solid #bbf7d0;font-size:12px;font-weight:600;color:#15803d;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              View Only
+            </span>
+          </div>
+          <div id="docs-contract-section" style="padding:22px;">
+            <div style="padding:12px 0;text-align:center;color:#9ca3af;font-size:14px;">Loading contract…</div>
+          </div>
+        </div>
+
         <!-- Invoices -->
         <div class="content-panel" style="padding:0;overflow:hidden;margin-bottom:24px;">
           <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
@@ -682,6 +792,287 @@
           </div>
           <div id="docs-sowa-section" style="padding:22px;">
             <div style="padding:12px 0;text-align:center;color:#9ca3af;font-size:14px;">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ WEEKLY SUMMARY ══════════ -->
+      <div class="sub-page" id="section-weekly-billing">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div class="section-title" style="margin-bottom:4px;">Weekly Summary</div>
+            <div class="section-sub" style="margin-bottom:0;">Cost-Plus model — Direct Costs + 15% Management Fee. Payment due every Friday.</div>
+          </div>
+        </div>
+
+        <!-- Overdue Alert -->
+        <div id="wb-overdue-alert" style="display:none;align-items:center;gap:14px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;padding:14px 18px;margin-bottom:20px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div id="wb-overdue-msg" style="font-size:13.5px;color:#dc2626;font-weight:600;"></div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="billing-summary-grid" style="margin-bottom:28px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));">
+          <div class="billing-sum-card billing-sum-green">
+            <div class="bsum-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00a85e" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div>
+              <div class="bsum-label">Total Billed</div>
+              <div class="bsum-value" id="wb-sum-billed">&#8369;0</div>
+            </div>
+          </div>
+          <div class="billing-sum-card billing-sum-blue">
+            <div class="bsum-icon bsum-icon-blue">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="bsum-label">Total Paid</div>
+              <div class="bsum-value" id="wb-sum-paid">&#8369;0</div>
+            </div>
+          </div>
+          <div class="billing-sum-card billing-sum-amber">
+            <div class="bsum-icon bsum-icon-amber">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <div class="bsum-label">Outstanding</div>
+              <div class="bsum-value" id="wb-sum-outstanding">&#8369;0</div>
+            </div>
+          </div>
+          <div class="billing-sum-card" style="border-left:3px solid #8b5cf6;background:linear-gradient(135deg,#faf5ff 0%,#f5f3ff 100%);">
+            <div class="bsum-icon" style="background:#ede9fe;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <div>
+              <div class="bsum-label">Mgmt Fees (15%)</div>
+              <div class="bsum-value" id="wb-sum-fees" style="color:#7c3aed;">&#8369;0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly Bills Table -->
+        <div class="content-panel" style="padding:0;overflow:hidden;">
+          <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;">
+            <div style="font-size:15px;font-weight:700;color:#1f2937;font-family:'Playfair Display',serif;">Weekly Billing History</div>
+            <div style="font-size:12.5px;color:#9ca3af;margin-top:2px;">Permanent audit trail — submitted every Friday. No entries are ever deleted.</div>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="wb-table">
+              <thead>
+                <tr>
+                  <th>Week Ending</th>
+                  <th>Labor</th>
+                  <th>Materials</th>
+                  <th>Other Costs</th>
+                  <th>Direct Total</th>
+                  <th>Mgmt Fee (15%)</th>
+                  <th>Total Due</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="wb-tbody">
+                <tr><td colspan="9" style="text-align:center;padding:32px;color:#b0c8bc;font-style:italic;">Loading weekly bills…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ PROGRESS & PHOTOS ══════════ -->
+      <div class="sub-page" id="section-progress">
+        <div style="margin-bottom:24px;">
+          <div class="section-title" style="margin-bottom:4px;">Progress &amp; Photos</div>
+          <div class="section-sub" style="margin-bottom:0;">Daily site updates and construction progress photos shared by your project manager.</div>
+        </div>
+
+        <!-- Daily Logs -->
+        <div class="content-panel" style="padding:0;overflow:hidden;margin-bottom:24px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f1f5f9;">
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#1f2937;font-family:'Playfair Display',serif;">Daily Site Logs</div>
+              <div style="font-size:12.5px;color:#9ca3af;margin-top:2px;">Work done each day — work done, materials used, and next-day plan.</div>
+            </div>
+            <div class="table-search-wrap" style="width:220px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="table-search" id="log-search" placeholder="Search logs…" oninput="filterProgressLogs()"/>
+            </div>
+          </div>
+          <div id="progress-logs-list" style="min-height:120px;">
+            <div style="padding:40px;text-align:center;color:#9ca3af;font-size:14px;">Loading daily logs…</div>
+          </div>
+        </div>
+
+        <!-- Client Walkthrough Log -->
+        <div class="content-panel" style="padding:0;overflow:hidden;margin-bottom:24px;">
+          <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;">
+            <div style="font-size:15px;font-weight:700;color:#1f2937;font-family:'Playfair Display',serif;">Walkthrough &amp; Milestone Log</div>
+            <div style="font-size:12.5px;color:#9ca3af;margin-top:2px;">Recorded client walkthroughs — what was discussed and agreed.</div>
+          </div>
+          <div id="walkthrough-list" style="min-height:80px;">
+            <div style="padding:32px;text-align:center;color:#9ca3af;font-size:14px;">Loading walkthroughs…</div>
+          </div>
+        </div>
+
+        <!-- Photo Gallery -->
+        <div class="content-panel" style="padding:0;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f1f5f9;">
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#1f2937;font-family:'Playfair Display',serif;">Progress Photos</div>
+              <div style="font-size:12.5px;color:#9ca3af;margin-top:2px;">Construction site photos marked visible to client by your project manager.</div>
+            </div>
+            <span id="photo-count-badge" class="panel-badge panel-badge-blue">0 Photos</span>
+          </div>
+          <div id="progress-photos-grid" style="padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;min-height:120px;">
+            <div style="padding:24px;text-align:center;color:#9ca3af;font-size:14px;grid-column:1/-1;">Loading photos…</div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ══════════ MATERIALS PROCUREMENT LIST ══════════ -->
+      <div class="sub-page" id="section-procurement-list">
+        <div style="margin-bottom:24px;">
+          <div class="section-title" style="margin-bottom:4px;">Materials Procurement List</div>
+          <div class="section-sub" style="margin-bottom:0;">Items your project manager needs to purchase. You may buy any item yourself — mark it as bought and upload your receipt.</div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="pm-stat-grid">
+          <div class="pm-stat-card pm-stat-green">
+            <div class="pm-stat-label">Total Items</div>
+            <div class="pm-stat-value" id="pl-total-items">0</div>
+            <div class="pm-stat-sub">on the procurement list</div>
+          </div>
+          <div class="pm-stat-card pm-stat-amber">
+            <div class="pm-stat-label">Pending</div>
+            <div class="pm-stat-value" id="pl-pending-items">0</div>
+            <div class="pm-stat-sub">items not yet purchased</div>
+          </div>
+          <div class="pm-stat-card pm-stat-blue">
+            <div class="pm-stat-label">Bought by You</div>
+            <div class="pm-stat-value" id="pl-client-items">0</div>
+            <div class="pm-stat-sub">items you purchased</div>
+          </div>
+          <div class="pm-stat-card pm-stat-purple">
+            <div class="pm-stat-label">Bought by Company</div>
+            <div class="pm-stat-value" id="pl-company-items">0</div>
+            <div class="pm-stat-sub">items company purchased</div>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="content-panel" style="padding:0;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#1f2937;font-family:'Playfair Display',serif;">Procurement Items</div>
+              <div style="font-size:12.5px;color:#9ca3af;margin-top:2px;">Items listed by your project manager. Mark items you purchased and upload your receipt.</div>
+            </div>
+            <div class="table-search-wrap" style="width:220px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="table-search" id="pl-search" placeholder="Search items…" oninput="filterProcurementList()"/>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="pl-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Qty</th>
+                  <th>Est. Price</th>
+                  <th>Status</th>
+                  <th>Actual Amount</th>
+                  <th>Buyer</th>
+                  <th>Receipt</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="pl-tbody">
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:#b0c8bc;font-style:italic;">Loading procurement list…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ REVOLVING FUND ══════════ -->
+      <div class="sub-page" id="section-revolving-fund">
+
+        <div style="margin-bottom:24px;">
+          <div class="section-title" style="margin-bottom:4px;">Revolving Fund</div>
+          <div class="section-sub" style="margin-bottom:0;">Petty cash fund for minor and urgent site purchases — replenished weekly via receipts you provide.</div>
+        </div>
+
+
+        <!-- Low Balance Alert -->
+        <div id="rf-low-alert" style="display:none;align-items:center;gap:12px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:14px 18px;margin-bottom:20px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div style="font-size:13.5px;color:#b45309;font-weight:600;">Revolving fund balance is below 20% — replenishment needed. Submit receipts to your project manager.</div>
+        </div>
+
+        <!-- Balance Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+          <div style="background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);border:1.5px solid #bbf7d0;border-radius:14px;padding:20px;">
+            <div style="font-size:12px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Current Balance</div>
+            <div style="font-size:26px;font-weight:700;color:#15803d;font-family:'Playfair Display',serif;" id="rf-balance">&#8369;0</div>
+            <div style="font-size:12px;color:#4ade80;margin-top:4px;" id="rf-balance-pct">0% of fund remaining</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#fff7ed 0%,#fed7aa 100%);border:1.5px solid #fdba74;border-radius:14px;padding:20px;">
+            <div style="font-size:12px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Total Spent</div>
+            <div style="font-size:26px;font-weight:700;color:#c2410c;font-family:'Playfair Display',serif;" id="rf-spent">&#8369;0</div>
+            <div style="font-size:12px;color:#fb923c;margin-top:4px;">This replenishment period</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:1.5px solid #93c5fd;border-radius:14px;padding:20px;">
+            <div style="font-size:12px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Fund Amount</div>
+            <div style="font-size:26px;font-weight:700;color:#1d4ed8;font-family:'Playfair Display',serif;" id="rf-total">&#8369;0</div>
+            <div style="font-size:12px;color:#60a5fa;margin-top:4px;">Client-provided revolving fund</div>
+          </div>
+        </div>
+
+        <!-- Replenishment History -->
+        <div class="content-panel" style="padding:0;overflow:hidden;margin-bottom:24px;">
+          <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;">
+            <div style="font-size:15px;font-weight:700;color:#1f2937;font-family:'Playfair Display',serif;">Replenishment History</div>
+            <div style="font-size:12.5px;color:#9ca3af;margin-top:2px;">Weekly replenishments via submitted receipts.</div>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="rf-replenish-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount Added</th>
+                  <th>Receipts Submitted</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="rf-replenish-tbody">
+                <tr><td colspan="4" style="text-align:center;padding:32px;color:#b0c8bc;font-style:italic;">No replenishments yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Expense Log -->
+        <div class="content-panel" style="padding:0;overflow:hidden;">
+          <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;">
+            <div style="font-size:15px;font-weight:700;color:#1f2937;font-family:'Playfair Display',serif;">Expense Log</div>
+            <div style="font-size:12.5px;color:#9ca3af;margin-top:2px;">Minor site purchases drawn from the revolving fund, with receipts.</div>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="rf-expense-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Item / Description</th>
+                  <th>Amount</th>
+                  <th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody id="rf-expense-tbody">
+                <tr><td colspan="4" style="text-align:center;padding:32px;color:#b0c8bc;font-style:italic;">Loading expenses…</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -733,6 +1124,91 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ══════════ MARK AS BOUGHT MODAL ══════════ -->
+<div id="plBuyModal" class="pm-modal-overlay" style="display:none;" onclick="if(event.target===this)plCloseBuyModal()">
+  <div class="pm-modal-card">
+    <div class="pm-modal-header">
+      <div class="pm-modal-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 12 11 14 15 10"/></svg>
+      </div>
+      <span class="pm-modal-title">Mark Item as Bought</span>
+      <button class="pm-modal-close" onclick="plCloseBuyModal()" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="pm-modal-body">
+      <input type="hidden" id="plBuyItemId"/>
+
+      <!-- Item info -->
+      <div class="pm-item-info-box">
+        <div class="pm-item-info-label">Item Details</div>
+        <div class="pm-item-info-name" id="plBuyItemName">—</div>
+        <div class="pm-item-info-meta">Qty: <span id="plBuyItemQty">—</span> &nbsp;·&nbsp; Est. Price: <span id="plBuyItemEst">—</span></div>
+      </div>
+
+      <!-- Actual Amount -->
+      <div class="pm-field">
+        <label class="pm-label">Actual Amount Paid <span class="pm-label-required">*</span></label>
+        <div class="pm-input-wrap">
+          <span class="pm-input-prefix">₱</span>
+          <input type="number" class="pm-input" id="plBuyAmount" placeholder="0.00" min="0" step="0.01"/>
+        </div>
+        <div class="pm-field-error" id="err-plBuyAmount"></div>
+      </div>
+
+      <!-- Receipt Upload -->
+      <div class="pm-field">
+        <label class="pm-label">Proof of Receipt <span class="pm-label-required">*</span></label>
+        <div class="pm-upload-zone" id="plReceiptUploadWrap"
+          onclick="document.getElementById('plReceiptFile').click()"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="plHandleReceiptDrop(event)">
+          <div class="pm-upload-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="pm-upload-text">Click to upload or drag &amp; drop</div>
+          <div class="pm-upload-hint">JPG, PNG, PDF &nbsp;·&nbsp; Max 5MB</div>
+        </div>
+        <input type="file" id="plReceiptFile" accept="image/*,application/pdf" style="display:none;" onchange="plPreviewReceipt(event)"/>
+        <div class="pm-receipt-preview" id="plReceiptPreview" style="display:none;"></div>
+        <div class="pm-field-error" id="err-plReceipt"></div>
+      </div>
+
+      <!-- Notes -->
+      <div class="pm-field">
+        <label class="pm-label">Notes <span class="pm-label-optional">(optional)</span></label>
+        <textarea class="pm-textarea" id="plBuyNotes" placeholder="Where you bought it, any remarks…" rows="2"></textarea>
+      </div>
+    </div>
+
+    <div class="pm-modal-footer">
+      <button class="pm-btn-cancel" onclick="plCloseBuyModal()">Cancel</button>
+      <button class="pm-btn-confirm" id="plBuySubmitBtn" onclick="plSubmitBought()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Confirm Purchase
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ RECEIPT VIEWER MODAL ══════════ -->
+<div id="plReceiptViewModal" class="pm-receipt-modal" style="display:none;" onclick="if(event.target===this)plCloseReceiptView()">
+  <div class="pm-receipt-modal-card">
+    <div class="pm-receipt-modal-header">
+      <span class="pm-receipt-modal-title" id="plReceiptViewTitle">Receipt</span>
+      <button class="pm-receipt-modal-close" onclick="plCloseReceiptView()" aria-label="Close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="pm-receipt-modal-body">
+      <img id="plReceiptViewImg" src="" alt="Receipt" style="display:none;"/>
+      <iframe id="plReceiptViewPdf" src="" style="width:100%;height:60vh;border:none;border-radius:8px;display:none;"></iframe>
+    </div>
+  </div>
+</div>
 
 <!-- PAYMENT REQUESTS: Pay Modal -->
 <div id="prClientPayModal" class="pr-modal-overlay" style="display:none;" onclick="if(event.target===this)prClientClosePayModal()">
@@ -854,13 +1330,48 @@
   </div>
 </div>
 
+<!-- WEEKLY BILLING: Detail Modal -->
+<div id="wbDetailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)closeWBDetail()">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #e5e7eb;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg>
+        </div>
+        <div>
+          <h3 style="margin:0;font-size:1rem;font-weight:700;color:#111827;">Weekly Bill Detail</h3>
+          <div style="font-size:12px;color:#9ca3af;margin-top:2px;" id="wbDetailSubtitle">Week ending —</div>
+        </div>
+      </div>
+      <button onclick="closeWBDetail()" style="background:none;border:none;font-size:1.5rem;color:#9ca3af;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <div style="overflow-y:auto;padding:22px;flex:1;" id="wbDetailBody">
+      <!-- Cost-plus breakdown rendered by JS -->
+    </div>
+    <div style="padding:16px 22px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:10px;">
+      <button onclick="wbPrintDetail()" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;border:none;background:#059669;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print / PDF
+      </button>
+      <button onclick="closeWBDetail()" style="padding:9px 18px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;color:#374151;font-size:13px;font-weight:600;cursor:pointer;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS PHOTOS: Full-Screen Viewer -->
+<div id="photoViewer" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;align-items:center;justify-content:center;flex-direction:column;gap:12px;" onclick="if(event.target===this)closePhotoViewer()">
+  <button onclick="closePhotoViewer()" style="position:absolute;top:20px;right:24px;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:1.5rem;cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;">&times;</button>
+  <img id="photoViewerImg" src="" alt="Progress photo" style="max-width:90vw;max-height:82vh;border-radius:8px;object-fit:contain;">
+  <div id="photoViewerCaption" style="color:#d1d5db;font-size:13px;text-align:center;max-width:600px;padding:0 16px;"></div>
+</div>
+
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 <script src="js/firebase-config.js"></script>
-<script src="js/client-app.js"></script>
+<script src="js/client-management-app.js"></script>
 
 <!-- Client SOWA Modal -->
 <div id="clientSowaModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
@@ -885,7 +1396,66 @@
 </div>
 
 <script src="js/client-payment.js"></script>
-<script src="js/soa-client.js"></script>
+<script>
+/* ── Weekly Billing helpers ── */
+function closeWBDetail(){
+  var m=document.getElementById('wbDetailModal');
+  m.style.display='none';
+}
+function openWBDetail(bill){
+  var m=document.getElementById('wbDetailModal');
+  var sub=document.getElementById('wbDetailSubtitle');
+  var body=document.getElementById('wbDetailBody');
+  sub.textContent='Week ending '+( bill.weekEnding||'—' );
+  var labor=bill.labor||0, materials=bill.materials||0,
+      delivery=bill.delivery||0, consumables=bill.consumables||0,
+      other=bill.other||0;
+  var direct=labor+materials+delivery+consumables+other;
+  var fee=direct*(bill.managementFeeRate||0.15);
+  var total=direct+fee;
+  var fmt=function(n){return '₱'+(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});};
+  var statusColor={Paid:'#15803d',Submitted:'#1d4ed8',Overdue:'#dc2626'}[bill.status]||'#6b7280';
+  body.innerHTML=[
+    '<div style="margin-bottom:20px;">',
+    '<span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:'+(bill.status==='Paid'?'#dcfce7':bill.status==='Overdue'?'#fee2e2':'#dbeafe')+';color:'+statusColor+';">',bill.status||'—','</span>',
+    bill.submittedAt?'<span style="font-size:12px;color:#9ca3af;margin-left:10px;">Submitted: '+bill.submittedAt+'</span>':'',
+    '</div>',
+    '<table style="width:100%;border-collapse:collapse;font-size:14px;">',
+    '<tbody>',
+    '<tr style="background:#f9fafb;"><td style="padding:10px 14px;color:#6b7280;border-bottom:1px solid #f1f5f9;">Labor Cost</td><td style="padding:10px 14px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9;">'+fmt(labor)+'</td></tr>',
+    '<tr><td style="padding:10px 14px;color:#6b7280;border-bottom:1px solid #f1f5f9;">Materials</td><td style="padding:10px 14px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9;">'+fmt(materials)+'</td></tr>',
+    delivery?'<tr style="background:#f9fafb;"><td style="padding:10px 14px;color:#6b7280;border-bottom:1px solid #f1f5f9;">Delivery</td><td style="padding:10px 14px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9;">'+fmt(delivery)+'</td></tr>':'',
+    consumables?'<tr><td style="padding:10px 14px;color:#6b7280;border-bottom:1px solid #f1f5f9;">Consumables</td><td style="padding:10px 14px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9;">'+fmt(consumables)+'</td></tr>':'',
+    other?'<tr style="background:#f9fafb;"><td style="padding:10px 14px;color:#6b7280;border-bottom:1px solid #f1f5f9;">Other</td><td style="padding:10px 14px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9;">'+fmt(other)+'</td></tr>':'',
+    '<tr style="background:#f0fdf4;font-size:15px;"><td style="padding:12px 14px;font-weight:700;color:#1f2937;border-bottom:2px solid #bbf7d0;">Direct Cost Total</td><td style="padding:12px 14px;text-align:right;font-weight:700;color:#1f2937;border-bottom:2px solid #bbf7d0;">'+fmt(direct)+'</td></tr>',
+    '<tr><td style="padding:10px 14px;color:#7c3aed;border-bottom:1px solid #f1f5f9;">Management Fee ('+(((bill.managementFeeRate||0.15)*100).toFixed(0))+'%)</td><td style="padding:10px 14px;text-align:right;font-weight:600;color:#7c3aed;border-bottom:1px solid #f1f5f9;">'+fmt(fee)+'</td></tr>',
+    '<tr style="background:#1f2937;"><td style="padding:14px;font-weight:700;color:#fff;font-size:16px;border-radius:0 0 0 8px;">TOTAL DUE</td><td style="padding:14px;text-align:right;font-weight:700;color:#4ade80;font-size:18px;border-radius:0 0 8px 0;">'+fmt(total)+'</td></tr>',
+    '</tbody></table>',
+    bill.paymentDue?'<div style="margin-top:14px;padding:10px 14px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;font-size:13px;color:#b45309;font-weight:600;">Payment due by: '+bill.paymentDue+'</div>':'',
+    bill.remarks?'<div style="margin-top:12px;padding:10px 14px;background:#f9fafb;border-radius:8px;font-size:13px;color:#6b7280;"><strong>Remarks:</strong> '+bill.remarks+'</div>':''
+  ].join('');
+  m.style.display='flex';
+}
+function wbPrintDetail(){
+  window.print();
+}
+
+/* ── Progress Photos helpers ── */
+function openPhotoViewer(src,caption){
+  var v=document.getElementById('photoViewer');
+  document.getElementById('photoViewerImg').src=src;
+  document.getElementById('photoViewerCaption').textContent=caption||'';
+  v.style.display='flex';
+}
+function closePhotoViewer(){
+  document.getElementById('photoViewer').style.display='none';
+}
+function filterProgressLogs(){
+  var q=document.getElementById('log-search').value.toLowerCase();
+  var rows=document.querySelectorAll('#progress-logs-list .progress-log-item');
+  rows.forEach(function(r){ r.style.display=q&&r.textContent.toLowerCase().indexOf(q)<0?'none':''; });
+}
+</script>
 
 <!-- Terms & Conditions Modal -->
 <div id="prTCModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:16px;">

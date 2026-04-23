@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="css/user-navigator.css">
     <link rel="stylesheet" href="css/payment-requests.css">
     <link rel="stylesheet" href="css/invoice-module.css">
+    <!-- Project Management Module Styles -->
+    <link rel="stylesheet" href="css/pm-admin.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -196,6 +198,30 @@
                     </a>
                     <a href="#" class="nav-item nav-child" data-view="consInventory">
                         <span class="nav-icon-wrap"><i data-lucide="box" class="nav-icon"></i></span><span>Inventory</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- PROJECT MANAGEMENT -->
+            <div class="nav-group" id="navGroup-projectMgmt">
+                <button class="nav-group-toggle" data-group="projectMgmt" aria-expanded="false">
+                    <span class="nav-icon-wrap nav-group-icon-wrap"><i data-lucide="hard-hat" class="nav-icon"></i></span>
+                    <span class="nav-group-title">Project Management</span>
+                    <span id="pm-group-badge" style="display:none;margin-right:4px;" class="pr-nav-badge"></span>
+                    <i data-lucide="chevron-right" class="nav-group-chevron"></i>
+                </button>
+                <div class="nav-group-children">
+                    <a href="#" class="nav-item nav-child" data-view="pmWeekly">
+                        <span class="nav-icon-wrap"><i data-lucide="calendar-days" class="nav-icon"></i></span><span>Weekly Summary</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="pmProcurement">
+                        <span class="nav-icon-wrap"><i data-lucide="shopping-cart" class="nav-icon"></i></span><span>Materials Procurement</span><span id="pm-proc-badge" style="display:none;" class="pr-nav-badge"></span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="pmRevolving">
+                        <span class="nav-icon-wrap"><i data-lucide="refresh-cw" class="nav-icon"></i></span><span>Revolving Fund</span>
+                    </a>
+                    <a href="#" class="nav-item nav-child" data-view="pmPayment">
+                        <span class="nav-icon-wrap"><i data-lucide="banknote" class="nav-icon"></i></span><span>Payment</span>
                     </a>
                 </div>
             </div>
@@ -1117,6 +1143,278 @@
         <div id="consInventoryView" class="content-view cons-view" style="display: none;">
             <div id="inventoryContainer"></div>
         </div>
+
+        <!-- ════════════ PROJECT MANAGEMENT VIEWS ════════════ -->
+        <div id="pmWeeklyView" class="content-view" style="display:none;">
+          <div class="pm-admin-header">
+            <div>
+              <div class="pm-admin-title">Weekly Summary</div>
+              <div class="pm-admin-sub">Input weekly labor and materials totals. The 15% management fee is computed automatically.</div>
+            </div>
+            <button class="pm-btn pm-btn-primary" onclick="pmOpenWeeklyModal()">
+              <i data-lucide="plus" style="width:15px;height:15px;"></i> New Entry
+            </button>
+          </div>
+
+          <!-- Client Selector -->
+          <div class="pm-client-selector-bar">
+            <label class="pm-field-label">Client / Project</label>
+            <select id="pm-client-select" class="pm-select" onchange="pmOnClientChange()">
+              <option value="">— Select a client project —</option>
+            </select>
+          </div>
+
+          <!-- KPI Row -->
+          <div class="pm-kpi-row">
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#e0f2fe;"><i data-lucide="hard-hat" style="color:#0284c7;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Total Labor (All Weeks)</div>
+                <div class="pm-kpi-value" id="pm-kpi-labor">₱0</div>
+              </div>
+            </div>
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#fef3c7;"><i data-lucide="package" style="color:#d97706;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Total Materials (All Weeks)</div>
+                <div class="pm-kpi-value" id="pm-kpi-materials">₱0</div>
+              </div>
+            </div>
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#ede9fe;"><i data-lucide="percent" style="color:#7c3aed;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Total Management Fee (15%)</div>
+                <div class="pm-kpi-value" id="pm-kpi-fee">₱0</div>
+              </div>
+            </div>
+            <div class="pm-kpi-card pm-kpi-total">
+              <div class="pm-kpi-icon" style="background:#d1fae5;"><i data-lucide="circle-dollar-sign" style="color:#059669;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Grand Total</div>
+                <div class="pm-kpi-value" id="pm-kpi-grand">₱0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly Entries Table -->
+          <div class="pm-table-wrap">
+            <table class="pm-table">
+              <thead>
+                <tr>
+                  <th>Week Of (Friday)</th>
+                  <th>Labor</th>
+                  <th>Materials</th>
+                  <th>Mgmt Fee (15%)</th>
+                  <th>Grand Total</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pm-weekly-tbody">
+                <tr><td colspan="7" class="pm-empty-row">Select a client project to view weekly entries.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div><!-- /pmWeeklyView -->
+
+        <div id="pmProcurementView" class="content-view" style="display:none;">
+          <div class="pm-admin-header">
+            <div>
+              <div class="pm-admin-title">Materials Procurement List</div>
+              <div class="pm-admin-sub">Manage items to be purchased. Mark company purchases with amount and receipt for full transparency.</div>
+            </div>
+            <button class="pm-btn pm-btn-primary" onclick="pmOpenAddItemModal()">
+              <i data-lucide="plus" style="width:15px;height:15px;"></i> Add Item
+            </button>
+          </div>
+
+          <!-- Client Selector -->
+          <div class="pm-client-selector-bar">
+            <label class="pm-field-label">Client / Project</label>
+            <select id="pm-proc-client-select" class="pm-select" onchange="pmProcOnClientChange()">
+              <option value="">— Select a client project —</option>
+            </select>
+          </div>
+
+          <!-- Stats -->
+          <div class="pm-stat-row" id="pm-proc-stats">
+            <div class="pm-stat-chip pm-chip-blue"><span id="pm-proc-total">0</span> Total Items</div>
+            <div class="pm-stat-chip pm-chip-amber"><span id="pm-proc-pending">0</span> Pending</div>
+            <div class="pm-stat-chip pm-chip-green"><span id="pm-proc-company">0</span> Bought by Company</div>
+            <div class="pm-stat-chip pm-chip-purple"><span id="pm-proc-client">0</span> Bought by Client</div>
+          </div>
+
+          <!-- Search -->
+          <div style="margin-bottom:14px;">
+            <input type="text" id="pm-proc-search" class="pm-input" placeholder="Search items…" oninput="pmProcFilter()" style="max-width:320px;">
+          </div>
+
+          <!-- Table -->
+          <div class="pm-table-wrap">
+            <table class="pm-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Qty</th>
+                  <th>Est. Price</th>
+                  <th>Status</th>
+                  <th>Actual Amount</th>
+                  <th>Bought By</th>
+                  <th>Receipt</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pm-proc-tbody">
+                <tr><td colspan="8" class="pm-empty-row">Select a client project to view items.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div><!-- /pmProcurementView -->
+
+        <div id="pmRevolvingView" class="content-view" style="display:none;">
+          <div class="pm-admin-header">
+            <div>
+              <div class="pm-admin-title">Revolving Fund</div>
+              <div class="pm-admin-sub">Track client-provided revolving fund. Record expenses drawn and replenishments each Friday.</div>
+            </div>
+            <button class="pm-btn pm-btn-primary" onclick="pmOpenExpenseModal()">
+              <i data-lucide="plus" style="width:15px;height:15px;"></i> Record Expense
+            </button>
+          </div>
+
+          <!-- Client Selector -->
+          <div class="pm-client-selector-bar">
+            <label class="pm-field-label">Client / Project</label>
+            <select id="pm-rev-client-select" class="pm-select" onchange="pmRevOnClientChange()">
+              <option value="">— Select a client project —</option>
+            </select>
+          </div>
+
+          <!-- Fund Overview -->
+          <div class="pm-kpi-row" id="pm-rev-kpis">
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#d1fae5;"><i data-lucide="wallet" style="color:#059669;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Initial Fund</div>
+                <div class="pm-kpi-value" id="pm-rev-initial">₱0</div>
+              </div>
+            </div>
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#fee2e2;"><i data-lucide="trending-down" style="color:#dc2626;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Total Spent</div>
+                <div class="pm-kpi-value" id="pm-rev-spent">₱0</div>
+              </div>
+            </div>
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#fef3c7;"><i data-lucide="coins" style="color:#d97706;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Remaining Balance</div>
+                <div class="pm-kpi-value" id="pm-rev-balance">₱0</div>
+              </div>
+            </div>
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#ede9fe;"><i data-lucide="refresh-cw" style="color:#7c3aed;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">To Replenish (Friday)</div>
+                <div class="pm-kpi-value" id="pm-rev-replenish">₱0</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <button class="pm-btn pm-btn-secondary" onclick="pmOpenSetFundModal()">
+              <i data-lucide="settings" style="width:14px;height:14px;"></i> Set Initial Fund
+            </button>
+            <button class="pm-btn pm-btn-secondary" onclick="pmOpenReplenishModal()">
+              <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Record Replenishment
+            </button>
+          </div>
+
+          <!-- Expenses Table -->
+          <div class="pm-table-wrap">
+            <table class="pm-table">
+              <thead>
+                <tr><th>Date</th><th>Description</th><th>Amount</th><th>Notes</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="pm-rev-tbody">
+                <tr><td colspan="5" class="pm-empty-row">Select a client project to view expenses.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div><!-- /pmRevolvingView -->
+
+        <div id="pmPaymentView" class="content-view" style="display:none;">
+          <div class="pm-admin-header">
+            <div>
+              <div class="pm-admin-title">Payment</div>
+              <div class="pm-admin-sub">Send payment requests, edit amounts, mark weeks as strict, and track payment history.</div>
+            </div>
+            <button class="pm-btn pm-btn-primary" onclick="pmOpenPaymentRequestModal()">
+              <i data-lucide="send" style="width:15px;height:15px;"></i> Send Payment Request
+            </button>
+          </div>
+
+          <!-- Client Selector -->
+          <div class="pm-client-selector-bar">
+            <label class="pm-field-label">Client / Project</label>
+            <select id="pm-pay-client-select" class="pm-select" onchange="pmPayOnClientChange()">
+              <option value="">— Select a client project —</option>
+            </select>
+          </div>
+
+          <!-- Payment KPIs -->
+          <div class="pm-kpi-row">
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#fee2e2;"><i data-lucide="alert-circle" style="color:#dc2626;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Outstanding Balance</div>
+                <div class="pm-kpi-value" id="pm-pay-outstanding">₱0</div>
+              </div>
+            </div>
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#d1fae5;"><i data-lucide="check-circle" style="color:#059669;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Total Paid</div>
+                <div class="pm-kpi-value" id="pm-pay-total-paid">₱0</div>
+              </div>
+            </div>
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#fef3c7;"><i data-lucide="clock" style="color:#d97706;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Next Payment Due</div>
+                <div class="pm-kpi-value" id="pm-pay-next-due">—</div>
+              </div>
+            </div>
+            <div class="pm-kpi-card">
+              <div class="pm-kpi-icon" style="background:#ede9fe;"><i data-lucide="shield-alert" style="color:#7c3aed;width:20px;height:20px;"></i></div>
+              <div class="pm-kpi-body">
+                <div class="pm-kpi-label">Strict Weeks</div>
+                <div class="pm-kpi-value" id="pm-pay-strict-count">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Requests Table -->
+          <div class="pm-table-wrap">
+            <table class="pm-table">
+              <thead>
+                <tr>
+                  <th>Week Of (Friday)</th>
+                  <th>Amount Due</th>
+                  <th>Carryover</th>
+                  <th>Total</th>
+                  <th>Strict</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pm-pay-tbody">
+                <tr><td colspan="7" class="pm-empty-row">Select a client project to view payment requests.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div><!-- /pmPaymentView -->
 
         <!-- ════════════ BOQ BUILDER ════════════ -->
         <div id="boqBuilderView" class="content-view" style="display: none;">
@@ -2407,6 +2705,310 @@
 <script src="js/payment-requests.js"></script>
 <script src="js/payment-reports.js"></script>
 <script src="js/invoice-module.js"></script>
+<script src="js/pm-admin.js"></script>
+
+<!-- ════════════ PROJECT MANAGEMENT MODALS ════════════ -->
+
+<!-- Weekly Entry Modal -->
+<div id="pmWeeklyModal" class="pm-modal-overlay" onclick="if(event.target===this)pmCloseModal('pmWeeklyModal')" style="display:none;">
+  <div class="pm-modal-box">
+    <div class="pm-modal-header">
+      <h3 id="pmWeeklyModalTitle">New Weekly Entry</h3>
+      <button class="pm-modal-close" onclick="pmCloseModal('pmWeeklyModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="pm-modal-body">
+      <input type="hidden" id="pmWeeklyEntryId">
+      <div class="pm-form-row">
+        <div class="pm-form-group">
+          <label class="pm-field-label">Week Of (Friday) <span class="pm-req">*</span></label>
+          <input type="date" id="pmWeeklyDate" class="pm-input">
+          <div class="pm-field-err" id="err-pmWeeklyDate"></div>
+        </div>
+      </div>
+      <div class="pm-form-row pm-two-col">
+        <div class="pm-form-group">
+          <label class="pm-field-label">Total Labor (₱) <span class="pm-req">*</span></label>
+          <input type="number" id="pmWeeklyLabor" class="pm-input" placeholder="0.00" min="0" step="0.01" oninput="pmWeeklyCompute()">
+          <div class="pm-field-err" id="err-pmWeeklyLabor"></div>
+        </div>
+        <div class="pm-form-group">
+          <label class="pm-field-label">Total Materials (₱) <span class="pm-req">*</span></label>
+          <input type="number" id="pmWeeklyMaterials" class="pm-input" placeholder="0.00" min="0" step="0.01" oninput="pmWeeklyCompute()">
+          <div class="pm-field-err" id="err-pmWeeklyMaterials"></div>
+        </div>
+      </div>
+      <!-- Auto-computed summary -->
+      <div class="pm-compute-box">
+        <div class="pm-compute-row"><span>Management Fee (15%)</span><strong id="pm-calc-fee">₱0.00</strong></div>
+        <div class="pm-compute-row pm-compute-total"><span>Grand Total</span><strong id="pm-calc-total">₱0.00</strong></div>
+      </div>
+      <div class="pm-form-group">
+        <label class="pm-field-label">Notes (optional)</label>
+        <textarea id="pmWeeklyNotes" class="pm-input pm-textarea" rows="2" placeholder="Any notes for this week…"></textarea>
+      </div>
+    </div>
+    <div class="pm-modal-footer">
+      <button class="pm-btn pm-btn-secondary" onclick="pmCloseModal('pmWeeklyModal')">Cancel</button>
+      <button class="pm-btn pm-btn-primary" onclick="pmSaveWeeklyEntry()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i> Save Entry
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Procurement Item Modal -->
+<div id="pmAddItemModal" class="pm-modal-overlay" onclick="if(event.target===this)pmCloseModal('pmAddItemModal')" style="display:none;">
+  <div class="pm-modal-box">
+    <div class="pm-modal-header">
+      <h3 id="pmAddItemTitle">Add Procurement Item</h3>
+      <button class="pm-modal-close" onclick="pmCloseModal('pmAddItemModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="pm-modal-body">
+      <input type="hidden" id="pmAddItemId">
+      <div class="pm-form-group">
+        <label class="pm-field-label">Item Name <span class="pm-req">*</span></label>
+        <input type="text" id="pmAddItemName" class="pm-input" placeholder="e.g. Plywood ¾ inch">
+        <div class="pm-field-err" id="err-pmAddItemName"></div>
+      </div>
+      <div class="pm-form-row pm-two-col">
+        <div class="pm-form-group">
+          <label class="pm-field-label">Quantity <span class="pm-req">*</span></label>
+          <input type="text" id="pmAddItemQty" class="pm-input" placeholder="e.g. 20 pcs">
+          <div class="pm-field-err" id="err-pmAddItemQty"></div>
+        </div>
+        <div class="pm-form-group">
+          <label class="pm-field-label">Estimated Price (₱)</label>
+          <input type="number" id="pmAddItemEst" class="pm-input" placeholder="0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="pm-form-group">
+        <label class="pm-field-label">Notes (optional)</label>
+        <input type="text" id="pmAddItemNotes" class="pm-input" placeholder="Brand, supplier, specs…">
+      </div>
+    </div>
+    <div class="pm-modal-footer">
+      <button class="pm-btn pm-btn-secondary" onclick="pmCloseModal('pmAddItemModal')">Cancel</button>
+      <button class="pm-btn pm-btn-primary" onclick="pmSaveProcItem()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i> Save Item
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Mark Company Bought Modal -->
+<div id="pmCompanyBuyModal" class="pm-modal-overlay" onclick="if(event.target===this)pmCloseModal('pmCompanyBuyModal')" style="display:none;">
+  <div class="pm-modal-box">
+    <div class="pm-modal-header">
+      <h3>Mark as Bought by Company</h3>
+      <button class="pm-modal-close" onclick="pmCloseModal('pmCompanyBuyModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="pm-modal-body">
+      <input type="hidden" id="pmCompanyBuyItemId">
+      <div class="pm-item-info-card">
+        <div class="pm-info-label">Item</div>
+        <div class="pm-info-value" id="pmCompanyBuyItemName">—</div>
+        <div class="pm-info-row">
+          <span><span class="pm-info-label">Qty</span> <span id="pmCompanyBuyItemQty">—</span></span>
+          <span><span class="pm-info-label">Est. Price</span> <span id="pmCompanyBuyItemEst">—</span></span>
+        </div>
+      </div>
+      <div class="pm-form-group">
+        <label class="pm-field-label">Actual Amount Paid (₱) <span class="pm-req">*</span></label>
+        <input type="number" id="pmCompanyBuyAmount" class="pm-input" placeholder="0.00" min="0" step="0.01">
+        <div class="pm-field-err" id="err-pmCompanyBuyAmount"></div>
+      </div>
+      <div class="pm-form-group">
+        <label class="pm-field-label">Proof of Receipt <span class="pm-req">*</span></label>
+        <div class="pm-upload-zone" id="pmCompanyUploadZone" onclick="document.getElementById('pmCompanyReceiptFile').click()"
+             ondragover="event.preventDefault();this.classList.add('dragover')"
+             ondragleave="this.classList.remove('dragover')"
+             ondrop="pmCompanyHandleDrop(event)">
+          <i data-lucide="upload-cloud" style="width:28px;height:28px;color:#9ca3af;margin-bottom:8px;"></i>
+          <div style="font-size:13px;color:#6b7280;">Click or drag &amp; drop receipt image / PDF</div>
+        </div>
+        <input type="file" id="pmCompanyReceiptFile" accept="image/*,.pdf" style="display:none" onchange="pmCompanyPreviewFile(this)">
+        <div id="pmCompanyReceiptPreview" style="margin-top:10px;display:none;"></div>
+        <div class="pm-field-err" id="err-pmCompanyReceipt"></div>
+      </div>
+      <div class="pm-form-group">
+        <label class="pm-field-label">Notes (optional)</label>
+        <input type="text" id="pmCompanyBuyNotes" class="pm-input" placeholder="Store name, purchase date…">
+      </div>
+    </div>
+    <div class="pm-modal-footer">
+      <button class="pm-btn pm-btn-secondary" onclick="pmCloseModal('pmCompanyBuyModal')">Cancel</button>
+      <button class="pm-btn pm-btn-primary" id="pmCompanyBuySubmitBtn" onclick="pmSubmitCompanyBuy()">
+        <i data-lucide="check" style="width:14px;height:14px;"></i> Confirm Purchase
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Revolving Fund: Set Initial Fund Modal -->
+<div id="pmSetFundModal" class="pm-modal-overlay" onclick="if(event.target===this)pmCloseModal('pmSetFundModal')" style="display:none;">
+  <div class="pm-modal-box pm-modal-sm">
+    <div class="pm-modal-header">
+      <h3>Set Initial Fund</h3>
+      <button class="pm-modal-close" onclick="pmCloseModal('pmSetFundModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="pm-modal-body">
+      <div class="pm-form-group">
+        <label class="pm-field-label">Initial Revolving Fund Amount (₱) <span class="pm-req">*</span></label>
+        <input type="number" id="pmSetFundAmount" class="pm-input" placeholder="0.00" min="0" step="0.01">
+        <div class="pm-field-err" id="err-pmSetFundAmount"></div>
+      </div>
+      <div class="pm-form-group">
+        <label class="pm-field-label">Notes (optional)</label>
+        <input type="text" id="pmSetFundNotes" class="pm-input" placeholder="e.g. Initial fund provided on April 21">
+      </div>
+    </div>
+    <div class="pm-modal-footer">
+      <button class="pm-btn pm-btn-secondary" onclick="pmCloseModal('pmSetFundModal')">Cancel</button>
+      <button class="pm-btn pm-btn-primary" onclick="pmSaveInitialFund()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i> Set Fund
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Revolving Fund: Record Expense Modal -->
+<div id="pmExpenseModal" class="pm-modal-overlay" onclick="if(event.target===this)pmCloseModal('pmExpenseModal')" style="display:none;">
+  <div class="pm-modal-box pm-modal-sm">
+    <div class="pm-modal-header">
+      <h3>Record Expense</h3>
+      <button class="pm-modal-close" onclick="pmCloseModal('pmExpenseModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="pm-modal-body">
+      <div class="pm-form-row pm-two-col">
+        <div class="pm-form-group">
+          <label class="pm-field-label">Date <span class="pm-req">*</span></label>
+          <input type="date" id="pmExpenseDate" class="pm-input">
+          <div class="pm-field-err" id="err-pmExpenseDate"></div>
+        </div>
+        <div class="pm-form-group">
+          <label class="pm-field-label">Amount (₱) <span class="pm-req">*</span></label>
+          <input type="number" id="pmExpenseAmount" class="pm-input" placeholder="0.00" min="0" step="0.01">
+          <div class="pm-field-err" id="err-pmExpenseAmount"></div>
+        </div>
+      </div>
+      <div class="pm-form-group">
+        <label class="pm-field-label">Description <span class="pm-req">*</span></label>
+        <input type="text" id="pmExpenseDesc" class="pm-input" placeholder="e.g. Nails and screws">
+        <div class="pm-field-err" id="err-pmExpenseDesc"></div>
+      </div>
+      <div class="pm-form-group">
+        <label class="pm-field-label">Notes (optional)</label>
+        <input type="text" id="pmExpenseNotes" class="pm-input" placeholder="Optional notes">
+      </div>
+    </div>
+    <div class="pm-modal-footer">
+      <button class="pm-btn pm-btn-secondary" onclick="pmCloseModal('pmExpenseModal')">Cancel</button>
+      <button class="pm-btn pm-btn-primary" onclick="pmSaveExpense()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i> Save Expense
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Revolving Fund: Replenishment Modal -->
+<div id="pmReplenishModal" class="pm-modal-overlay" onclick="if(event.target===this)pmCloseModal('pmReplenishModal')" style="display:none;">
+  <div class="pm-modal-box pm-modal-sm">
+    <div class="pm-modal-header">
+      <h3>Record Replenishment</h3>
+      <button class="pm-modal-close" onclick="pmCloseModal('pmReplenishModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="pm-modal-body">
+      <div class="pm-form-row pm-two-col">
+        <div class="pm-form-group">
+          <label class="pm-field-label">Date (Friday) <span class="pm-req">*</span></label>
+          <input type="date" id="pmReplenishDate" class="pm-input">
+          <div class="pm-field-err" id="err-pmReplenishDate"></div>
+        </div>
+        <div class="pm-form-group">
+          <label class="pm-field-label">Amount (₱) <span class="pm-req">*</span></label>
+          <input type="number" id="pmReplenishAmount" class="pm-input" placeholder="0.00" min="0" step="0.01">
+          <div class="pm-field-err" id="err-pmReplenishAmount"></div>
+        </div>
+      </div>
+      <div class="pm-form-group">
+        <label class="pm-field-label">Notes (optional)</label>
+        <input type="text" id="pmReplenishNotes" class="pm-input" placeholder="e.g. Friday replenishment Week 4">
+      </div>
+    </div>
+    <div class="pm-modal-footer">
+      <button class="pm-btn pm-btn-secondary" onclick="pmCloseModal('pmReplenishModal')">Cancel</button>
+      <button class="pm-btn pm-btn-primary" onclick="pmSaveReplenishment()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i> Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Request Modal -->
+<div id="pmPaymentRequestModal" class="pm-modal-overlay" onclick="if(event.target===this)pmCloseModal('pmPaymentRequestModal')" style="display:none;">
+  <div class="pm-modal-box">
+    <div class="pm-modal-header">
+      <h3>Send Payment Request</h3>
+      <button class="pm-modal-close" onclick="pmCloseModal('pmPaymentRequestModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="pm-modal-body">
+      <input type="hidden" id="pmPayReqId">
+      <div class="pm-form-row pm-two-col">
+        <div class="pm-form-group">
+          <label class="pm-field-label">Week Of (Friday) <span class="pm-req">*</span></label>
+          <input type="date" id="pmPayReqDate" class="pm-input">
+          <div class="pm-field-err" id="err-pmPayReqDate"></div>
+        </div>
+        <div class="pm-form-group">
+          <label class="pm-field-label">Amount Due (₱) <span class="pm-req">*</span></label>
+          <input type="number" id="pmPayReqAmount" class="pm-input" placeholder="0.00" min="0" step="0.01">
+          <div class="pm-field-err" id="err-pmPayReqAmount"></div>
+        </div>
+      </div>
+      <div class="pm-form-row pm-two-col">
+        <div class="pm-form-group">
+          <label class="pm-field-label">Carryover from Previous (₱)</label>
+          <input type="number" id="pmPayReqCarryover" class="pm-input" placeholder="0.00" min="0" step="0.01" value="0">
+        </div>
+        <div class="pm-form-group" style="display:flex;align-items:flex-end;gap:10px;">
+          <label class="pm-field-label" style="flex:0 0 auto;margin-bottom:0;">
+            <input type="checkbox" id="pmPayReqStrict" style="margin-right:6px;">
+            Strict mode (exact payment required)
+          </label>
+        </div>
+      </div>
+      <div class="pm-form-group">
+        <label class="pm-field-label">Notes (optional)</label>
+        <textarea id="pmPayReqNotes" class="pm-input pm-textarea" rows="2" placeholder="Additional notes for client…"></textarea>
+      </div>
+    </div>
+    <div class="pm-modal-footer">
+      <button class="pm-btn pm-btn-secondary" onclick="pmCloseModal('pmPaymentRequestModal')">Cancel</button>
+      <button class="pm-btn pm-btn-primary" onclick="pmSavePaymentRequest()">
+        <i data-lucide="send" style="width:14px;height:14px;"></i> Send Request
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt Viewer Modal (PM) -->
+<div id="pmReceiptViewModal" class="pm-modal-overlay" onclick="if(event.target===this)pmCloseModal('pmReceiptViewModal')" style="display:none;">
+  <div class="pm-modal-box">
+    <div class="pm-modal-header">
+      <h3 id="pmReceiptViewTitle">Receipt</h3>
+      <button class="pm-modal-close" onclick="pmCloseModal('pmReceiptViewModal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="pm-modal-body" style="text-align:center;">
+      <div id="pmReceiptViewContent"></div>
+    </div>
+    <div class="pm-modal-footer">
+      <a id="pmReceiptDownloadLink" href="#" target="_blank" class="pm-btn pm-btn-secondary">
+        <i data-lucide="external-link" style="width:14px;height:14px;"></i> Open in New Tab
+      </a>
+      <button class="pm-btn pm-btn-primary" onclick="pmCloseModal('pmReceiptViewModal')">Close</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ════════════════════════════════════════════════════════════
@@ -2417,6 +3019,7 @@
     const CONS_VIEWS = ['consBatch','consUrgent','consBatchHistory','consInventory'];
     const BOQ_VIEWS  = ['boqBuilder'];
     const UN_VIEWS   = ['userNavigator','clientAccounts'];
+    const PM_VIEWS   = ['pmWeekly','pmProcurement','pmRevolving','pmPayment'];
     const TITLES = {
         dashboard:        'Dashboard',
         appointments:     'Appointments',
@@ -2436,14 +3039,18 @@
         paymentRequests:  'Payment Requests',
         paymentReports:   'Payment Reports',
         invoices:         'Invoice Receipt',
+        pmWeekly:         'Weekly Summary',
+        pmProcurement:    'Materials Procurement',
+        pmRevolving:      'Revolving Fund',
+        pmPayment:        'Payment',
     };
 
     window.switchView = function(view) {
         // Role guard
         if (typeof currentUserRole !== 'undefined' && currentUserRole !== null) {
             if (currentUserRole === 'staff') {
-                const blocked = ['expOverhead'];
-                if (blocked.includes(view)) view = 'dashboard';
+                // Staff can access all expense views including Overhead
+                // No views are blocked for staff
             } else if (currentUserRole === 'worker' || currentUserRole === 'teamLeader') {
                 const allowed = ['consBatch','consUrgent','consBatchHistory','consInventory'];
                 if (!allowed.includes(view)) view = 'consBatch';
@@ -2487,6 +3094,7 @@
         if (view === 'paymentRequests' && typeof initSOAModule      === 'function') initSOAModule();
         if (view === 'paymentReports'  && typeof initPaymentReports === 'function') initPaymentReports();
         if (view === 'invoices'        && typeof initInvoiceModule  === 'function') initInvoiceModule();
+        if (PM_VIEWS.includes(view)   && typeof initPMModule       === 'function') initPMModule(view);
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
     };

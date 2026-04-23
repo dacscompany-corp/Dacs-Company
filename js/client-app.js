@@ -458,6 +458,54 @@ function _setText(id, val) {
 
 // ── Populate Dashboard ───────────────────────────────────
 function populateDashboard() {
+    // ── NEW HERO KPIs (Always Visible) ──
+    const designPctEl = document.getElementById('hero-design-pct');
+    const designSubEl = document.getElementById('hero-design-sub');
+    const billedPctEl = document.getElementById('hero-billed-pct');
+    const billedSubEl = document.getElementById('hero-billed-sub');
+    const activityEl  = document.getElementById('hero-activity-count');
+    const activitySubEl = document.getElementById('hero-activity-last');
+
+    // 1. Design Progress
+    const totalAcc   = currentBoqDocs.reduce((s, d) => s + calcTotalAcc(d.costItems), 0);
+    const totalCost  = currentBoqDocs.reduce((s, d) => s + calcGrandTotal(d.costItems), 0);
+    const progressPct = totalCost > 0 ? Math.round((totalAcc / totalCost) * 100) : 0;
+    const approved   = currentBoqDocs.filter(d => d.status === 'approved').length;
+    if (designPctEl) animateValue(designPctEl, 0, progressPct, 1200, n => n + '%');
+    if (designSubEl) designSubEl.textContent = approved + ' approved';
+
+    // 2. Total Billed
+    const totalBudget = currentFolders.reduce((s, f) => s + (parseFloat(f.totalBudget) || 0), 0);
+    const totalBilled = (window._clientPayRequests || [])
+        .filter(r => r.status === 'verified')
+        .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+    const billedPct   = totalBudget > 0 ? Math.round((totalBilled / totalBudget) * 100) : 0;
+    const payReqCount = (window._clientPayRequests || []).length;
+    if (billedPctEl) animateValue(billedPctEl, 0, billedPct, 1000, n => n + '%');
+    if (billedSubEl) billedSubEl.textContent = payReqCount + ' requests';
+
+    // 3. Recent Activity
+    const events = [];
+    currentBoqDocs.slice(-3).forEach(doc => {
+        const name = doc.header?.subject || doc.projectName || 'Report';
+        if (doc.status === 'approved') {
+            events.push({ msg: name + ' approved', ts: doc.updatedAt });
+        } else if (doc.status === 'submitted') {
+            events.push({ msg: name + ' submitted for review', ts: doc.updatedAt });
+        }
+    });
+    (window._clientPayRequests || []).slice(-2).forEach(r => {
+        if (r.status === 'verified') {
+            events.push({ msg: r.billingPeriod + ' payment verified', ts: r.verifiedAt });
+        }
+    });
+    events.sort((a, b) => (b.ts?.seconds || 0) - (a.ts?.seconds || 0));
+    const recentCount = events.length;
+    const latest = events[0];
+    if (activityEl) animateValue(activityEl, 0, recentCount, 800, n => n.toString());
+    if (activitySubEl) activitySubEl.textContent = latest ? latest.msg : 'No recent activity';
+
+    // ── Existing dashboard content ──
     const noProject  = document.getElementById('no-project-state');
     const projContent = document.getElementById('project-content');
 

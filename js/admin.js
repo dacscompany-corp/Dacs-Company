@@ -92,12 +92,8 @@ function applyRoleBasedUI() {
     _resetCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
 
     if (currentUserRole === 'staff') {
-        // Staff cannot access Overhead
-        const hiddenViews = ['expOverhead'];
-        hiddenViews.forEach(view => {
-            const navItem = document.querySelector(`.nav-item[data-view="${view}"]`);
-            if (navItem) navItem.style.display = 'none';
-        });
+        // Staff can access all expense views including Overhead
+        // No views are hidden for staff
 
         // Hide specific KPI cards not relevant to staff
         const hiddenCards = ['mvpDetailBudgetCard'];
